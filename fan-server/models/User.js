@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   password: {
     type: String,
@@ -35,3 +36,5 @@ const UserSchema = new mongoose.Schema({
     default:"http://localhost:3001/assets/defaultProfilePic.png", 
   },
 });
+
+module.exports = mongoose.model("User", UserSchema);
