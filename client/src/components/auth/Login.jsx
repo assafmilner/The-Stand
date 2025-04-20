@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const response = await axios.post("/api/login", { email, password })
+      const response = await axios.post("http://localhost:3001/api/users/login", { email, password })
       console.log(response.data)
       navigate("/home")
     } catch (error) {

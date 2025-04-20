@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Login from "./components/auth/Login"
 import Signup from "./components/auth/Signup"
+import Home from "./components/Home";
 import "./styles.css"
 
 const App = () => {
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Signup />} />
         <Route path="*" element={<Login />} />
+        <Route path="/home" element={<Home />} />
       </Routes>
     </Router>
   )
