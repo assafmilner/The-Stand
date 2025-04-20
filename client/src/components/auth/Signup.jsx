@@ -12,6 +12,7 @@ const Signup = () => {
   const [favoriteTeam, setFavoriteTeam] = useState("הפועל תל אביב")
   const [location, setLocation] = useState("אחר")
   const [isLoading, setIsLoading] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate()
 
   const teams = [
@@ -34,10 +35,17 @@ const Signup = () => {
   ]
 
   const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"]
-
+  
   const handleSignup = async (e) => {
     e.preventDefault()
     setIsLoading(true)
+   
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const response = await axios.post("http://localhost:3001/api/users/register", {
         name,
@@ -123,6 +131,19 @@ const Signup = () => {
                 required
                 className="form-input"
                 placeholder="הסיסמה שלך"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
+                אימות סיסמה
+              </label>
+              <input
+                type="password"
+                placeholder="הסיסמה שלך בשנית"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="form-input" 
               />
             </div>
 

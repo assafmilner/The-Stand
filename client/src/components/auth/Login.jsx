@@ -16,7 +16,9 @@ const Login = () => {
     setIsLoading(true)
     try {
       const response = await axios.post("http://localhost:3001/api/users/login", { email, password })
+      localStorage.setItem("accessToken", response.data.accessToken);
       console.log(response.data)
+      
       navigate("/home")
     } catch (error) {
       console.error("Login error:", error)
