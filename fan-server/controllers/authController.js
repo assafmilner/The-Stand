@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-console.log("🔑 JWT utils export:", require("../utils/jwt"));
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 
 async function register(req, res) {
@@ -107,12 +106,27 @@ async function login(req, res) {
           res.status(403).json({ error: "Refresh failed" });
         }
       }
-      
+    
+      async function logout(req, res) {
+        try {
+          // Clear the cookie
+          res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Lax",
+          });
+          return res.status(204).send(); // No Content
+        } catch (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Logout failed" });
+        }
+      }
 
 
 
 module.exports = {   
     register,
     login,
-    refreshToken
+    refreshToken,
+    logout,
 };

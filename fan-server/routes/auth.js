@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   register,
   login,
-  refreshToken
+  refreshToken,
+  logout,
 } = require("../controllers/authController");
 
 // register
@@ -14,5 +15,7 @@ router.post("/login", login);
 
 // token refresh
 router.post("/refresh", refreshToken);
+
+router.post("/logout", logout);
 
 module.exports = router;
