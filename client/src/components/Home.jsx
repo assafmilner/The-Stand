@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import axios from "axios"
+import { useUser } from "./context/UserContext"
 import "./home-styles.css"
 
 const Home = () => {
     
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState()
   const [loading, setLoading] = useState(true)
   const [checkedAuth, setCheckedAuth] = useState(false);
   const [teamTheme, setTeamTheme] = useState({
@@ -42,33 +44,38 @@ const Home = () => {
     navigate("/login");
     return;
     }
-    // Mock authenticated user data - in a real app, get this from server or localStorage
-    const mockUserData = {
-      name: "ליאת מרלי",
-      email: "avi@example.com",
-      favoriteTeam: "מכבי תל אביב",
-      location: "אשדוד"
-    }
     
-    // Simulate loading data
-    setTimeout(() => {
-      setUser(mockUserData)
-      setLoading(false)
-      setCheckedAuth(true)
+    const fetchUser = async() => {
+        try {
+            const response = await axios.get("http://localhost:3001/api/users/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-      // Set team colors based on user's favorite team
-      if (mockUserData.favoriteTeam && teamColors[mockUserData.favoriteTeam]) {
-        setTeamTheme({
-          ...teamColors[mockUserData.favoriteTeam],
-          name: mockUserData.favoriteTeam
-        })
-        
-        // Apply theme colors to CSS variables
-        document.documentElement.style.setProperty('--primary-color', teamColors[mockUserData.favoriteTeam].primary)
-        document.documentElement.style.setProperty('--secondary-color', teamColors[mockUserData.favoriteTeam].secondary)
-      }
-    }, 1000)
-  }, [])
+            const userData = response.data;
+            setUser(response.data);
+            setLoading(false);
+            setCheckedAuth(true);
+            
+            if (userData.favoriteTeam && teamColors[userData.favoriteTeam]) {
+                setTeamTheme({
+                    ...teamColors[userData.favoriteTeam],
+                    name: userData.favoriteTeam
+                });
+
+                document.documentElement.style.setProperty('--primary-color', teamColors[userData.favoriteTeam].primary)
+                document.documentElement.style.setProperty('--primary-color', teamColors[userData.favoriteTeam].secondary)
+            }
+        } catch (err) {
+            console.error("Failed to fetch user:", err);
+            navigate("/login");
+        }
+    };
+    
+    fetchUser();
+},[]);
+   
   
   const handleLogout = () => {
     // In a real app, implement logout functionality
