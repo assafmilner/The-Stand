@@ -1,32 +1,35 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import axios from "axios"
-import { useNavigate, Link } from "react-router-dom"
-import "./auth-styles.css"
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import "./auth-styles.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:3001/api/users/login", { email, password })
+      const response = await axios.post(
+        "http://localhost:3001/api/auth/login",
+        { email, password }
+      );
       localStorage.setItem("accessToken", response.data.accessToken);
-      console.log(response.data)
-      
-      navigate("/home")
+      console.log(response.data);
+
+      navigate("/home");
     } catch (error) {
-      console.error("Login error:", error)
-      alert("Login failed!")
+      console.error("Login error:", error);
+      alert("Login failed!");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="auth-container">
@@ -36,8 +39,20 @@ const Login = () => {
           <div className="form-header">
             {/* Modern Football Logo */}
             <div className="logo-container">
-              <svg className="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+              <svg
+                className="logo"
+                viewBox="0 0 64 64"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="30"
+                  fill="white"
+                  stroke="#15803d"
+                  strokeWidth="2"
+                />
                 <path
                   d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                   fill="white"
@@ -49,7 +64,9 @@ const Login = () => {
               </svg>
             </div>
             <h1 className="form-title">ברוכים השבים!</h1>
-            <p className="form-subtitle">התחבר כדי להמשיך ל-Fan? Feel at Home</p>
+            <p className="form-subtitle">
+              התחבר כדי להמשיך ל-Fan? Feel at Home
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="form">
@@ -91,7 +108,11 @@ const Login = () => {
             <button type="submit" disabled={isLoading} className="form-button">
               {isLoading ? (
                 <>
-                  <svg className="form-button-icon animate-spin" viewBox="0 0 24 24" fill="none">
+                  <svg
+                    className="form-button-icon animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -110,7 +131,11 @@ const Login = () => {
                 </>
               ) : (
                 <>
-                  <svg className="form-button-icon" viewBox="0 0 24 24" fill="none">
+                  <svg
+                    className="form-button-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
                     <path
                       d="M15 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
                       stroke="currentColor"
@@ -168,8 +193,19 @@ const Login = () => {
         {/* Modern football elements */}
         <div className="football-element football-element-1">
           <div className="modern-football">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="32"
+                cy="32"
+                r="30"
+                fill="white"
+                stroke="#15803d"
+                strokeWidth="2"
+              />
               <path
                 d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                 fill="white"
@@ -185,8 +221,19 @@ const Login = () => {
 
         <div className="football-element football-element-2">
           <div className="modern-football">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="32"
+                cy="32"
+                r="30"
+                fill="white"
+                stroke="#15803d"
+                strokeWidth="2"
+              />
               <path
                 d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                 fill="white"
@@ -203,7 +250,12 @@ const Login = () => {
         {/* Content card */}
         <div className="decorative-content">
           <div className="decorative-card">
-            <svg className="decorative-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              className="decorative-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"
                 stroke="currentColor"
@@ -235,14 +287,14 @@ const Login = () => {
             </svg>
             <h2 className="decorative-title">חזור לקהילת האוהדים!</h2>
             <p className="decorative-text">
-              התחבר כדי לחזור לקהילת האוהדים שלך, לעקוב אחרי המשחקים ולהתחבר עם אוהדים אחרים שחולקים את התשוקה שלך
-              לכדורגל.
+              התחבר כדי לחזור לקהילת האוהדים שלך, לעקוב אחרי המשחקים ולהתחבר עם
+              אוהדים אחרים שחולקים את התשוקה שלך לכדורגל.
             </p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

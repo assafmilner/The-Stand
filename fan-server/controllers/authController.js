@@ -14,25 +14,25 @@ async function register(req, res) {
             password: hashedPassword,
             favoriteTeam,
             location
-          });
-          res.status(201).json({message: "User registered successfully",
+        });
+        res.status(201).json({
+            message: "User registered successfully",
             user: {
-              id: newUser._id,
-              name: newUser.name,
-              email: newUser.email,
-              favoriteTeam: newUser.favoriteTeam,
-              location: newUser.location,
-              profilePicture: newUser.profilePicture,
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                favoriteTeam: newUser.favoriteTeam,
+                location: newUser.location,
+                profilePicture: newUser.profilePicture,
             }
-          });
+        });
     } catch (err) {
         if (err.code === 11000 && err.keyPattern && err.keyPattern.email) {
             return res.status(400).json({ error: "Email already in use" });
-          }
+        }
         console.error(err);
         res.status(500).json({ error: "Registration failed" });
     }
-
 }
 
 async function login(req, res) {
@@ -45,7 +45,7 @@ async function login(req, res) {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-        return res.status(400).json({ error: "Invalid credentials" });
+            return res.status(400).json({ error: "Invalid credentials" });
         }
 
         const payload = { id: user._id, role: user.role };
@@ -65,66 +65,58 @@ async function login(req, res) {
         res.json({
             accessToken,
             user: {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              favoriteTeam: user.favoriteTeam,
-              location: user.location,
-              profilePicture: user.profilePicture,
-              role: user.role,
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                favoriteTeam: user.favoriteTeam,
+                location: user.location,
+                profilePicture: user.profilePicture,
+                role: user.role,
             }
-          });
-
-
-
-
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Login failed" });
-      }
     }
+}
 
-    async function refreshToken(req, res) {
-        try {
-          const token = req.cookies.refreshToken;
-          if (!token) {
+async function refreshToken(req, res) {
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) {
             return res.status(401).json({ error: "No token provided" });
-          }
-          const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-          if (!payload) {
+        }
+        const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+        if (!payload) {
             return res.status(403).json({ error: "Invalid token" });
-          }
-          
-          const newAccessToken = generateAccessToken({
+        }
+
+        const newAccessToken = generateAccessToken({
             id: payload.id,
             role: payload.role
-          });
-          return res.json({ accessToken: newAccessToken });
-        
-        } catch (err) {
-          console.error(err);
-          res.status(403).json({ error: "Refresh failed" });
-        }
-      }
-    
-      async function logout(req, res) {
-        try {
-          // Clear the cookie
-          res.clearCookie("refreshToken", {
+        });
+        return res.json({ accessToken: newAccessToken });
+    } catch (err) {
+        console.error(err);
+        res.status(403).json({ error: "Refresh failed" });
+    }
+}
+
+async function logout(req, res) {
+    try {
+        res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Lax",
-          });
-          return res.status(204).send(); // No Content
-        } catch (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Logout failed" });
-        }
-      }
+        });
+        return res.status(204).send();
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Logout failed" });
+    }
+}
 
-
-
-module.exports = {   
+module.exports = {
     register,
     login,
     refreshToken,

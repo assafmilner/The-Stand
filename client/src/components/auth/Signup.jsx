@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import axios from "axios"
-import { useNavigate, Link } from "react-router-dom"
-import "./auth-styles.css"
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import "./auth-styles.css";
 
 const Signup = () => {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [favoriteTeam, setFavoriteTeam] = useState("הפועל תל אביב")
-  const [location, setLocation] = useState("אחר")
-  const [isLoading, setIsLoading] = useState(false)
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [favoriteTeam, setFavoriteTeam] = useState("הפועל תל אביב");
+  const [location, setLocation] = useState("אחר");
+  const [isLoading, setIsLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const teams = [
     "הפועל תל אביב",
@@ -32,37 +32,41 @@ const Signup = () => {
     "מכבי פתח תקווה",
     "הפועל רמת גן",
     "הפועל כפר שלם",
-  ]
+  ];
 
-  const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"]
-  
+  const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"];
+
   const handleSignup = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-   
+    e.preventDefault();
+    setIsLoading(true);
+
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       setIsLoading(false);
       return;
     }
-    
+
     try {
-      const response = await axios.post("http://localhost:3001/api/users/register", {
-        name,
-        email,
-        password,
-        favoriteTeam,
-        location,
-      })
-      console.log(response.data)
-      navigate("/login")
+      const response = await axios.post(
+        "http://localhost:3001/api/auth/register",
+        {
+          name,
+          email,
+          password,
+          favoriteTeam,
+          location,
+        }
+      );
+      localStorage.setItem("accessToken", response.data.accessToken);
+      console.log(response.data);
+      navigate("/login");
     } catch (error) {
-      console.error("Signup error:", error)
-      alert("Signup failed!")
+      console.error("Signup error:", error);
+      alert("Signup failed!");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="auth-container">
@@ -72,8 +76,20 @@ const Signup = () => {
           <div className="form-header">
             {/* Modern Football Logo */}
             <div className="logo-container">
-              <svg className="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+              <svg
+                className="logo"
+                viewBox="0 0 64 64"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="30"
+                  fill="white"
+                  stroke="#15803d"
+                  strokeWidth="2"
+                />
                 <path
                   d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                   fill="white"
@@ -85,7 +101,9 @@ const Signup = () => {
               </svg>
             </div>
             <h1 className="form-title">הצטרף לקהילה!</h1>
-            <p className="form-subtitle">צור את החשבון שלך ב-Fan? Feel at Home</p>
+            <p className="form-subtitle">
+              צור את החשבון שלך ב-Fan? Feel at Home
+            </p>
           </div>
 
           <form onSubmit={handleSignup} className="form">
@@ -143,7 +161,7 @@ const Signup = () => {
                 placeholder="הסיסמה שלך בשנית"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="form-input" 
+                className="form-input"
               />
             </div>
 
@@ -188,7 +206,11 @@ const Signup = () => {
             <button type="submit" disabled={isLoading} className="form-button">
               {isLoading ? (
                 <>
-                  <svg className="form-button-icon animate-spin" viewBox="0 0 24 24" fill="none">
+                  <svg
+                    className="form-button-icon animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -207,7 +229,11 @@ const Signup = () => {
                 </>
               ) : (
                 <>
-                  <svg className="form-button-icon" viewBox="0 0 24 24" fill="none">
+                  <svg
+                    className="form-button-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
                     <path
                       d="M12 4V20M20 12H4"
                       stroke="currentColor"
@@ -251,8 +277,19 @@ const Signup = () => {
         {/* Modern football elements */}
         <div className="football-element football-element-1">
           <div className="modern-football">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="32"
+                cy="32"
+                r="30"
+                fill="white"
+                stroke="#15803d"
+                strokeWidth="2"
+              />
               <path
                 d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                 fill="white"
@@ -268,8 +305,19 @@ const Signup = () => {
 
         <div className="football-element football-element-2">
           <div className="modern-football">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="30" fill="white" stroke="#15803d" strokeWidth="2" />
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="32"
+                cy="32"
+                r="30"
+                fill="white"
+                stroke="#15803d"
+                strokeWidth="2"
+              />
               <path
                 d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
                 fill="white"
@@ -286,7 +334,12 @@ const Signup = () => {
         {/* Content card */}
         <div className="decorative-content">
           <div className="decorative-card">
-            <svg className="decorative-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              className="decorative-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"
                 stroke="currentColor"
@@ -318,13 +371,14 @@ const Signup = () => {
             </svg>
             <h2 className="decorative-title">הצטרף לקהילת האוהדים!</h2>
             <p className="decorative-text">
-              התחבר עם אוהדים אחרים, שתף את התשוקה שלך לכדורגל, והרגש בבית עם תומכים שחולקים את האהבה שלך למשחק.
+              התחבר עם אוהדים אחרים, שתף את התשוקה שלך לכדורגל, והרגש בבית עם
+              תומכים שחולקים את האהבה שלך למשחק.
             </p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Signup
+export default Signup;
