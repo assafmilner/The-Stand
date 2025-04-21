@@ -33,11 +33,21 @@ const Header = ({ user }) => {
 
         {/* Logo + avatar */}
         <div className="navbar-logo">
-          <span className="logo-text" onClick={() => navigate("/home")}>
+          <span
+            className="logo-text tracking-wide "
+            onClick={() => navigate("/home")}
+          >
             היציע
           </span>
           <button className="logo-circle" onClick={() => navigate("/profile")}>
-            {user?.name?.charAt(0).toUpperCase() || "?"}
+            <img
+              src={
+                user?.profilePicture ||
+                "http://localhost:3001/assets/defaultProfilePic.png"
+              }
+              alt="Profile"
+              className="w-full h-full object-cover rounded-full"
+            />
           </button>
         </div>
       </div>

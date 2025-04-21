@@ -120,10 +120,7 @@ const ChangePassword = () => {
       </div>
 
       <div className="col-span-2 flex justify-end mt-4">
-        <button
-          type="submit"
-          className="px-4 py-2 bg-primary text-white rounded"
-        >
+        <button type="submit" className="px-4 py-2 bg-primary rounded">
           שמור סיסמה חדשה
         </button>
       </div>

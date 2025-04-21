@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const { cloudinary } = require("../utils/cloudinary");
+
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -54,8 +56,44 @@ const updateLocation = async (req, res) => {
   }
 };
 
+const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "לא הועלתה תמונה" });
+    }
+
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "profile_pictures" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer); // שולח את הקובץ מ-memory
+    });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { profilePicture: uploadResult.secure_url },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    res.json({
+      message: "תמונת פרופיל עודכנה בהצלחה",
+      profilePicture: updatedUser.profilePicture,
+    });
+  } catch (err) {
+    console.error("שגיאה בהעלאת תמונת פרופיל:", err);
+    res.status(500).json({ error: "שגיאה בשרת" });
+  }
+};
+
+
+
 module.exports = {
   getCurrentUser,
   changePassword,
   updateLocation,
+  uploadProfilePicture,
 };

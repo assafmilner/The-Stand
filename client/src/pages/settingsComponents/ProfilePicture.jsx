@@ -1,10 +1,14 @@
 import React, { useRef, useState } from "react";
+import axios from "axios";
+import { useUser } from "../../components/context/UserContext";
 
 const ProfilePicture = ({ user }) => {
+  const { setUser } = useUser();
   const [preview, setPreview] = useState(
     user?.profilePicture || "http://localhost:3001/assets/defaultProfilePic.png"
   );
   const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -25,12 +29,45 @@ const ProfilePicture = ({ user }) => {
     setPreview("http://localhost:3001/assets/defaultProfilePic.png");
   };
 
-  const handleSave = () => {
-    if (selectedFile) {
-      // שליחת selectedFile לשרת (TODO)
-      console.log("Uploading:", selectedFile);
-    } else {
+  const handleSave = async () => {
+    if (!selectedFile) {
       console.log("No file selected");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+    setUploading(true);
+
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const response = await axios.post(
+        "http://localhost:3001/api/users/upload-profile",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const imageUrl = response.data.profilePicture;
+
+      // עדכון מקומי בתצוגה
+      setPreview(imageUrl);
+      setSelectedFile(null);
+      setUploading(false);
+
+      // עדכון בקונטקסט הגלובלי
+      setUser((prev) => ({
+        ...prev,
+        profilePicture: imageUrl,
+      }));
+    } catch (err) {
+      console.error("שגיאה בהעלאת תמונה:", err);
+      setUploading(false);
     }
   };
 
@@ -68,9 +105,10 @@ const ProfilePicture = ({ user }) => {
 
       <button
         onClick={handleSave}
-        className="flex justify-end gap-4 border-b pb-3 mb-6 flex-wrap"
+        disabled={uploading}
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition mt-4"
       >
-        שמור תמונה
+        {uploading ? "מעלה..." : "שמור תמונה"}
       </button>
     </div>
   );

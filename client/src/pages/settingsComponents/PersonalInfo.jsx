@@ -96,7 +96,7 @@ const PersonalInfo = ({ user }) => {
       <div className="col-span-2 flex justify-end mt-4">
         <button
           type="button"
-          className="bg-primary text-white px-4 py-2 rounded hover:opacity-90"
+          className="bg-primary px-4 py-2 rounded hover:opacity-90"
           onClick={handleUpdateLocation}
         >
           שמור שינויים
