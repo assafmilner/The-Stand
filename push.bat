@@ -1,9 +1,16 @@
+
+
 @echo off
-set /p message="Enter commit message: "
-git pull origin main
+echo Adding all files...
 git add .
+
+echo Committing changes...
 git commit -m "%message%"
-git push
+
+echo Pushing to GitHub...
+git push origin main
+
+echo Push completed ✅
 pause
 
 

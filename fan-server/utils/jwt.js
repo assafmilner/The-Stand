@@ -18,10 +18,8 @@ function generateAccessToken(payload) {
 
   function verifyToken(token) {
     try {
-      console.log("✅ SECRET:", process.env.JWT_SECRET);
       return jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-      console.error("❌ JWT verification error:", err.message);
       return null;
     }
   }
