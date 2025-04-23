@@ -42,13 +42,19 @@ const Settings = () => {
       <Header user={user} />
       <div className="max-w-4xl mx-auto px-4 py-10">
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-2xl font-semibold mb-6 text-right">הגדרות</h2>
+          <h2 className="text-4xl font-bold mb-6 text-right">הגדרות</h2>
           <ProfilePictureTab user={user} />
 
-          <div className="flex justify-center gap-6 my-8 border-b pb-3 flex-wrap text-right">
-            <a href="#personal">פרטים אישיים</a>
-            <a href="#password">שינוי סיסמה</a>
-            <a href="#delete">מחיקת חשבון</a>
+          <div className="flex justify-center gap-6 my-8 border-b pb-3 flex-wrap text-right ">
+            <a href="#personal" className="secondary-bg-primary-text">
+              פרטים אישיים
+            </a>
+            <a href="#password" className="secondary-bg-primary-text">
+              שינוי סיסמה
+            </a>
+            <a href="#delete" className="secondary-bg-primary-text">
+              מחיקת חשבון
+            </a>
           </div>
 
           <div id="personal" className="mb-10 scroll-mt-28">

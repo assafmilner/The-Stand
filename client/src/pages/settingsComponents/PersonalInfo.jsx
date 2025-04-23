@@ -4,31 +4,42 @@ import { CheckCircle, AlertTriangle } from "lucide-react";
 
 const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"];
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("he-IL", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+};
+
 const PersonalInfo = ({ user }) => {
   const [selectedLocation, setSelectedLocation] = useState(
-    user?.location || ""
+    user?.location || "אחר"
   );
+
+  const [bio, setBio] = useState(user?.bio || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const handleUpdateLocation = async () => {
+  const handleSaveInfo = async () => {
     setSuccess("");
     setError("");
 
     try {
       const token = localStorage.getItem("accessToken");
       const res = await axios.put(
-        "http://localhost:3001/api/users/update-location",
-        { location: selectedLocation },
+        "http://localhost:3001/api/users/update-profile",
+        { bio, phone },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setSuccess(res.data.message);
     } catch (err) {
-      setError("שגיאה בעדכון המיקום");
+      setError("שגיאה בעדכון המידע האישי");
     }
   };
 
@@ -93,11 +104,58 @@ const PersonalInfo = ({ user }) => {
         </select>
       </div>
 
-      <div className="col-span-2 flex justify-end mt-4">
+      <div>
+        <label className="block text-sm font-medium">מין</label>
+        <input
+          value={user?.gender}
+          disabled
+          className="w-full p-2 border rounded bg-gray-100"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">תאריך לידה</label>
+        <input
+          value={formatDate(user?.birthDate)}
+          disabled
+          className="w-full p-2 border rounded bg-gray-100"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">תאריך הצטרפות</label>
+        <input
+          value={formatDate(user?.createdAt)}
+          disabled
+          className="w-full p-2 border rounded bg-gray-100"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">טלפון</label>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-full p-2 border rounded"
+          placeholder="הזן טלפון..."
+        />
+      </div>
+
+      <div className="col-span-2">
+        <label className="block text-sm font-medium">ביוגרפיה קצרה</label>
+        <textarea
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          className="w-full p-2 border rounded min-h-[100px]"
+          placeholder="כתוב כאן קצת על עצמך..."
+        />
+      </div>
+
+      <div className="col-span-2 flex justify-end mt-4 gap-3">
         <button
           type="button"
-          className="bg-primary px-4 py-2 rounded hover:opacity-90"
-          onClick={handleUpdateLocation}
+          onClick={handleSaveInfo}
+          className="bg-primary px-4 py-2 rounded hover:opacity-30"
         >
           שמור שינויים
         </button>

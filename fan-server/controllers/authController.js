@@ -5,7 +5,7 @@ const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 
 async function register(req, res) {
     try {
-        const { name, email, password, favoriteTeam, location } = req.body;
+        const { name, email, password, favoriteTeam, location, bio, gender, phone, birthDate } = req.body;
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const newUser = await User.create({
@@ -13,7 +13,11 @@ async function register(req, res) {
             email,
             password: hashedPassword,
             favoriteTeam,
-            location
+            location,
+            bio,
+            gender,
+            phone,
+            birthDate,
         });
         res.status(201).json({
             message: "User registered successfully",
@@ -24,6 +28,10 @@ async function register(req, res) {
                 favoriteTeam: newUser.favoriteTeam,
                 location: newUser.location,
                 profilePicture: newUser.profilePicture,
+                bio: newUser.bio,
+                gender: newUser.gender,
+                phone: newUser.phone,
+                birthDate: newUser.birthDate,
             }
         });
     } catch (err) {
@@ -64,15 +72,7 @@ async function login(req, res) {
 
         res.json({
             accessToken,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                favoriteTeam: user.favoriteTeam,
-                location: user.location,
-                profilePicture: user.profilePicture,
-                role: user.role,
-            }
+            user,
         });
     } catch (err) {
         console.error(err);

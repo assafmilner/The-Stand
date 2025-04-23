@@ -41,20 +41,29 @@ const changePassword = async (req, res) => {
   }
 };
 
-const updateLocation = async (req, res) => {
+const updateProfileInfo = async (req, res) => {
   try {
+    const { location, bio, phone } = req.body;
+
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "משתמש לא נמצא" });
 
-    user.location = req.body.location;
+    if (location) user.location = location;
+    if (bio) user.bio = bio;
+    if (phone) user.phone = phone;
+
     await user.save();
 
-    res.json({ message: "המיקום עודכן בהצלחה", location: user.location });
+    res.json({
+      message: "הפרטים עודכנו בהצלחה",
+      updatedFields: { location: user.location, bio: user.bio, phone: user.phone },
+    });
   } catch (err) {
-    console.error("שגיאה בעדכון מיקום:", err);
+    console.error("שגיאה בעדכון הפרופיל:", err);
     res.status(500).json({ error: "שגיאה בשרת" });
   }
 };
+
 
 const uploadProfilePicture = async (req, res) => {
   try {
@@ -89,11 +98,23 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
+const deleteAccount = async (req, res) => {
+  try {
+    const userID = req.user.id;
+    await User.findByIdAndDelete(userID);
+    res.json({ message: "החשבון נמחק בהצלחה"});
+  } catch (err) {
+    console.error("שגיאה במחיקת החשבון", err);
+    res.status(500).json({error:"שגיאה בשרת בעת מחיקת החשבון"});
+
+  }
+}
 
 
 module.exports = {
   getCurrentUser,
   changePassword,
-  updateLocation,
+  updateProfileInfo,
   uploadProfilePicture,
+  deleteAccount,
 };

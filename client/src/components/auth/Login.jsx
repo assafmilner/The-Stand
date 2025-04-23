@@ -3,12 +3,14 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 import "./auth-styles.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { setUser } = useUser();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -20,8 +22,7 @@ const Login = () => {
         { email, password }
       );
       localStorage.setItem("accessToken", response.data.accessToken);
-      console.log(response.data);
-
+      setUser(response.data.user);
       navigate("/home");
     } catch (error) {
       console.error("Login error:", error);
@@ -64,9 +65,7 @@ const Login = () => {
               </svg>
             </div>
             <h1 className="form-title">ברוכים השבים!</h1>
-            <p className="form-subtitle">
-              התחבר כדי להמשיך ל-Fan? Feel at Home
-            </p>
+            <p className="form-subtitle">התחבר כדי להמשיך ל-היציע</p>
           </div>
 
           <form onSubmit={handleLogin} className="form">

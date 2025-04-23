@@ -24,19 +24,21 @@ function ColorManager() {
 
 function App() {
   return (
-    <BrowserRouter>
+    
       <UserProvider>
-      <ColorManager />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Signup />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/" element={<Login />} />
-          </Routes>
+        <BrowserRouter>
         <ColorManager />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Signup />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/" element={<Login />} />
+            </Routes>
+          <ColorManager />
+        </BrowserRouter>
       </UserProvider>
-    </BrowserRouter>
+    
   );
 }
 

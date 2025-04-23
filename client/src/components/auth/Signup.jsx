@@ -13,6 +13,11 @@ const Signup = () => {
   const [location, setLocation] = useState("אחר");
   const [isLoading, setIsLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [bio, setBio] = useState("");
+
   const navigate = useNavigate();
 
   const teams = [
@@ -55,6 +60,10 @@ const Signup = () => {
           password,
           favoriteTeam,
           location,
+          phone,
+          gender,
+          birthDate,
+          bio,
         }
       );
       localStorage.setItem("accessToken", response.data.accessToken);
@@ -201,6 +210,63 @@ const Signup = () => {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="phone" className="form-label">
+                טלפון
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="form-input"
+                placeholder="050-0000000"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="gender" className="form-label">
+                מין
+              </label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="form-select"
+              >
+                <option value="">בחר מין</option>
+                <option value="זכר">זכר</option>
+                <option value="נקבה">נקבה</option>
+                <option value="אחר">אחר</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="birthDate" className="form-label">
+                תאריך לידה
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="bio" className="form-label">
+                ביוגרפיה קצרה
+              </label>
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="form-input"
+                placeholder="כמה מילים על עצמך..."
+                rows={3}
+              />
             </div>
 
             <button type="submit" disabled={isLoading} className="form-button">

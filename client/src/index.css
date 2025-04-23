@@ -17,7 +17,7 @@
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
   --card-bg: white;
-  --card-border: #e5e7eb;
+  --card-border: var(--color-primary);
 
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
@@ -51,7 +51,7 @@
   --chart-5: 280 75% 60%;
 
   --radius: 0.5rem;
-  --light-bg: #f9fafb;
+  --light-bg: #f9fafb78;
   --text-color: #1f2937;
 }
 
@@ -186,11 +186,12 @@ a, .link, .nav-item {
 .navbar-icons {
   display: flex;
   gap: 1rem;
+  
 }
 
 .icon-button {
   background: var(--color-primary);
-  border: none;
+  border: 1px solid var(--color-primary);
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -199,7 +200,9 @@ a, .link, .nav-item {
 }
 
 .icon-button:hover {
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  
 }
 
 .navbar-search input {
@@ -534,6 +537,7 @@ a, .link, .nav-item {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: var(--color-primary)
 }
 
 .tab-buttons-inner {
@@ -554,6 +558,7 @@ button {
 
 button:hover {
   opacity: 0.85;
+  
 }
 
 .join-group-button {
@@ -563,15 +568,15 @@ button:hover {
   border: 1px solid var(--color-primary);
   border-radius: 0.375rem;
   padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .join-group-button:hover {
-  background-color: var(--color-primary);
-  color: white;
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
 }
 
 .register-button {
@@ -595,6 +600,21 @@ button:hover {
 .register-button:active {
   transform: translateY(0);
   box-shadow: none;
+}
+.secondary-bg-primary-text {
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  transition: 0.2s ease;
+  text-decoration: none;
+  /* border: 2px solid var(--color-primary); */
+}
+
+.secondary-bg-primary-text:hover {
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
 }
 
 /* =====================
