@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import Header from "../components/Header";
 import { useUser } from "../components/context/UserContext";
-import PersonalInfoTab from "../pages/settingsComponents/PersonalInfo";
-import ChangePasswordTab from "../pages/settingsComponents/ChangePassword";
-import ProfilePictureTab from "../pages/settingsComponents/ProfilePicture";
-import DeleteAccountTab from "../pages/settingsComponents/DeleteAccount";
+import PersonalInfoTab from "../components/settingsComponents/PersonalInfo";
+import ChangePasswordTab from "../components/settingsComponents/ChangePassword";
+import ProfilePictureTab from "../components/settingsComponents/ProfilePicture";
+import DeleteAccountTab from "../components/settingsComponents/DeleteAccount";
 import { useNavigate } from "react-router-dom";
 
 const Settings = () => {

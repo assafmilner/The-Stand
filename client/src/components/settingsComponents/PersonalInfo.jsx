@@ -155,7 +155,7 @@ const PersonalInfo = ({ user }) => {
         <button
           type="button"
           onClick={handleSaveInfo}
-          className="bg-primary px-4 py-2 rounded hover:opacity-30"
+          className="bg-primary px-4 py-2 rounded hover:opacity-90"
         >
           שמור שינויים
         </button>

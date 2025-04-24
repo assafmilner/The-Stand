@@ -1,7 +1,7 @@
 // Team color configurations
 const teamColors = {
-    "הפועל תל אביב": { primary: "#FF0000", secondary: "#FFFFFF" },
-    "מכבי תל אביב": { primary: "#FFFF00", secondary: "#0000FF" },
+    "הפועל תל אביב": { primary: "#dc2626", secondary: "#FFFFFF" },
+    "מכבי תל אביב": { primary: "#fde047", secondary: "#0000FF" },
     "הפועל באר שבע": { primary: "#FF0000", secondary: "#FFFFFF" },
     "מכבי חיפה": { primary: "#00FF00", secondary: "#FFFFFF" },
     'בית"ר ירושלים': { primary: "#FFFF00", secondary: "#000000" },
