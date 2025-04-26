@@ -12,7 +12,7 @@ const teamNameMap = {
     badge: "https://r2.thesportsdb.com/images/media/team/badge/t73b501639433206.png",
   },
   "Beitar Jerusalem": {
-    name: "בית״ר ירושלים",
+    name: 'בית"ר ירושלים',
     badge: "https://r2.thesportsdb.com/images/media/team/badge/bq7vys1639433460.png",
   },
   "Hapoel Haifa": {
