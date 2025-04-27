@@ -1,30 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
-import { calculatePlayoffTable } from "./calculatePlayoffTable";
+import { calculateTable } from "./calculateTable";
+import { fetchFromApi } from "../../utils/fetchFromApi";
+
+const getLeagueConfig = (league) => {
+  if (league === "ligat-haal") {
+    return { seasonId: 4644, playoffStartRound: 26, topPlayoffSize: 6 };
+  } else if (league === "leumit") {
+    return { seasonId: 4966, playoffStartRound: 30, topPlayoffSize: 8 };
+  } else {
+    return { seasonId: 0, playoffStartRound: 0, topPlayoffSize: 0 }; // ליתר ביטחון
+  }
+};
 
 const LeagueTable = ({ league }) => {
-  const seasonId = league === "ligat-haal" ? 4644 : 4966;
-  const playoffStartRound = league === "ligat-haal" ? 26 : 30;
-  const topPlayoffSize = league === "ligat-haal" ? 6 : 8;
-
   const [mode, setMode] = useState("regular");
   const [loading, setLoading] = useState(true);
   const [playoffLoading, setPlayoffLoading] = useState(false);
-
   const [regularTable, setRegularTable] = useState([]);
   const [topPlayoff, setTopPlayoff] = useState([]);
   const [bottomPlayoff, setBottomPlayoff] = useState([]);
 
-  // שולף רק את העונה הסדירה
   useEffect(() => {
     const fetchRegularSeason = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
+        const { seasonId } = getLeagueConfig(league);
+
+        const data = await fetchFromApi(
           `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${seasonId}&s=2024-2025`
         );
-        const data = await res.json();
+
         if (!data.table) return;
         const regular = data.table.map((team) => ({
           team: team.strTeam,
@@ -46,34 +53,35 @@ const LeagueTable = ({ league }) => {
       }
     };
 
-    fetchRegularSeason();
-  }, [seasonId]);
+    if (league) {
+      fetchRegularSeason();
+    }
+  }, [league]);
 
-  // ברגע שמבקשים לראות פלייאוף – נטען אותו
   useEffect(() => {
     const fetchPlayoffData = async () => {
       try {
         setPlayoffLoading(true);
+        const { seasonId, playoffStartRound, topPlayoffSize } =
+          getLeagueConfig(league);
 
-        // שלב 1: שליפת תאריך סיום העונה הסדירה
-        const lastRoundRes = await fetch(
+        const lastRoundData = await fetchFromApi(
           `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${playoffStartRound}&s=2024-2025`
         );
-        const lastRoundData = await lastRoundRes.json();
+
         const lastGames = lastRoundData.events || [];
         const lastDate = lastGames
           .map((e) => new Date(e.dateEvent))
           .sort((a, b) => b - a)[0];
 
-        // שלב 2: שליפת משחקים בפלייאוף
         const rounds = Array.from({ length: 10 }, (_, i) => i + 1);
         const playoffGames = [];
 
         for (const r of rounds) {
-          const res = await fetch(
+          const data = await fetchFromApi(
             `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${r}&s=2024-2025`
           );
-          const data = await res.json();
+
           if (data?.events) {
             playoffGames.push(
               ...data.events.filter((e) => new Date(e.dateEvent) > lastDate)
@@ -81,12 +89,10 @@ const LeagueTable = ({ league }) => {
           }
         }
 
-        const { topPlayoffTable, bottomPlayoffTable } = calculatePlayoffTable(
+        const { topPlayoffTable, bottomPlayoffTable } = calculateTable(
           playoffGames,
           regularTable,
-          {
-            topPlayoffSize,
-          }
+          { topPlayoffSize }
         );
 
         setTopPlayoff(topPlayoffTable);
@@ -105,7 +111,7 @@ const LeagueTable = ({ league }) => {
     ) {
       fetchPlayoffData();
     }
-  }, [mode]);
+  }, [mode, league, regularTable]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 post-card">

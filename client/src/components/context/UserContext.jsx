@@ -6,7 +6,7 @@ export const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  console.log("hello from user provider");
+
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("accessToken");
@@ -21,7 +21,6 @@ export const UserProvider = ({ children }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("res: ", res);
         setUser(res.data);
       } catch (err) {
         console.error("Failed to fetch user", err);

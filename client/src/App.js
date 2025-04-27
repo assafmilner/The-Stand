@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import { UserProvider, useUser } from './components/context/UserContext';
 import teamColors from './utils/teamStyles';
+import Fixtures from './components/homeComponents/fixtures';
 
 
 function ColorManager() {
@@ -33,6 +34,7 @@ function App() {
               <Route path="/register" element={<Signup />} />
               <Route path="/home" element={<Home />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/fixtures" element={<Fixtures/>} />
               <Route path="/" element={<Login />} />
             </Routes>
           <ColorManager />

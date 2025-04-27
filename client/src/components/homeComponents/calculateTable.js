@@ -1,4 +1,4 @@
-export function calculatePlayoffTable(eventsAfterRegular, leagueTableAfterRegular, config) {
+export function calculateTable(eventsAfterRegular, leagueTableAfterRegular, config) {
   if (!Array.isArray(eventsAfterRegular) || !Array.isArray(leagueTableAfterRegular)) {
     throw new Error("Both events and league table must be arrays");
   }

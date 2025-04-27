@@ -16,6 +16,7 @@ const teamColors = {
     "מכבי פתח תקווה": { primary: "#0000FF", secondary: "#FFFFFF" },
     "הפועל רמת גן": { primary: "#dc2626", secondary: "#000000" },
     "הפועל כפר שלם": { primary: "#FFA500", secondary: "#FFFFFF" },
+    
   };
 
   export default teamColors;

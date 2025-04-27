@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 const RightSidebar = ({ user, colors, onLogout }) => {
   const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken", "cacheKey");
+    navigate("/login");
+  };
   return (
     <aside>
       <nav
@@ -30,7 +34,7 @@ const RightSidebar = ({ user, colors, onLogout }) => {
           </li>
           <li
             className="nav-item flex items-center gap-2 text-red-600"
-            onClick={onLogout}
+            onClick={handleLogout}
           >
             <LogOut size={18} /> התנתק
           </li>
