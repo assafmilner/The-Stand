@@ -1,24 +1,16 @@
-import { useNavigate } from "react-router-dom";
 import { useUser } from "../components/context/UserContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Layout from "../components/Layout"; // ✅ שימוש בלייאאוט
 import Feed from "../components/homeComponents/Feed";
 import SmartLeagueTable from "../components/homeComponents/SmartLeagueTable";
-import NextFixtures from "../components/homeComponents/NextFixtures";
+
 import teamColors from "../utils/teamStyles";
 import "../index.css";
 
 const Home = () => {
-  const navigate = useNavigate();
   const { user, loading } = useUser();
   const [selectedTab, setSelectedTab] = useState("feed"); // ✅ מצב טאב
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return (

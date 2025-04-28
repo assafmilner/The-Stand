@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 const RightSidebar = ({ user, colors, onLogout }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem("accessToken", "cacheKey");
+    localStorage.clear();
     navigate("/login");
   };
   return (
-    <aside>
+    <aside className="side-bar right-0">
       <nav
         className="dashboard-card"
         style={{
@@ -51,7 +51,7 @@ const RightSidebar = ({ user, colors, onLogout }) => {
           borderTop: `4px solid ${colors.primary}`,
         }}
       >
-        <h3 className="card-title">הקבוצה שלך: {user.favoriteTeam}</h3>
+        <h3 className="card-title">הקבוצה שלך: {user?.favoriteTeam}</h3>
         <p className="group-desc">זו הקבוצה שאתה עוקב אחריה בברירת מחדל.</p>
         <button
           className="join-group-button"

@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import { UserProvider, useUser } from './components/context/UserContext';
 import teamColors from './utils/teamStyles';
-import Fixtures from './components/homeComponents/fixtures';
+import Fixtures from './pages/fixtures';
 
 
 function ColorManager() {

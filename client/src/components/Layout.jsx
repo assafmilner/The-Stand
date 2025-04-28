@@ -1,14 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useUser } from "./context/UserContext";
-import Header from "./Header";
-import RightSidebar from "./RightSidebar";
+import Header from "./layoutComponents/Header";
+import RightSidebar from "./layoutComponents/RightSidebar";
 import teamColors from "../utils/teamStyles";
+import NextFixtures from "./layoutComponents/NextFixtures";
+import { useNavigate } from "react-router-dom";
 import "../index.css";
-import NextFixtures from "./homeComponents/NextFixtures";
 
 const Layout = ({ children }) => {
-  const { user } = useUser();
+  const navigate = useNavigate();
+  const { user, loading } = useUser();
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="home-container">
@@ -20,7 +28,7 @@ const Layout = ({ children }) => {
           <RightSidebar user={user} colors={colors} />
 
           {/* אזור תוכן מרכזי */}
-          <section>{children}</section>
+          <section className="pt-6">{children}</section>
 
           {/* אזור צד שמאל - ריק */}
           <aside>

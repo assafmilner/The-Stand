@@ -18,6 +18,7 @@ const venuesHebrew = {
     "Herzliya Municipal StadiumHerzliya Municipal Stadium": "גרונדמן",
     "Afula Illit Stadium": "איצטדיון עפולה",
     "": "טרם הוחלט",
+    "Doha Stadium[A]": "אצטדיון השלום"
 
 
   };

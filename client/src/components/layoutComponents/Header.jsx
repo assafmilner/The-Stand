@@ -1,8 +1,8 @@
 // components/Header.jsx
 import React from "react";
-import { User, MessageCircle, Bell, Settings } from "lucide-react";
+import { MessageCircle, Bell, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import "../index.css";
+import "../../index.css";
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
