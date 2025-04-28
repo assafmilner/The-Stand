@@ -23,7 +23,10 @@ const RightSidebar = ({ user, colors, onLogout }) => {
           >
             <User size={18} /> דף הבית
           </li>
-          <li className="nav-item flex items-center gap-2">
+          <li
+            className="nav-item flex items-center gap-2"
+            onClick={() => navigate("/fixtures")}
+          >
             <Calendar size={18} /> משחקים
           </li>
           <li className="nav-item flex items-center gap-2">

@@ -23,8 +23,9 @@ export async function fetchFixtures(seasonId) {
         console.log(`✅ Finished loading fixtures at round ${round - 1}`);
         break;
       }
-
+  
       const fixturesForRound = data.events.map((event) => ({
+    
         id: event.idEvent,
         homeTeam: event.strHomeTeam,
         awayTeam: event.strAwayTeam,
@@ -34,7 +35,10 @@ export async function fetchFixtures(seasonId) {
         round: parseInt(event.intRound, 10),
         homeScore: event.intHomeScore !== null ? parseInt(event.intHomeScore) : null,
         awayScore: event.intAwayScore !== null ? parseInt(event.intAwayScore) : null,
+        
       }));
+
+      
 
       allFixtures.push(...fixturesForRound);
 

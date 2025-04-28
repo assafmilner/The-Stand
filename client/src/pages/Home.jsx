@@ -101,42 +101,6 @@ const Home = () => {
           </div>
         )}
       </div>
-
-      {/* אזור צד שמאל */}
-      <aside>
-        <section
-          className="dashboard-card upcoming-matches"
-          style={{
-            marginBottom: "1.5rem",
-            borderTop: `4px solid ${colors.primary}`,
-          }}
-        >
-          <h3 className="card-title">משחקים קרובים</h3>
-          <NextFixtures />
-        </section>
-
-        <section
-          className="dashboard-card fan-groups"
-          style={{
-            marginBottom: "1.5rem",
-            borderTop: `4px solid ${colors.primary}`,
-          }}
-        >
-          <h3 className="card-title">אוהדים לעקוב</h3>
-          <div className="groups-list">
-            <div className="group-item">
-              <div className="group-name">רועי לוי</div>
-              <div className="group-members">הפועל ת"א</div>
-              <button className="join-group-button">עקוב</button>
-            </div>
-            <div className="group-item">
-              <div className="group-name">שירה כהן</div>
-              <div className="group-members">בית"ר ירושלים</div>
-              <button className="join-group-button">עקוב</button>
-            </div>
-          </div>
-        </section>
-      </aside>
     </Layout>
   );
 };

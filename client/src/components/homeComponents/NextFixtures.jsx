@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { fetchFixtures } from "../../utils/fetchFixtures";
-import { detectLeague } from "../../utils/leagueUtils"; // נוסיף
+import { detectLeague } from "../../utils/leagueUtils";
 import stadiums from "../../utils/stadiums";
 import teamNameMap from "../../utils/teams-hebrew";
 
@@ -62,20 +62,46 @@ const NextFixtures = () => {
     return <div>טוען משחקים...</div>;
   }
 
-  return (
-    <div className="next-fixtures-container">
-      <h2>המשחקים הקרובים של {user.favoriteTeam}</h2>
+  const today = new Date();
 
-      {fixtures.length === 0 ? (
+  // סינון משחקים שתאריכם אחרי היום (כולל היום עצמו אם תרצה)
+  const upcomingFixtures = fixtures.filter((match) => {
+    const matchDate = new Date(match.date);
+    return matchDate >= today;
+  });
+
+  return (
+    <div className=" dashboard-card upcoming-matches text-center">
+      <h2>המשחקים הקרובים </h2>
+
+      {upcomingFixtures.length === 0 ? (
         <div>אין משחקים קרובים לקבוצה.</div>
       ) : (
-        <ul>
-          {fixtures.slice(0, 5).map((match) => (
-            <li key={match.id}>
-              {teamNameMap[match.homeTeam]?.name || match.homeTeam} נגד{" "}
-              {teamNameMap[match.awayTeam]?.name || match.awayTeam} -{" "}
-              {match.date} בשעה {match.time} (
-              {stadiums[match.venue] || match.venue})
+        <ul className="space-y-4 text-right text-gray-700 mt-4">
+          {upcomingFixtures.slice(0, 5).map((match) => (
+            <li
+              key={match.id}
+              className="p-3 rounded-md shadow-sm bg-white border border-gray-200"
+            >
+              <div className="text-md font-semibold mb-1 text-center">
+                {teamNameMap[match.homeTeam]?.name || match.homeTeam} נגד{" "}
+                {teamNameMap[match.awayTeam]?.name || match.awayTeam}
+              </div>
+
+              {match.venue && (
+                <div className="text-sm text-gray-500 text-center">
+                  ({stadiums[match.venue] || match.venue})
+                </div>
+              )}
+
+              <div className="text-sm text-gray-600">
+                {new Date(match.date).toLocaleDateString("he-IL", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+                &nbsp;בשעה&nbsp;{match.time}
+              </div>
             </li>
           ))}
         </ul>

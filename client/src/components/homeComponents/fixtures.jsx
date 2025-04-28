@@ -133,16 +133,15 @@ function Fixtures() {
                         ></div>
                       )}
 
-                      <div className="flex items-center gap-2 text-gray-500 text-sm mb-2 mt-2">
+                      {/* תאריך ושעה באותה שורה */}
+                      <div className="flex items-center justify-center gap-2 text-gray-500 text-sm mt-2 mb-4">
                         <Calendar size={16} />
                         <span>{match.date}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
                         <Clock size={16} />
                         <span>{match.time}</span>
                       </div>
 
+                      {/* שמות קבוצות */}
                       <div className="flex items-center justify-center gap-2 text-lg font-semibold mb-2">
                         <span>
                           {teamNameMap[match.homeTeam]?.name || match.homeTeam}
@@ -153,6 +152,14 @@ function Fixtures() {
                         </span>
                       </div>
 
+                      {/* תוצאה */}
+                      {match.homeScore != null && match.awayScore != null && (
+                        <div className="text-xl font-bold text-gray-700 my-2">
+                          {match.homeScore} - {match.awayScore}
+                        </div>
+                      )}
+
+                      {/* אצטדיון */}
                       <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
                         <Landmark size={16} />
                         <span>{stadiums[match.venue] || match.venue}</span>
