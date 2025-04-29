@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const postRoutes = require("./routes/postRoutes"); // ✨ הוספת ייבוא הפוסטים
+
 
 dotenv.config();
 const app = express();
@@ -21,6 +23,8 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes); // ✨ הנתיב לפוסטים
+
 
 // Root check
 app.get("/", (req, res) => {
