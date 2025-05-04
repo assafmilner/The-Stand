@@ -11,7 +11,7 @@ function Community({ colors }) {
 
   // המרת שם בעברית לשם באנגלית כדי לקבל את ה-communityId
   const englishName = Object.keys(teamsMap).find(
-    (key) => teamsMap[key].hebrew === user.favoriteTeam
+    (key) => teamsMap[key].name === user.favoriteTeam
   );
 
   const communityId = teamsMap[englishName]?.communityId;
@@ -22,7 +22,15 @@ function Community({ colors }) {
 
   return (
     <section>
-      <h2 style={{ color: colors.primary, marginBottom: "1rem" }}>
+      <h2
+        style={{
+          color: colors.primary,
+          marginBottom: "0.5rem",
+          fontSize: "2rem",
+          fontWeight: "bold",
+          textAlign: "center",
+        }}
+      >
         פוסטים של אוהדי {user.favoriteTeam}
       </h2>
       <PostList communityId={communityId} colors={colors} />

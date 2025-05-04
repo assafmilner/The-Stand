@@ -1,28 +1,51 @@
-import React from "react";
+import React, { useState } from "react";
+import { Heart, MessageCircle, X } from "lucide-react";
+import axios from "axios";
+import LikeModal from "./LikeModal"; // 💡 ודא שהקובץ הזה קיים
 
-const Post = ({ post, currentUserId, onDelete, onEdit }) => {
+const Post = ({ post, currentUserId, onDelete, onEdit, colors }) => {
   const isOwner = currentUserId === post.authorId.email;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
   const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
+  const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
+  const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
+  const [showLikeModal, setShowLikeModal] = useState(false);
+
+  const toggleLike = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.put(
+        `http://localhost:3001/api/posts/${post._id}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setLiked(res.data.liked);
+      setLikeCount(res.data.likeCount);
+    } catch (err) {
+      console.error("שגיאה בעדכון לייק:", err);
+    }
+  };
 
   return (
     <div
       style={{
         backgroundColor: "#fff",
-        borderRadius: "16px",
-        padding: "16px",
+        borderRadius: "1rem",
+        overflow: "hidden",
         marginBottom: "24px",
         boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-        maxWidth: "700px",
+        width: "100%",
         marginInline: "auto",
         direction: "rtl",
+        borderTop: `6px solid ${colors?.primary || "#ccc"}`,
       }}
     >
-      {/* Header */}
-      <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}
-      >
+      <div style={{ display: "flex", alignItems: "center", padding: "16px" }}>
         <div
           style={{
             width: "48px",
@@ -76,21 +99,20 @@ const Post = ({ post, currentUserId, onDelete, onEdit }) => {
         )}
       </div>
 
-      {/* Content */}
       <div
         style={{
           fontSize: "1rem",
           lineHeight: "1.6",
           color: "#444",
+          paddingInline: "16px",
           marginBottom: "12px",
         }}
       >
         {post.content}
       </div>
 
-      {/* Media */}
       {post.media.length > 0 && (
-        <div style={{ marginTop: "12px" }}>
+        <div style={{ marginTop: "12px", paddingInline: "16px" }}>
           {post.media.map((url, i) => (
             <img
               key={i}
@@ -107,21 +129,44 @@ const Post = ({ post, currentUserId, onDelete, onEdit }) => {
         </div>
       )}
 
-      {/* Footer: likes/comments */}
       <div
         style={{
           marginTop: "16px",
           borderTop: "1px solid #eee",
-          paddingTop: "10px",
+          padding: "10px 16px",
           display: "flex",
           justifyContent: "space-between",
           color: "#888",
           fontSize: "0.9rem",
         }}
       >
-        <span>❤️ {post.likes?.length || 0} לייקים</span>
-        <span>💬 {post.comments?.length || 0} תגובות</span>
+        <span
+          onClick={() => setShowLikeModal(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            cursor: "pointer",
+            color: liked ? "#f44336" : "#888",
+          }}
+        >
+          <Heart fill={liked ? "#f44336" : "none"} color="#f44336" size={16} />
+          {likeCount} לייקים
+        </span>
+
+        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <MessageCircle size={16} color="#2196f3" />
+          {post.comments?.length || 0} תגובות
+        </span>
       </div>
+
+      {showLikeModal && (
+        <LikeModal
+          users={post.likesDetails || []}
+          onClose={() => setShowLikeModal(false)}
+          color={colors?.primary || "#2196f3"}
+        />
+      )}
     </div>
   );
 };

@@ -32,7 +32,7 @@ const Home = () => {
           style={{
             width: "100%",
             backgroundColor: "var(--card-bg)",
-            padding: "0.5rem",
+            padding: "1rem",
             borderRadius: "1rem",
             display: "flex",
             alignItems: "center",

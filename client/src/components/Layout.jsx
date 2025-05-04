@@ -28,7 +28,7 @@ const Layout = ({ children }) => {
           <RightSidebar user={user} colors={colors} />
 
           {/* אזור תוכן מרכזי */}
-          <section className="pt-6">{children}</section>
+          <section className="centered-content pt-6">{children}</section>
 
           {/* אזור צד שמאל - ריק */}
           <aside>

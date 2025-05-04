@@ -56,6 +56,7 @@ function Feed({ colors, communityId }) {
       </div>
 
       {/* תצוגת הפוסטים */}
+
       <PostList posts={posts} colors={colors} />
     </section>
   );

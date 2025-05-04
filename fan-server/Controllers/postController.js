@@ -87,10 +87,47 @@ const deletePost = async (req, res) => {
   }
 };
 
+const toggleLike = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user.id;
+
+    const post = await Post.findById(postId).populate("likes", "name profilePicture");
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const alreadyLiked = post.likes.some(
+      (likeUser) => likeUser._id.toString() === userId
+    );
+
+    if (alreadyLiked) {
+      post.likes = post.likes.filter(
+        (likeUser) => likeUser._id.toString() !== userId
+      );
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+
+    const updatedPost = await Post.findById(postId).populate("likes", "name profilePicture");
+
+    res.json(updatedPost);
+  } catch (error) {
+    console.error("שגיאה בעדכון לייק:", error);
+    res.status(500).json({ error: "Error updating like" });
+  }
+};
+
+
+
 module.exports = {
   getAllPosts,
   createPost,
   updatePost,
-  deletePost
+  deletePost,
+  toggleLike
 };
 

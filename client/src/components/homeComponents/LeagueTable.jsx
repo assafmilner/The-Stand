@@ -114,7 +114,7 @@ const LeagueTable = ({ league }) => {
   }, [mode, league, regularTable]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 post-card">
+    <div className="dashboard-card">
       <div className="flex justify-center border-b border-gray-200 mb-6">
         <button
           onClick={() => setMode("regular")}
