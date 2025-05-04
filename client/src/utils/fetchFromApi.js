@@ -2,7 +2,7 @@
 
 export async function fetchFromApi(apiUrl) {
     try {
-      const proxyUrl = `http://localhost:5000/api/proxy?url=${encodeURIComponent(apiUrl)}`;
+      const proxyUrl = `http://localhost:3001/api/proxy?url=${encodeURIComponent(apiUrl)}`;
       const response = await fetch(proxyUrl);
   
       if (!response.ok) {

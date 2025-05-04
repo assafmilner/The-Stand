@@ -1,20 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import CreatePost from "../post/CreatePost";
+import PostList from "../post/PostList";
 
-function Feed({ colors }) {
-  const [newPostContent, setNewPostContent] = useState("");
-  const [mediaFile, setMediaFile] = useState(null);
+function Feed({ colors, communityId }) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handlePostSubmit = () => {
-    if (!newPostContent.trim()) return;
-    console.log("פוסט חדש:", newPostContent, mediaFile);
-    // כאן אפשר לשלוח לשרת
-    setNewPostContent("");
-    setMediaFile(null);
+  // שליפת פוסטים לפי קהילה (או כלליים)
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const url = communityId
+          ? `http://localhost:3001/api/posts?communityId=${communityId}`
+          : `http://localhost:3001/api/posts`;
+        const res = await axios.get(url);
+        setPosts(res.data);
+      } catch (err) {
+        setError("בעיה בטעינת פוסטים");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [communityId]);
+
+  const handlePostCreated = (newPost) => {
+    // מוסיף את הפוסט החדש לראש הרשימה
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
-  const handleRemoveMedia = () => {
-    setMediaFile(null);
-  };
+  if (loading) return <p>טוען פוסטים...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <section>
@@ -33,114 +52,13 @@ function Feed({ colors }) {
           gap: "1rem",
         }}
       >
-        {/* טקסט */}
-        <textarea
-          className="post-input"
-          placeholder="מה קורה בקבוצת האוהדים שלך?"
-          value={newPostContent}
-          onChange={(e) => setNewPostContent(e.target.value)}
-          style={{
-            width: "100%",
-            minHeight: "100px",
-            padding: "0.75rem",
-            border: "1px solid var(--border-color)",
-            borderRadius: "0.75rem",
-            resize: "vertical",
-          }}
-        />
-
-        {/* הצגת תמונה/וידאו שנבחרו */}
-        {mediaFile && (
-          <div style={{ textAlign: "center", position: "relative" }}>
-            {mediaFile.type.startsWith("image") ? (
-              <img
-                src={URL.createObjectURL(mediaFile)}
-                alt="תמונה נבחרת"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "300px",
-                  borderRadius: "0.75rem",
-                  marginTop: "0.5rem",
-                }}
-              />
-            ) : (
-              <video
-                src={URL.createObjectURL(mediaFile)}
-                controls
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "300px",
-                  borderRadius: "0.75rem",
-                  marginTop: "0.5rem",
-                }}
-              />
-            )}
-            <button
-              onClick={handleRemoveMedia}
-              style={{
-                position: "absolute",
-                top: "0.5rem",
-                left: "0.5rem",
-                backgroundColor: "red",
-                color: "white",
-                border: "none",
-                borderRadius: "0.5rem",
-                padding: "0.25rem 0.5rem",
-                cursor: "pointer",
-                fontSize: "0.75rem",
-              }}
-            >
-              הסר קובץ
-            </button>
-          </div>
-        )}
-
-        {/* כפתורים */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
-          <label className="join-group-button" style={{ cursor: "pointer" }}>
-            צרפ/י קובץ
-            <input
-              type="file"
-              accept="image/*,video/*"
-              style={{ display: "none" }}
-              onChange={(e) => setMediaFile(e.target.files[0])}
-            />
-          </label>
-
-          <button
-            className="join-group-button"
-            onClick={handlePostSubmit}
-          >
-            העל/י פוסט
-          </button>
-        </div>
+        <CreatePost colors={colors} onPostCreated={handlePostCreated} />
       </div>
 
-      {/* הצגת פוסטים קיימים */}
-      <div
-        className="post-card"
-        style={{
-          marginBottom: "1.5rem",
-          borderTop: `4px solid ${colors.primary}`,
-          padding: "1rem",
-          backgroundColor: "var(--card-bg)",
-          borderRadius: "0.75rem",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        <div className="post-header" style={{ marginBottom: "1rem", fontWeight: "bold" }}>
-          איתי כהן
-        </div>
-        <p>איזה שחקן סתיו טוריאללל הקבוצה הזאת בדם!! 🔥⚽</p>
-        <div className="post-footer" style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
-          <span>124 לייקים</span>
-          <span>32 תגובות</span>
-        </div>
-      </div>
+      {/* תצוגת הפוסטים */}
+      <PostList posts={posts} colors={colors} />
     </section>
   );
 }
 
 export default Feed;
-
-

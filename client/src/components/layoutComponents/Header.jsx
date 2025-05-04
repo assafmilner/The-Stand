@@ -27,7 +27,10 @@ const Header = ({ user }) => {
         </div>
 
         {/* Search bar */}
-        <div className="navbar-search">
+        <div
+          className="navbar-search"
+          style={{ flex: 1, display: "flex", justifyContent: "center" }}
+        >
           <input type="text" placeholder="חפש אוהדים, קבוצות או פוסטים..." />
         </div>
 

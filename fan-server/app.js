@@ -16,7 +16,10 @@ const app = express();
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",  // רק הדומיין של הפרונטנד
+  credentials: true                 // מאפשר שליחה של cookies / headers
+}));
 app.use(express.json());
 app.use(cookieParser());
 

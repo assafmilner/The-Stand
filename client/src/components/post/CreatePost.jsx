@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useUser } from "../context/UserContext";
+import teamsMap from "../../utils/teams-hebrew";
 
-const CreatePost = ({ communityId, onPostCreated }) => {
+const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
-
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -18,7 +17,11 @@ const CreatePost = ({ communityId, onPostCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+
+    const englishTeamName = Object.keys(teamsMap).find(
+      (key) => teamsMap[key].name === user.favoriteTeam
+    );
+    const communityId = teamsMap[englishTeamName]?.communityId;
 
     const formData = new FormData();
     formData.append("authorId", user._id);
@@ -29,45 +32,86 @@ const CreatePost = ({ communityId, onPostCreated }) => {
     }
 
     try {
-      const res = await axios.post("/api/posts", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      // איפוס הטופס אחרי הצלחה
+      const res = await axios.post(
+        "http://localhost:3001/api/posts",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
       setContent("");
       setImageFile(null);
-
-      // עדכון הפיד (אם הועבר prop של onPostCreated)
-      if (onPostCreated) onPostCreated(res.data);
-    } catch (err) {
-      setError("Failed to create post.");
+      if (onPostCreated) {
+        const enrichedPost = {
+          ...res.data,
+          authorId: {
+            _id: user._id,
+            name: user.name,
+            profilePicture: user.profilePicture,
+          },
+        };
+        onPostCreated(enrichedPost);
+      }
+    } catch {
+      alert("Error posting.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form className="create-post" onSubmit={handleSubmit}>
+    <form className="create-post-modern" onSubmit={handleSubmit}>
+      <div className="post-header">
+        <img
+          className="profile-img"
+          src={user?.profilePicture || "/default.png"}
+          alt="profile"
+        />
+        <div className="post-meta">
+          <strong>{user?.name}</strong>
+          <div className="privacy">ציבורי 🌐</div>
+        </div>
+      </div>
+
       <textarea
-        placeholder="What's on your mind?"
+        placeholder="מה קורה בעולם הכדורגל?"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        required
+        maxLength={500}
+        rows={3}
       />
-      <input type="file" accept="image/*" onChange={handleImageChange} />
+
       {imageFile && (
         <div className="image-preview">
-          <img
-            src={URL.createObjectURL(imageFile)}
-            alt="Preview"
-            style={{ width: "100px", marginTop: "10px" }}
-          />
+          <img src={URL.createObjectURL(imageFile)} alt="Preview" />
         </div>
       )}
-      <button type="submit" disabled={loading}>
-        {loading ? "Posting..." : "Post"}
-      </button>
-      {error && <p className="error">{error}</p>}
+
+      <div className="post-footer">
+        <span>{content.length}/500</span>
+        <div className="post-actions">
+          <label>
+            📷
+            <input type="file" hidden onChange={handleImageChange} />
+          </label>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              backgroundColor: colors.primary,
+              color: "white",
+              border: "none",
+              padding: "0.4rem 1rem",
+              borderRadius: "999px",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            {loading ? "מפרסם..." : "פרסם"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 };

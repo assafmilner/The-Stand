@@ -71,16 +71,10 @@ const uploadProfilePicture = async (req, res) => {
       return res.status(400).json({ error: "לא הועלתה תמונה" });
     }
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "profile_pictures" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      stream.end(req.file.buffer); // שולח את הקובץ מ-memory
-    });
+    const uploadResult = {
+      secure_url: req.file.path
+    };
+    
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,

@@ -4,7 +4,7 @@ const authMiddleware = require("../middlewares/auth");
 const { getCurrentUser, changePassword, updateProfileInfo, uploadProfilePicture, deleteAccount } = require("../controllers/userController");
 const { storage } = require("../utils/cloudinary");
 const multer = require("multer");
-const upload = require("../middlewares/upload");
+const upload = require("../middlewares/uploadProfile");
 
 router.get("/me", authMiddleware, getCurrentUser);
 router.put("/change-password", authMiddleware, changePassword);

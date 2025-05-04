@@ -8,8 +8,7 @@ const PostSchema = new mongoose.Schema({
   },
   
   communityId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Community",
+    type: String,
     required: true,
   },
 

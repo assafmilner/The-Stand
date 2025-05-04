@@ -169,22 +169,24 @@ a, .link, .nav-item {
 
 .top-navbar {
   width: 100%;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 0; /* בלי padding צדדי */
   background-color: white;
   border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100; /* לוודא שזה מעל הסיידברים */
 }
 
 .navbar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%; /* שינוי קריטי */
+  padding: 0 2rem; /* ריווח פנימי */
   flex-direction: row-reverse;
 }
+
+
 
 .navbar-icons {
   display: flex;
@@ -209,14 +211,18 @@ a, .link, .nav-item {
 }
 
 .navbar-search input {
-  width: 600px;
+  width: 100%;
+  max-width: 600px;        /* מקסימום רוחב */
+  min-width: 200px;        /* כדי לא להיות קטנה מדי במסכים קטנים */
   padding: 0.5rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
   background-color: #f9fafb;
   font-size: 0.875rem;
   direction: rtl;
+  box-sizing: border-box;
 }
+
 
 .navbar-logo {
   display: flex;
@@ -241,9 +247,10 @@ a, .link, .nav-item {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background-color: var(--color-primary);
+  background-color: white;
   color: white;
   border-radius: 9999px;
+  border: 2px solid var(--color-primary); 
   font-weight: bold;
   cursor: pointer;
 }
@@ -363,7 +370,10 @@ a, .link, .nav-item {
   grid-template-columns: 250px 1fr 250px;
   gap: 4rem;
   align-items: start;
-  flex: 1
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .dashboard-grid > aside:first-of-type {
@@ -385,6 +395,24 @@ a, .link, .nav-item {
   gap: 1rem;
   min-height: 100%;
 }
+
+/* 📱 רספונסיביות למסכים קטנים */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .dashboard-grid > aside:first-of-type,
+  .dashboard-grid > aside:last-of-type {
+    display: none;
+  }
+
+  .dashboard-grid > section {
+    grid-column: 1;
+  }
+}
+
 
 .dashboard-card {
   background-color: var(--card-bg);
@@ -718,54 +746,87 @@ button:hover {
 /* =====================
    POST AREA
 ===================== */
-.post-box {
-  padding: 0.75rem 1rem;
+.create-post-modern {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: auto;
-  min-height: unset;
-}
-
-.post-input {
-  width: 100%;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-primary);
-  background-color: #f9fafb;
-  resize: none;
-  min-height: 60px;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.post-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
-}
-
-.post-card {
-  background-color: var(--card-bg);
-  /* border: 1px solid var(--card-border); */
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .post-header {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.post-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.privacy {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.create-post-modern textarea {
+  border: none;
+  resize: none;
+  font-size: 1rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  outline: none;
+}
+
+.image-preview img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .post-footer {
   display: flex;
   justify-content: space-between;
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #999;
 }
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.post-actions label {
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.post-actions button {
+  background-color: #f87171;
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
 
 /* =====================
    NAVIGATION
@@ -810,4 +871,77 @@ button:hover {
 
 .custom-tab-button.inactive:hover {
   background-color: #d1d5db; /* gray-300 */
+}
+
+
+/* רקע אפור חצי שקוף */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* הקופסה הלבנה עצמה */
+.edit-modal {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  direction: rtl;
+}
+
+/* כותרת המודאל */
+.edit-modal h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* טקסטבוקס */
+.edit-modal textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+
+/* כפתורים בתחתית */
+.edit-modal .modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* כפתור ביטול */
+.modal-cancel {
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* כפתור שמירה */
+.modal-save {
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
 }

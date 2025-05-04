@@ -3,7 +3,7 @@ import { useState } from "react";
 import Layout from "../components/Layout"; // ✅ שימוש בלייאאוט
 import Feed from "../components/homeComponents/Feed";
 import SmartLeagueTable from "../components/homeComponents/SmartLeagueTable";
-
+import Community from "../components/homeComponents/Community";
 import teamColors from "../utils/teamStyles";
 import "../index.css";
 
@@ -76,14 +76,8 @@ const Home = () => {
             <SmartLeagueTable />
           </div>
         )}
-        {selectedTab === "groups" && (
-          <div
-            key="groups"
-            className="animate-fade-in text-center text-gray-500"
-          >
-            קבוצות - בקרוב
-          </div>
-        )}
+        {selectedTab === "groups" && <Community colors={colors} />}
+
         {selectedTab === "tickets" && (
           <div
             key="tickets"
