@@ -6,4 +6,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-module.exports = { cloudinary };
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'posts', 
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+  },
+});
+
+module.exports = { cloudinary, storage };

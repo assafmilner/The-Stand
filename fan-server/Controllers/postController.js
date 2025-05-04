@@ -15,21 +15,24 @@ const getAllPosts = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { authorId, communityId, content, media } = req.body;
+  const { authorId, communityId, content } = req.body;
+
+  const mediaUrl = req.file ? req.file.path : null; // נשלף מ-Cloudinary
+
   try {
     const newPost = new Post({
       authorId,
       communityId,
       content,
-      media: media || []
+      media: mediaUrl ? [mediaUrl] : [],
     });
+
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
   } catch (error) {
     res.status(500).json({ message: "Error creating post", error });
   }
 };
-
 const updatePost = async (req, res) => {
   const { id } = req.params;
   const { content, media } = req.body;
