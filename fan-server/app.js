@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const proxyRouter = require('./proxy');
 const postRoutes = require("./routes/postRoutes"); // ✨ הוספת ייבוא הפוסטים
+const commentRoutes = require("./routes/commentRoutes");
 
 
 dotenv.config();
@@ -29,8 +30,8 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/posts", postRoutes); // ✨ הנתיב לפוסטים
-
+app.use("/api/posts", postRoutes); 
+app.use("/api/comments", commentRoutes);
 
 // Root check
 app.get("/", (req, res) => {

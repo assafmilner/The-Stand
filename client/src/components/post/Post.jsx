@@ -2,16 +2,12 @@ import React, { useState, useEffect } from "react";
 import { ThumbsUp, MessageCircle } from "lucide-react";
 import axios from "axios";
 import LikeModal from "./LikeModal";
+import CommentsList from "../comment/CommentsList";
+import { groupBy } from "lodash";
 
-const Post = ({
-  post,
-  currentUserId,
-  currentUserEmail,
-  onDelete,
-  onEdit,
-  colors,
-}) => {
-  const isOwner = currentUserEmail === post.authorId.email;
+const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
+  const isOwner = currentUser?.email === post.authorId.email;
+  const currentUserId = currentUser?._id;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
   const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
@@ -20,6 +16,8 @@ const Post = ({
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [likeDetails, setLikeDetails] = useState([]);
   const [showLikeModal, setShowLikeModal] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     const hasDetails =
@@ -84,6 +82,33 @@ const Post = ({
       setLikeCount(prevLikes.length);
     }
   };
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(
+          `http://localhost:3001/api/comments/post/${post._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const grouped = groupBy(res.data, (c) => c.parentCommentId || "root");
+        const total =
+          (grouped.root?.length || 0) +
+          Object.entries(grouped)
+            .filter(([key]) => key !== "root")
+            .reduce((sum, [_, replies]) => sum + replies.length, 0);
+
+        setCommentCount(total);
+      } catch (err) {
+        console.error("שגיאה בטעינת תגובות:", err);
+      }
+    };
+
+    fetchCommentCount();
+  }, [post._id]);
 
   return (
     <div
@@ -248,6 +273,7 @@ const Post = ({
           }}
         >
           <button
+            onClick={() => setShowComments((prev) => !prev)}
             style={{
               background: "transparent",
               border: "none",
@@ -259,10 +285,19 @@ const Post = ({
             }}
           >
             <MessageCircle size={20} color="#2196f3" />
-            תגובה
+            {showComments ? "הסתר תגובות" : `תגובה (${commentCount})`}
           </button>
         </div>
       </div>
+
+      {showComments && (
+        <CommentsList
+          postId={post._id}
+          currentUserId={currentUserId}
+          currentUser={currentUser}
+          onCountUpdate={setCommentCount} // העברת הפונקציה
+        />
+      )}
 
       {showLikeModal && (
         <LikeModal

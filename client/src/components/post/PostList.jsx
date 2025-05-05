@@ -120,6 +120,7 @@ const PostList = ({ communityId, colors }) => {
             key={post._id}
             post={post}
             colors={colors}
+            currentUser={user}
             currentUserId={user?._id}
             currentUserEmail={user.email}
             onDelete={handleDelete}
