@@ -6,24 +6,35 @@ const LikeModal = ({ users, onClose }) => {
     <div className="like-modal-backdrop" onClick={onClose}>
       <div
         className="like-modal"
-        onClick={(e) => e.stopPropagation()} // כדי שלא יסגור בלחיצה על התוכן
+        onClick={(e) => e.stopPropagation()} // שלא יסגור בלחיצה פנימית
       >
-        <h3>אהבו את הפוסט</h3>
-        <ul className="like-list">
-          {users.map((user) => (
-            <li key={user._id} className="like-item">
-              <img
-                src={user.profilePicture || "/default.png"}
-                alt={user.name}
-                className="like-avatar"
-              />
-              <span>{user.name}</span>
-            </li>
-          ))}
-        </ul>
         <button className="close-modal" onClick={onClose}>
-          סגור
+          ×
         </button>
+
+        <h3 style={{ color: "#333", textAlign: "right", marginBottom: "16px" }}>
+          אהבו את הפוסט
+        </h3>
+
+        {users.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#888" }}>אין עדיין לייקים</p>
+        ) : (
+          <ul className="like-list">
+            {users.map((user, index) => (
+              <li key={user._id || index} className="like-item">
+                <img
+                  src={user.profilePicture || "/defaultProfilePic.png"}
+                  onError={(e) => {
+                    e.target.src = "/defaultProfilePic.png";
+                  }}
+                  alt={user.name}
+                  className="like-avatar"
+                />
+                <span>{user.name || "משתמש"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

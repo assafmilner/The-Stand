@@ -8,6 +8,7 @@ const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find(filter)
       .populate("authorId", "name email profilePicture")
+      .populate("likes", "name email profilePicture")
       .sort({ createdAt: -1 });
 
     res.status(200).json(posts);

@@ -18,6 +18,9 @@ const PostList = ({ communityId, colors }) => {
           ? `http://localhost:3001/api/posts?communityId=${communityId}`
           : `http://localhost:3001/api/posts`;
         const res = await axios.get(url);
+
+        console.log("פוסטים:", res.data); // כאן תוודאי שlikes הוא מערך של אובייקטים ולא מזהים
+
         setPosts(res.data);
       } catch (err) {
         setError("Error loading posts.");
@@ -117,7 +120,8 @@ const PostList = ({ communityId, colors }) => {
             key={post._id}
             post={post}
             colors={colors}
-            currentUserId={user?.email}
+            currentUserId={user?._id}
+            currentUserEmail={user.email}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />

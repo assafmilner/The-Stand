@@ -951,3 +951,75 @@ button:hover {
   grid-column: 2;
   width: 100%;
 }
+
+
+/* =====================
+   Like Modal
+===================== */
+
+.like-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.like-modal {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  direction: rtl;
+}
+
+.like-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.like-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.like-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.like-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #888;
+}

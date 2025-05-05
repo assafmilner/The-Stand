@@ -1,18 +1,66 @@
-import React, { useState } from "react";
-import { Heart, MessageCircle, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ThumbsUp, MessageCircle } from "lucide-react";
 import axios from "axios";
-import LikeModal from "./LikeModal"; // 💡 ודא שהקובץ הזה קיים
+import LikeModal from "./LikeModal";
 
-const Post = ({ post, currentUserId, onDelete, onEdit, colors }) => {
-  const isOwner = currentUserId === post.authorId.email;
+const Post = ({
+  post,
+  currentUserId,
+  currentUserEmail,
+  onDelete,
+  onEdit,
+  colors,
+}) => {
+  const isOwner = currentUserEmail === post.authorId.email;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
   const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
-  const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
+
+  const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
+  const [likeDetails, setLikeDetails] = useState([]);
   const [showLikeModal, setShowLikeModal] = useState(false);
 
+  useEffect(() => {
+    const hasDetails =
+      post.likes?.length &&
+      typeof post.likes[0] === "object" &&
+      post.likes[0].name;
+
+    if (hasDetails) {
+      setLikeDetails(post.likes);
+      setLikeCount(post.likes.length);
+    } else {
+      setLikeDetails([]);
+      setLikeCount(post.likes?.length || 0);
+    }
+  }, [post.likes]);
+
+  useEffect(() => {
+    const userLiked = likeDetails.some(
+      (u) => (typeof u === "object" ? u._id?.toString() : u) === currentUserId
+    );
+
+    setLiked(userLiked);
+  }, [likeDetails, currentUserId]);
+
   const toggleLike = async () => {
+    const wasLiked = liked;
+    const prevLikes = [...likeDetails];
+
+    const newLiked = !wasLiked;
+    setLiked(newLiked);
+
+    const newLikeDetails = newLiked
+      ? [...prevLikes, { _id: currentUserId, name: "את/ה", profilePicture: "" }]
+      : prevLikes.filter(
+          (u) =>
+            (typeof u === "object" ? u._id?.toString() : u) !== currentUserId
+        );
+
+    setLikeDetails(newLikeDetails);
+    setLikeCount(newLikeDetails.length);
+
     try {
       const token = localStorage.getItem("accessToken");
       const res = await axios.put(
@@ -24,10 +72,16 @@ const Post = ({ post, currentUserId, onDelete, onEdit, colors }) => {
           },
         }
       );
-      setLiked(res.data.liked);
-      setLikeCount(res.data.likeCount);
+
+      const updatedLikes = res.data.likes;
+      setLikeDetails(updatedLikes);
+      setLikeCount(updatedLikes.length);
+      setLiked(updatedLikes.some((u) => u._id?.toString() === currentUserId));
     } catch (err) {
-      console.error("שגיאה בעדכון לייק:", err);
+      console.error("שגיאה בשליחת לייק לשרת:", err);
+      setLiked(wasLiked);
+      setLikeDetails(prevLikes);
+      setLikeCount(prevLikes.length);
     }
   };
 
@@ -131,38 +185,88 @@ const Post = ({ post, currentUserId, onDelete, onEdit, colors }) => {
 
       <div
         style={{
-          marginTop: "16px",
-          borderTop: "1px solid #eee",
-          padding: "10px 16px",
+          padding: "0 16px",
+          paddingTop: "8px",
+          textAlign: "right",
+          fontSize: "1rem",
+          color: "#555",
+          cursor: "pointer",
+        }}
+        onClick={() => setShowLikeModal(true)}
+      >
+        {likeCount} לייקים
+      </div>
+
+      <div
+        style={{
           display: "flex",
-          justifyContent: "space-between",
-          color: "#888",
+          justifyContent: "space-around",
+          borderTop: "1px solid #eee",
+          padding: "12px 0",
           fontSize: "0.9rem",
+          color: "#444",
+          direction: "rtl",
         }}
       >
-        <span
-          onClick={() => setShowLikeModal(true)}
+        <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: "4px",
-            cursor: "pointer",
-            color: liked ? "#f44336" : "#888",
           }}
         >
-          <Heart fill={liked ? "#f44336" : "none"} color="#f44336" size={16} />
-          {likeCount} לייקים
-        </span>
+          <button
+            onClick={toggleLike}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              color: liked ? "#1877f2" : "#888",
+            }}
+          >
+            <ThumbsUp
+              size={20}
+              fill={liked ? "#1877f2" : "none"}
+              color="#1877f2"
+              style={{
+                transition: "fill 0.3s ease, transform 0.2s",
+                transform: liked ? "scale(1.2)" : "scale(1)",
+              }}
+            />
+            לייק
+          </button>
+        </div>
 
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <MessageCircle size={16} color="#2196f3" />
-          {post.comments?.length || 0} תגובות
-        </span>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <button
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              color: "#888",
+            }}
+          >
+            <MessageCircle size={20} color="#2196f3" />
+            תגובה
+          </button>
+        </div>
       </div>
 
       {showLikeModal && (
         <LikeModal
-          users={post.likesDetails || []}
+          users={likeDetails}
           onClose={() => setShowLikeModal(false)}
           color={colors?.primary || "#2196f3"}
         />
