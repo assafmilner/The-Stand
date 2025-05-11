@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ThumbsUp, MessageCircle } from "lucide-react";
 import axios from "axios";
+import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "./LikeModal";
 import CommentsList from "../comment/CommentsList";
 import { groupBy } from "lodash";
@@ -156,7 +157,9 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
           <div style={{ fontWeight: "600", fontSize: "1rem", color: "#333" }}>
             {name}
           </div>
-          <div style={{ fontSize: "0.85rem", color: "#777" }}>{createdAt}</div>
+          <div style={{ fontSize: "0.85rem", color: "#777" }}>
+            {formatTimeAgo(createdAt)}
+          </div>
         </div>
 
         {isOwner && (

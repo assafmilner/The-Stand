@@ -35,7 +35,7 @@ const Login = () => {
       if (error.response?.data?.emailVerificationRequired) {
         setEmailVerificationRequired(true);
       } else {
-        setError(error.response?.data?.error || "Login failed!");
+        setError(error.response?.data?.error || "ההתחברות נכשלה!");
       }
     } finally {
       setIsLoading(false);
