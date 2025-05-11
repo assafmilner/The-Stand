@@ -17,6 +17,9 @@ const Signup = () => {
   const [gender, setGender] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [bio, setBio] = useState("");
+  // Add this state
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
@@ -44,9 +47,10 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setError("הסיסמאות אינן תואמות");
       setIsLoading(false);
       return;
     }
@@ -66,16 +70,141 @@ const Signup = () => {
           bio,
         }
       );
-      localStorage.setItem("accessToken", response.data.accessToken);
-      console.log(response.data);
-      navigate("/login");
+
+      // Show success message instead of navigating
+      setRegistrationSuccess(true);
+
+      // Reset form
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setFavoriteTeam("הפועל תל אביב");
+      setLocation("אחר");
+      setPhone("");
+      setGender("");
+      setBirthDate("");
+      setBio("");
     } catch (error) {
       console.error("Signup error:", error);
-      alert("Signup failed!");
+      setError(error.response?.data?.error || "שגיאה ברישום. נסה שוב.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // If registration was successful, show a success message
+  if (registrationSuccess) {
+    return (
+      <div className="auth-container">
+        <div className="form-container">
+          <div className="form-content">
+            <div className="form-header">
+              <div className="logo-container">
+                <svg
+                  className="logo"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="30"
+                    fill="white"
+                    stroke="#15803d"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8Z"
+                    fill="white"
+                  />
+                  <path
+                    d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8ZM32 12C35.73 12 39.21 13.033 42.167 14.833L38.833 19.5L32.833 19.833L26.5 15.167V12.333C28.245 12.117 30.1 12 32 12ZM16.833 24.5L22.5 20.167L28.833 24.833L29.167 32.833L24.5 38.5L15.5 37.167C14.35 35.583 13.517 33.833 13.167 32C13.167 32.833 13.283 33.667 13.5 34.5H16.833V24.5ZM24.167 51.833C18.745 50.883 14.117 47.45 11.5 42.833L19.167 44.167L24.5 40.833L32.167 44.5V51.833H24.167ZM40.167 51.833V47.167L43.833 42.5L52.167 44.167C48.883 48.4 44.833 51.167 40.167 51.833ZM53.167 32.833L46.5 32.5L44.167 27.167L49.5 22.5C52.167 28.5 52.833 33.667 53.167 32.833Z"
+                    fill="#15803d"
+                  />
+                </svg>
+              </div>
+              <h1 className="form-title">הרשמה הושלמה!</h1>
+              <div className="mt-6 bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center justify-center mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-12 w-12 text-green-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-center text-gray-700 mb-4">
+                  תודה שנרשמת ליציע! שלחנו מייל אימות לכתובת:
+                </p>
+                <p className="text-center font-bold text-gray-900 mb-4">
+                  {email}
+                </p>
+                <p className="text-center text-gray-700">
+                  אנא בדוק את תיבת הדואר הנכנס שלך (וגם את תיקיית הספאם) ולחץ על
+                  הקישור לאימות החשבון שלך.
+                </p>
+              </div>
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => navigate("/login")}
+                  className="form-button"
+                >
+                  המשך להתחברות
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Decorative side - keep as is */}
+        <div className="decorative-container">
+          <div className="field-pattern"></div>
+          <div className="field-elements">
+            <div className="center-circle"></div>
+            <div className="center-dot"></div>
+            <div className="halfway-line"></div>
+            <div className="penalty-area-top"></div>
+            <div className="penalty-area-bottom"></div>
+            <div className="goal-top"></div>
+            <div className="goal-bottom"></div>
+          </div>
+          <div className="decorative-content">
+            <div className="decorative-card">
+              <svg
+                className="decorative-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M22 12h-4l-3 9L9 3l-3 9H2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <h2 className="decorative-title">כמעט שם!</h2>
+              <p className="decorative-text">
+                אנא אמת את כתובת המייל שלך כדי להמשיך. אימות המייל עוזר לנו
+                לשמור על קהילה בטוחה ואיכותית של אוהדי כדורגל.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">
@@ -110,10 +239,14 @@ const Signup = () => {
               </svg>
             </div>
             <h1 className="form-title">הצטרף לקהילה!</h1>
-            <p className="form-subtitle">
-              צור את החשבון שלך ב-Fan? Feel at Home
-            </p>
+            <p className="form-subtitle">צור את החשבון שלך ב-היציע</p>
           </div>
+
+          {error && (
+            <div className="bg-red-100 p-4 rounded text-center mt-2 mb-4">
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSignup} className="form">
             <div className="form-group">
@@ -171,6 +304,7 @@ const Signup = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="form-input"
+                required
               />
             </div>
 

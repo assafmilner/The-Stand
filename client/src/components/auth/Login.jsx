@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -10,12 +8,20 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [emailVerificationRequired, setEmailVerificationRequired] =
+    useState(false);
+  const [error, setError] = useState("");
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const { setUser } = useUser();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
+    setEmailVerificationRequired(false);
+
     try {
       const response = await axios.post(
         "http://localhost:3001/api/auth/login",
@@ -26,9 +32,30 @@ const Login = () => {
       navigate("/home");
     } catch (error) {
       console.error("Login error:", error);
-      alert("Login failed!");
+      if (error.response?.data?.emailVerificationRequired) {
+        setEmailVerificationRequired(true);
+      } else {
+        setError(error.response?.data?.error || "Login failed!");
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingEmail(true);
+    setResendSuccess(false);
+
+    try {
+      await axios.post("http://localhost:3001/api/auth/resend-verification", {
+        email,
+      });
+      setResendSuccess(true);
+    } catch (error) {
+      console.error("Failed to resend verification email:", error);
+      setError("Failed to resend verification email. Please try again.");
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -67,6 +94,32 @@ const Login = () => {
             <h1 className="form-title">ברוכים השבים!</h1>
             <p className="form-subtitle">התחבר כדי להמשיך ל-היציע</p>
           </div>
+
+          {error && (
+            <div className="bg-red-100 p-4 rounded text-center mt-2 mb-4">
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
+
+          {emailVerificationRequired && (
+            <div className="bg-yellow-100 p-4 rounded text-center mt-2 mb-4">
+              <p className="text-yellow-800">
+                נא לאמת את כתובת הדוא"ל שלך לפני ההתחברות. בדוק את תיבת הדואר
+                שלך.
+              </p>
+              {resendSuccess ? (
+                <p className="text-green-600 mt-2">מייל אימות נשלח בהצלחה!</p>
+              ) : (
+                <button
+                  onClick={handleResendVerification}
+                  disabled={isResendingEmail}
+                  className="text-yellow-800 font-medium hover:underline mt-2"
+                >
+                  {isResendingEmail ? "שולח..." : "שלח שוב מייל אימות"}
+                </button>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="form">
             <div className="form-group">
