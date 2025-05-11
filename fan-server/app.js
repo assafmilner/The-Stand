@@ -9,6 +9,8 @@ const postRoutes = require("./routes/postRoutes"); // ✨ הוספת ייבוא 
 const commentRoutes = require("./routes/commentRoutes");
 
 
+
+
 dotenv.config();
 const app = express();
 
@@ -32,6 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes); 
 app.use("/api/comments", commentRoutes);
+app.use("/api/friends", require("./routes/friends"));
 
 // Root check
 app.get("/", (req, res) => {

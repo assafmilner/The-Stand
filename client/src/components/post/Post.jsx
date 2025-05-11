@@ -5,10 +5,12 @@ import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "./LikeModal";
 import CommentsList from "../comment/CommentsList";
 import { groupBy } from "lodash";
+import FriendActionButton from "../friendsComponents/FriendActionButton";
 
 const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
   const isOwner = currentUser?.email === post.authorId.email;
   const currentUserId = currentUser?._id;
+  const targetUserId = post.authorId?._id;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
   const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
@@ -39,7 +41,6 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
     const userLiked = likeDetails.some(
       (u) => (typeof u === "object" ? u._id?.toString() : u) === currentUserId
     );
-
     setLiked(userLiked);
   }, [likeDetails, currentUserId]);
 
@@ -83,6 +84,7 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
       setLikeCount(prevLikes.length);
     }
   };
+
   useEffect(() => {
     const fetchCommentCount = async () => {
       try {
@@ -161,6 +163,10 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
             {formatTimeAgo(createdAt)}
           </div>
         </div>
+
+        {!isOwner && currentUserId && targetUserId && (
+          <FriendActionButton currentUserId={currentUserId} targetUserId={targetUserId} />
+        )}
 
         {isOwner && (
           <div style={{ display: "flex", gap: "6px" }}>
@@ -298,7 +304,7 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
           postId={post._id}
           currentUserId={currentUserId}
           currentUser={currentUser}
-          onCountUpdate={setCommentCount} // העברת הפונקציה
+          onCountUpdate={setCommentCount}
         />
       )}
 
