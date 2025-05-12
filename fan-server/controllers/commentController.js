@@ -48,7 +48,7 @@ const getCommentsByPost = async (req, res) => {
           .populate("authorId", "name profilePicture")
           .populate("likes", "name profilePicture")
           .sort({ createdAt: 1 })
-          .limit(2);
+          
 
         const totalReplies = await Comment.countDocuments({ parentCommentId: comment._id });
 

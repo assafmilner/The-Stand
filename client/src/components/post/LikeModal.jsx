@@ -13,7 +13,7 @@ const LikeModal = ({ users, onClose }) => {
         </button>
 
         <h3 style={{ color: "#333", textAlign: "right", marginBottom: "16px" }}>
-          אהבו את הפוסט
+          אהבו את זה
         </h3>
 
         {users.length === 0 ? (

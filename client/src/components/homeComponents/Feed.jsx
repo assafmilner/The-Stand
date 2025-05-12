@@ -4,20 +4,20 @@ import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
 
 function Feed({ colors, communityId }) {
-  const [initialPostsData, setInitialPostsData] = useState(null);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // שליפת פוסטים ראשונים בלבד (עמוד 1)
   useEffect(() => {
-    const fetchInitialPosts = async () => {
+    const fetchPosts = async () => {
       try {
         const url = communityId
-          ? `http://localhost:3001/api/posts?communityId=${communityId}&page=1&limit=20`
-          : `http://localhost:3001/api/posts?page=1&limit=20`;
-
+          ? `http://localhost:3001/api/posts?communityId=${communityId}`
+          : `http://localhost:3001/api/posts`;
         const res = await axios.get(url);
-        setInitialPostsData(res.data.posts);
+
+        // התמודדות עם התגובה החדשה
+        setPosts(res.data.posts || res.data);
       } catch (err) {
         setError("בעיה בטעינת פוסטים");
       } finally {
@@ -25,29 +25,18 @@ function Feed({ colors, communityId }) {
       }
     };
 
-    fetchInitialPosts();
+    fetchPosts();
   }, [communityId]);
 
   const handlePostCreated = (newPost) => {
-    // מוסיף את הפוסט החדש לראש הרשימה
-    setInitialPostsData((prevPosts) =>
-      prevPosts ? [newPost, ...prevPosts] : [newPost]
-    );
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
-  if (loading)
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>טוען פוסטים...</p>
-      </div>
-    );
-
+  if (loading) return <p>טוען פוסטים...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <section>
-      {/* תיבת יצירת פוסט */}
       <div
         className="dashboard-card post-box"
         style={{
@@ -65,12 +54,7 @@ function Feed({ colors, communityId }) {
         <CreatePost colors={colors} onPostCreated={handlePostCreated} />
       </div>
 
-      {/* תצוגת הפוסטים עם Infinite Scroll */}
-      <PostList
-        colors={colors}
-        communityId={communityId}
-        initialPosts={initialPostsData}
-      />
+      <PostList posts={posts} colors={colors} />
     </section>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Comment from "./Comment";
-import { groupBy } from "lodash";
 
 const CommentsList = ({
   postId,
@@ -9,10 +8,11 @@ const CommentsList = ({
   currentUser,
   onCountUpdate,
 }) => {
-  const [comments, setComments] = useState({});
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
-  const [showMoreReplies, setShowMoreReplies] = useState({});
+  const [replyContent, setReplyContent] = useState("");
+  const [showReplies, setShowReplies] = useState({});
 
   useEffect(() => {
     console.log("currentUser:", currentUser);
@@ -28,29 +28,20 @@ const CommentsList = ({
           }
         );
 
-        // בדוק את מבנה הנתונים שמגיעים מהשרת
-        console.log("Response data:", res.data);
+        console.log("Raw comments data:", res.data);
 
-        // אם res.data הוא אובייקט עם מערך comments בתוכו:
-        let commentsData = res.data;
-        if (res.data.comments && Array.isArray(res.data.comments)) {
-          commentsData = res.data.comments;
-        }
+        // התגובות מגיעות כמערך ישיר עם replies מוטמעים
+        setComments(res.data.comments || res.data);
 
-        const grouped = groupBy(
-          commentsData,
-          (c) => c.parentCommentId || "root"
-        );
-        setComments(grouped);
-
-        // עדכון כמות תגובות
+        // חישוב כמות תגובות כללית
         if (onCountUpdate) {
-          const total =
-            (grouped.root?.length || 0) +
-            Object.values(grouped)
-              .filter((_, key) => key !== "root")
-              .reduce((sum, arr) => sum + arr.length, 0);
-          onCountUpdate(total);
+          const totalCount = (res.data.comments || res.data).reduce(
+            (total, comment) => {
+              return total + 1 + (comment.replies?.length || 0);
+            },
+            0
+          );
+          onCountUpdate(totalCount);
         }
       } catch (err) {
         console.error("שגיאה בטעינת תגובות:", err);
@@ -70,7 +61,7 @@ const CommentsList = ({
         {
           postId,
           content: newComment,
-          parentCommentId: replyTo || null,
+          parentCommentId: null,
         },
         {
           headers: {
@@ -79,20 +70,9 @@ const CommentsList = ({
         }
       );
 
-      setComments((prev) => {
-        const updated = { ...prev };
-        if (replyTo) {
-          updated[replyTo] = updated[replyTo]
-            ? [...updated[replyTo], res.data]
-            : [res.data];
-        } else {
-          updated["root"] = [res.data, ...(updated["root"] || [])];
-        }
-        return updated;
-      });
-
+      // הוספת התגובה החדשה לתחילת הרשימה
+      setComments((prev) => [res.data, ...prev]);
       setNewComment("");
-      setReplyTo(null);
     } catch (err) {
       console.error("שגיאה ביצירת תגובה:", err);
     }
@@ -110,6 +90,9 @@ const CommentsList = ({
           },
         }
       );
+
+      // יש לרענן את הנתונים אחרי לייק
+      // או לעדכן באופן מקומי את הסטייט
     } catch (err) {
       console.error("שגיאה בעדכון לייק לתגובה:", err);
     }
@@ -124,14 +107,21 @@ const CommentsList = ({
         },
       });
 
+      // מחיקת התגובה או הריפליי
       setComments((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach(
-          (key) =>
-            (updated[key] = updated[key].filter((c) => c._id !== commentId))
-        );
-        delete updated[commentId];
-        return updated;
+        return prev
+          .map((comment) => {
+            if (comment._id === commentId) {
+              return null; // מחיקת התגובה הראשית
+            }
+            if (comment.replies) {
+              comment.replies = comment.replies.filter(
+                (reply) => reply._id !== commentId
+              );
+            }
+            return comment;
+          })
+          .filter(Boolean);
       });
     } catch (err) {
       console.error("שגיאה במחיקת תגובה:", err);
@@ -157,23 +147,29 @@ const CommentsList = ({
         }
       );
 
+      // הוספת הריפליי לתגובה המתאימה
       setComments((prev) => {
-        const updated = { ...prev };
-        updated[parentCommentId] = [
-          res.data,
-          ...(updated[parentCommentId] || []),
-        ];
-        return updated;
+        return prev.map((comment) => {
+          if (comment._id === parentCommentId) {
+            return {
+              ...comment,
+              replies: [res.data, ...(comment.replies || [])],
+              repliesCount: (comment.repliesCount || 0) + 1,
+            };
+          }
+          return comment;
+        });
       });
 
       setReplyTo(null);
+      setReplyContent("");
     } catch (err) {
       console.error("שגיאה בפרסום תגובה:", err);
     }
   };
 
   const toggleReplies = (commentId) => {
-    setShowMoreReplies((prev) => ({
+    setShowReplies((prev) => ({
       ...prev,
       [commentId]: !prev[commentId],
     }));
@@ -183,36 +179,34 @@ const CommentsList = ({
     <div className="bg-gray-100 p-4 font-sans" dir="rtl">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow">
         <div className="p-3 space-y-3 border-b">
-          {comments.root?.map((comment, index) => (
-            // הכנסנו key לכל תגובה
+          {comments.map((comment) => (
             <div
-              key={comment._id || index}
+              key={comment._id}
               className="border-t border-gray-200 pt-2 mt-2"
             >
-              <div>
-                <Comment
-                  comment={comment}
-                  currentUserId={currentUserId}
-                  onLike={handleLike}
-                  onDelete={handleDelete}
-                  onReply={handleReply}
-                />
-              </div>
+              <Comment
+                comment={comment}
+                currentUserId={currentUserId}
+                onLike={handleLike}
+                onDelete={handleDelete}
+                onReply={(content) => handleReply(content, comment._id)}
+              />
 
-              {comments[comment._id]?.length > 0 && (
-                <div className="mt-2 ">
-                  {!showMoreReplies[comment._id] ? (
+              {/* הצגת כפתור לצפייה בתגובות */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="mt-2 ml-10">
+                  {!showReplies[comment._id] ? (
                     <button
                       className="bg-transparent text-gray-500 text-xs hover:underline"
                       onClick={() => toggleReplies(comment._id)}
                     >
-                      הצג את כל {comments[comment._id].length} התגובות
+                      הצג {comment.replies.length} תגובות
                     </button>
                   ) : (
                     <>
-                      {comments[comment._id].map((reply, replyIndex) => (
+                      {comment.replies.map((reply) => (
                         <div
-                          key={reply._id || `reply-${replyIndex}`}
+                          key={reply._id}
                           className="border-t border-gray-200 pt-2 mt-2 mr-10"
                         >
                           <Comment
@@ -220,7 +214,9 @@ const CommentsList = ({
                             currentUserId={currentUserId}
                             onLike={handleLike}
                             onDelete={handleDelete}
-                            onReply={handleReply}
+                            onReply={(content) =>
+                              handleReply(content, comment._id)
+                            }
                           />
                         </div>
                       ))}
@@ -260,6 +256,11 @@ const CommentsList = ({
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="כתוב תגובה..."
               className="w-full rounded-full py-2 px-4 bg-gray-100 focus:outline-none text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleAddComment();
+                }
+              }}
             />
           </div>
           {newComment.trim() && (

@@ -104,11 +104,38 @@ const deleteAccount = async (req, res) => {
   }
 }
 
+const uploadCoverImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "לא הועלתה תמונה" });
+    }
 
+    const uploadResult = {
+      secure_url: req.file.path
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { coverImage: uploadResult.secure_url },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    res.json({
+      message: "תמונת קאבר עודכנה בהצלחה",
+      coverImage: updatedUser.coverImage,
+    });
+  } catch (err) {
+    console.error("שגיאה בהעלאת תמונת קאבר:", err);
+    res.status(500).json({ error: "שגיאה בשרת" });
+  }
+};
+
+// עדכון module.exports להוסיף את הפונקציה החדשה
 module.exports = {
   getCurrentUser,
   changePassword,
   updateProfileInfo,
   uploadProfilePicture,
+  uploadCoverImage,  
   deleteAccount,
 };

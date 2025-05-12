@@ -11,7 +11,7 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
   const [error, setError] = useState("");
   const [editingPost, setEditingPost] = useState(null);
   const [page, setPage] = useState(initialPosts ? 2 : 1); // Start from 2 if we have initial posts
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(!!communityId);
   const [loadingMore, setLoadingMore] = useState(false);
   const observer = useRef();
 
@@ -45,15 +45,24 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
 
       const res = await axios.get(url);
 
+      console.log("res.data:", res.data);
       if (pageNum === 1) {
-        setPosts(res.data.posts);
+        setPosts(res.data.posts || res.data); // תמיכה בשתי התבניות
       } else {
-        setPosts((prev) => [...prev, ...res.data.posts]);
+        setPosts((prev) => [...prev, ...(res.data.posts || res.data)]);
       }
 
-      setHasMore(res.data.pagination.hasMore);
+      // אם יש pagination, השתמש בו, אחרת השתמש בברירת מחדל
+      if (res.data.pagination) {
+        setHasMore(res.data.pagination.hasMore);
+      } else {
+        // אם אין pagination, בדוק אם הגיעו פוסטים פחות מהמבוקש
+        setHasMore((res.data.posts || res.data).length === 20);
+      }
+
       setPage(pageNum);
     } catch (err) {
+      console.error("Error loading posts:", err);
       setError("Error loading posts.");
     } finally {
       setLoading(false);
@@ -150,7 +159,7 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
 
   if (error) return <p>{error}</p>;
   if (!posts || posts.length === 0) return <p>אין עדיין פוסטים.</p>;
-
+  console.log("POSTS:", posts);
   return (
     <>
       <div className="post-list">

@@ -43,6 +43,11 @@ const UserSchema = new mongoose.Schema({
     default:"http://localhost:3001/assets/defaultProfilePic.png", 
   },
 
+  coverImage: {  
+    type: String,
+    default: null,
+  },
+
   phone: {
     type: String,
   },
