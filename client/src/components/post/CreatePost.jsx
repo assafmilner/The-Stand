@@ -6,12 +6,33 @@ import teamsMap from "../../utils/teams-hebrew";
 const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
   const [content, setContent] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [mediaFile, setMediaFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [mediaType, setMediaType] = useState(""); // "image" או "video"
 
-  const handleImageChange = (e) => {
+  const handleMediaChange = (e) => {
     const file = e.target.files[0];
-    if (file) setImageFile(file);
+    if (file) {
+      setMediaFile(file);
+
+      // יצירת URL לתצוגה מקדימה
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      // זיהוי סוג הקובץ
+      const fileType = file.type.startsWith("video/") ? "video" : "image";
+      setMediaType(fileType);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setPreviewUrl("");
+    setMediaType("");
+    // ניקוי ה-input
+    const input = document.querySelector('input[type="file"]');
+    if (input) input.value = "";
   };
 
   const handleSubmit = async (e) => {
@@ -27,8 +48,8 @@ const CreatePost = ({ onPostCreated, colors }) => {
     formData.append("authorId", user._id);
     formData.append("communityId", communityId);
     formData.append("content", content);
-    if (imageFile) {
-      formData.append("image", imageFile);
+    if (mediaFile) {
+      formData.append("image", mediaFile); // ה-field name נשאר "image" לתאימות עם השרת
     }
 
     try {
@@ -41,7 +62,10 @@ const CreatePost = ({ onPostCreated, colors }) => {
         }
       );
       setContent("");
-      setImageFile(null);
+      setMediaFile(null);
+      setPreviewUrl("");
+      setMediaType("");
+
       if (onPostCreated) {
         const enrichedPost = {
           ...res.data,
@@ -82,9 +106,44 @@ const CreatePost = ({ onPostCreated, colors }) => {
         rows={3}
       />
 
-      {imageFile && (
+      {/* תצוגה מקדימה של מדיה */}
+      {previewUrl && (
         <div className="image-preview">
-          <img src={URL.createObjectURL(imageFile)} alt="Preview" />
+          {mediaType === "video" ? (
+            <video
+              src={previewUrl}
+              controls
+              style={{ maxWidth: "100%", maxHeight: "400px" }}
+            >
+              הדפדפן שלך לא תומך בתגית וידאו.
+            </video>
+          ) : (
+            <img
+              src={previewUrl}
+              alt="Preview"
+              style={{ maxWidth: "100%", maxHeight: "400px" }}
+            />
+          )}
+          <button
+            type="button"
+            onClick={handleRemoveMedia}
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              border: "none",
+              borderRadius: "50%",
+              width: "30px",
+              height: "30px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -92,8 +151,13 @@ const CreatePost = ({ onPostCreated, colors }) => {
         <span>{content.length}/500</span>
         <div className="post-actions">
           <label>
-            📷
-            <input type="file" hidden onChange={handleImageChange} />
+            📷🎥
+            <input
+              type="file"
+              hidden
+              onChange={handleMediaChange}
+              accept="image/*,video/*"
+            />
           </label>
           <button
             type="submit"

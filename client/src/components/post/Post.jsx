@@ -182,21 +182,45 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
         {post.content}
       </div>
 
-      {post.media?.length > 0 && (
+      {post.media.length > 0 && (
         <div style={{ marginTop: "12px", paddingInline: "16px" }}>
-          {post.media.map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              alt={`media-${i}`}
-              style={{
-                width: "100%",
-                borderRadius: "12px",
-                objectFit: "cover",
-                maxHeight: "500px",
-              }}
-            />
-          ))}
+          {post.media.map((url, i) => {
+            // בדיקה אם זה סרטון או תמונה על בסיס הסיומת או הURL
+            const isVideo =
+              url.includes("video/") ||
+              url.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|3gp|m4v)$/i);
+
+            return isVideo ? (
+              <video
+                key={i}
+                src={url}
+                controls
+                style={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  maxHeight: "500px",
+                }}
+                preload="metadata" // טעינה חכמה
+                playsInline // נגינה בתוך הדף במובייל
+                // הוספת poster (תמונה מקדימה) אוטומטי מCloudinary
+                poster={url.replace(/\.[^/.]+$/, ".jpg")}
+              >
+                הדפדפן שלך לא תומך בתגית וידאו.
+              </video>
+            ) : (
+              <img
+                key={i}
+                src={url}
+                alt={`media-${i}`}
+                style={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  objectFit: "cover",
+                  maxHeight: "500px",
+                }}
+              />
+            );
+          })}
         </div>
       )}
 

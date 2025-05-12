@@ -47,11 +47,8 @@ const NextFixtures = () => {
             match.awayTeam === favoriteTeamEnglish
         );
 
-        console.log("All team fixtures:", teamFixtures);
-
         // 🔥 קוד מתוקן עם טיפול נכון באזור זמן 🔥
         const now = new Date();
-        console.log("Current time:", now);
 
         const upcomingFixtures = teamFixtures.filter((match) => {
           // פרסינג של התאריך במפורש
@@ -70,48 +67,9 @@ const NextFixtures = () => {
             matchDateTime.setHours(23, 59, 59, 999);
           }
 
-          console.log(`Match: ${match.homeTeam} vs ${match.awayTeam}`);
-          console.log(`Match date: ${match.date}, time: ${match.time}`);
-          console.log(`Match date-time object: ${matchDateTime}`);
-          console.log(`Now: ${now}`);
-          console.log(`Is future: ${matchDateTime >= now}`);
-          console.log("---");
-
           return matchDateTime >= now;
         });
 
-        console.log("Final upcoming fixtures:", upcomingFixtures);
-
-        // מיון לפי תאריך ושעה
-        // upcomingFixtures.sort((a, b) => {
-        //   const [yearA, monthA, dayA] = a.date.split("-");
-        //   const [yearB, monthB, dayB] = b.date.split("-");
-
-        //   let dateA = new Date(
-        //     parseInt(yearA),
-        //     parseInt(monthA) - 1,
-        //     parseInt(dayA)
-        //   );
-        //   let dateB = new Date(
-        //     parseInt(yearB),
-        //     parseInt(monthB) - 1,
-        //     parseInt(dayB)
-        //   );
-
-        //   if (a.time) {
-        //     const [hoursA, minutesA] = a.time.split(":");
-        //     dateA.setHours(parseInt(hoursA), parseInt(minutesA));
-        //   }
-
-        //   if (b.time) {
-        //     const [hoursB, minutesB] = b.time.split(":");
-        //     dateB.setHours(parseInt(hoursB), parseInt(minutesB));
-        //   }
-
-        //   return dateA - dateB;
-        // });
-
-        console.log("Sorted upcoming fixtures:", upcomingFixtures);
         setFixtures(upcomingFixtures);
       } catch (error) {
         console.error("Failed to load fixtures:", error);
@@ -137,7 +95,6 @@ const NextFixtures = () => {
         ) : (
           <ul className="space-y-4 text-right text-gray-700 mt-4">
             {fixtures.slice(0, 3).map((match) => {
-              console.log("Rendering match:", match);
               return (
                 <li
                   key={match.id}

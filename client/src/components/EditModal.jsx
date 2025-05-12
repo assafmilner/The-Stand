@@ -3,20 +3,42 @@ import "../index.css";
 
 const EditModal = ({ post, onSave, onCancel }) => {
   const [newContent, setNewContent] = useState(post.content);
-  const [newImageFile, setNewImageFile] = useState(null);
+  const [newMediaFile, setNewMediaFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(post.media?.[0] || null);
+  const [mediaType, setMediaType] = useState("");
+
+  // זיהוי סוג המדיה הנוכחית
+  React.useEffect(() => {
+    if (previewUrl) {
+      const isVideo =
+        previewUrl.includes("video/") ||
+        previewUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|3gp|m4v)$/i);
+      setMediaType(isVideo ? "video" : "image");
+    }
+  }, [previewUrl]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setNewImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setNewMediaFile(file);
+
+      // יצירת URL לתצוגה מקדימה
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      // זיהוי סוג הקובץ
+      const fileType = file.type.startsWith("video/") ? "video" : "image";
+      setMediaType(fileType);
     }
   };
 
-  const handleRemoveImage = () => {
-    setNewImageFile(null);
+  const handleRemoveMedia = () => {
+    setNewMediaFile(null);
     setPreviewUrl(null);
+    setMediaType("");
+    // ניקוי ה-input
+    const input = document.querySelector('.edit-modal input[type="file"]');
+    if (input) input.value = "";
   };
 
   const handleSave = () => {
@@ -24,11 +46,11 @@ const EditModal = ({ post, onSave, onCancel }) => {
 
     const updatedData = {
       content: newContent,
-      media: previewUrl ? [previewUrl] : [], // אם הסרנו תמונה, רשימה ריקה
-      imageFile: newImageFile, // אם יש קובץ חדש – נשלח אותו
+      media: previewUrl ? [previewUrl] : [], // אם הסרנו מדיה, רשימה ריקה
+      imageFile: newMediaFile, // אם יש קובץ חדש – נשלח אותו
     };
 
-    onSave(updatedData); // נשלח את כל האובייקט במקום רק סטרינג
+    onSave(updatedData);
   };
 
   return (
@@ -42,20 +64,63 @@ const EditModal = ({ post, onSave, onCancel }) => {
         />
 
         {previewUrl && (
-          <div className="image-preview">
-            <img src={previewUrl} alt="preview" />
-            <button onClick={handleRemoveImage}>הסר תמונה</button>
+          <div className="image-preview" style={{ position: "relative" }}>
+            {mediaType === "video" ? (
+              <video src={previewUrl} controls style={{ maxWidth: "100%" }}>
+                הדפדפן שלך לא תומך בתגית וידאו.
+              </video>
+            ) : (
+              <img
+                src={previewUrl}
+                alt="preview"
+                style={{ maxWidth: "100%" }}
+              />
+            )}
+            <button
+              onClick={handleRemoveMedia}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                backgroundColor: "red",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                width: "30px",
+                height: "30px",
+                cursor: "pointer",
+              }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        <label>
-          בחר תמונה חדשה
+        <label style={{ display: "block", marginTop: "10px" }}>
+          בחר תמונה או סרטון חדש
           <input
             type="file"
             hidden
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleFileChange}
           />
+          <button
+            type="button"
+            onClick={() =>
+              document.querySelector('.edit-modal input[type="file"]').click()
+            }
+            style={{
+              backgroundColor: "#f0f0f0",
+              border: "1px solid #ccc",
+              padding: "10px",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginTop: "5px",
+              width: "100%",
+            }}
+          >
+            📷🎥 העלה קובץ
+          </button>
         </label>
 
         <div className="modal-buttons">
