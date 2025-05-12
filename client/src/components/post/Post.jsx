@@ -4,21 +4,37 @@ import axios from "axios";
 import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "./LikeModal";
 import CommentsList from "../comment/CommentsList";
-import { groupBy } from "lodash";
 
 const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
   const isOwner = currentUser?.email === post.authorId.email;
   const currentUserId = currentUser?._id;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
-  const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
+
+  // Format date with error handling
+  let createdAt;
+  try {
+    if (post.createdAt) {
+      const date = new Date(post.createdAt);
+      if (isNaN(date.getTime())) {
+        createdAt = "תאריך לא תקין";
+      } else {
+        createdAt = date.toLocaleString("he-IL");
+      }
+    } else {
+      createdAt = "אין תאריך";
+    }
+  } catch (error) {
+    console.error("Error parsing date:", error);
+    createdAt = "תאריך לא תקין";
+  }
 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [likeDetails, setLikeDetails] = useState([]);
   const [showLikeModal, setShowLikeModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [commentCount, setCommentCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(post.commentsCount || 0);
 
   useEffect(() => {
     const hasDetails =
@@ -83,33 +99,6 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
       setLikeCount(prevLikes.length);
     }
   };
-  useEffect(() => {
-    const fetchCommentCount = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        const res = await axios.get(
-          `http://localhost:3001/api/comments/post/${post._id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const grouped = groupBy(res.data, (c) => c.parentCommentId || "root");
-        const total =
-          (grouped.root?.length || 0) +
-          Object.entries(grouped)
-            .filter(([key]) => key !== "root")
-            .reduce((sum, [_, replies]) => sum + replies.length, 0);
-
-        setCommentCount(total);
-      } catch (err) {
-        console.error("שגיאה בטעינת תגובות:", err);
-      }
-    };
-
-    fetchCommentCount();
-  }, [post._id]);
 
   return (
     <div
@@ -158,7 +147,7 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
             {name}
           </div>
           <div style={{ fontSize: "0.85rem", color: "#777" }}>
-            {formatTimeAgo(createdAt)}
+            {formatTimeAgo(post.createdAt)}
           </div>
         </div>
 
@@ -193,7 +182,7 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
         {post.content}
       </div>
 
-      {post.media.length > 0 && (
+      {post.media?.length > 0 && (
         <div style={{ marginTop: "12px", paddingInline: "16px" }}>
           {post.media.map((url, i) => (
             <img
@@ -298,7 +287,9 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
           postId={post._id}
           currentUserId={currentUserId}
           currentUser={currentUser}
-          onCountUpdate={setCommentCount} // העברת הפונקציה
+          onCountUpdate={setCommentCount}
+          initialComments={post.comments}
+          initialCommentsCount={post.commentsCount}
         />
       )}
 

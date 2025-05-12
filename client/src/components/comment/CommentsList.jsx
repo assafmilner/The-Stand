@@ -28,7 +28,19 @@ const CommentsList = ({
           }
         );
 
-        const grouped = groupBy(res.data, (c) => c.parentCommentId || "root");
+        // בדוק את מבנה הנתונים שמגיעים מהשרת
+        console.log("Response data:", res.data);
+
+        // אם res.data הוא אובייקט עם מערך comments בתוכו:
+        let commentsData = res.data;
+        if (res.data.comments && Array.isArray(res.data.comments)) {
+          commentsData = res.data.comments;
+        }
+
+        const grouped = groupBy(
+          commentsData,
+          (c) => c.parentCommentId || "root"
+        );
         setComments(grouped);
 
         // עדכון כמות תגובות
@@ -46,7 +58,7 @@ const CommentsList = ({
     };
 
     fetchComments();
-  }, [postId]);
+  }, [postId, onCountUpdate]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -171,9 +183,13 @@ const CommentsList = ({
     <div className="bg-gray-100 p-4 font-sans" dir="rtl">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow">
         <div className="p-3 space-y-3 border-b">
-          {comments.root?.map((comment) => (
-            <div className="border-t border-gray-200 pt-2 mt-2">
-              <div key={comment._id}>
+          {comments.root?.map((comment, index) => (
+            // הכנסנו key לכל תגובה
+            <div
+              key={comment._id || index}
+              className="border-t border-gray-200 pt-2 mt-2"
+            >
+              <div>
                 <Comment
                   comment={comment}
                   currentUserId={currentUserId}
@@ -194,9 +210,9 @@ const CommentsList = ({
                     </button>
                   ) : (
                     <>
-                      {comments[comment._id].map((reply) => (
+                      {comments[comment._id].map((reply, replyIndex) => (
                         <div
-                          key={reply._id}
+                          key={reply._id || `reply-${replyIndex}`}
                           className="border-t border-gray-200 pt-2 mt-2 mr-10"
                         >
                           <Comment

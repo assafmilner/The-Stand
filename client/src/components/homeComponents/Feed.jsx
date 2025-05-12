@@ -4,19 +4,20 @@ import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
 
 function Feed({ colors, communityId }) {
-  const [posts, setPosts] = useState([]);
+  const [initialPostsData, setInitialPostsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // שליפת פוסטים לפי קהילה (או כלליים)
+  // שליפת פוסטים ראשונים בלבד (עמוד 1)
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchInitialPosts = async () => {
       try {
         const url = communityId
-          ? `http://localhost:3001/api/posts?communityId=${communityId}`
-          : `http://localhost:3001/api/posts`;
+          ? `http://localhost:3001/api/posts?communityId=${communityId}&page=1&limit=20`
+          : `http://localhost:3001/api/posts?page=1&limit=20`;
+
         const res = await axios.get(url);
-        setPosts(res.data);
+        setInitialPostsData(res.data.posts);
       } catch (err) {
         setError("בעיה בטעינת פוסטים");
       } finally {
@@ -24,15 +25,24 @@ function Feed({ colors, communityId }) {
       }
     };
 
-    fetchPosts();
+    fetchInitialPosts();
   }, [communityId]);
 
   const handlePostCreated = (newPost) => {
     // מוסיף את הפוסט החדש לראש הרשימה
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
+    setInitialPostsData((prevPosts) =>
+      prevPosts ? [newPost, ...prevPosts] : [newPost]
+    );
   };
 
-  if (loading) return <p>טוען פוסטים...</p>;
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>טוען פוסטים...</p>
+      </div>
+    );
+
   if (error) return <p>{error}</p>;
 
   return (
@@ -55,9 +65,12 @@ function Feed({ colors, communityId }) {
         <CreatePost colors={colors} onPostCreated={handlePostCreated} />
       </div>
 
-      {/* תצוגת הפוסטים */}
-
-      <PostList posts={posts} colors={colors} />
+      {/* תצוגת הפוסטים עם Infinite Scroll */}
+      <PostList
+        colors={colors}
+        communityId={communityId}
+        initialPosts={initialPostsData}
+      />
     </section>
   );
 }

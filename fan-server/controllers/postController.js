@@ -1,18 +1,61 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
+const Comment = require("../models/Comment");
 
 const getAllPosts = async (req, res) => {
-  const { communityId } = req.query;
-  const filter = communityId ? { communityId } : {}; // זה פותר את הבעיה
-
   try {
+    // Extract pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    
+    // Extract community filter
+    const { communityId } = req.query;
+    const filter = communityId ? { communityId } : {};
+
+    // Get posts with pagination
     const posts = await Post.find(filter)
       .populate("authorId", "name email profilePicture")
       .populate("likes", "name email profilePicture")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.status(200).json(posts);
+    // Get total count for pagination
+    const totalPosts = await Post.countDocuments(filter);
+    const hasMore = skip + posts.length < totalPosts;
+
+    // For each post, get only the first 2 comments
+    const postsWithComments = await Promise.all(
+      posts.map(async (post) => {
+        const comments = await Comment.find({ postId: post._id })
+          .populate("authorId", "name profilePicture")
+          .populate("likes", "name profilePicture")
+          .sort({ createdAt: 1 })
+          .limit(2);
+
+        const totalComments = await Comment.countDocuments({ postId: post._id });
+
+        return {
+          ...post.toObject(),
+          comments: comments,
+          commentsCount: totalComments,
+          hasMoreComments: totalComments > 2
+        };
+      })
+    );
+
+    res.status(200).json({
+      posts: postsWithComments,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / limit),
+        hasMore,
+        totalPosts
+      }
+    });
   } catch (error) {
+    console.error("Error fetching posts:", error);
     res.status(500).json({ message: "Error fetching posts", error });
   }
 };
@@ -48,8 +91,6 @@ const createPost = async (req, res) => {
   }
 };
 
-
-
 const updatePost = async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
@@ -72,8 +113,6 @@ const updatePost = async (req, res) => {
     res.status(500).json({ error: "שגיאה בעדכון פוסט" });
   }
 };
-
-
 
 const deletePost = async (req, res) => {
   const { id } = req.params;
@@ -122,8 +161,6 @@ const toggleLike = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   getAllPosts,
   createPost,
@@ -131,4 +168,3 @@ module.exports = {
   deletePost,
   toggleLike
 };
-

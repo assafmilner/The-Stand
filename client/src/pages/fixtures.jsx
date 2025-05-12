@@ -38,17 +38,26 @@ function Fixtures() {
         const seasonId = await detectLeague(user.favoriteTeam);
 
         if (!seasonId) {
-          console.error("לא הצלחנו לזהות את הליגה.");
+          console.log("לא ניתן לזהות את הליגה, עדיין יש להמשיך...");
+          // לא צריך לעצור כאן - זה יכול להיות מקרה לגיטימי
+          setLoading(false);
           return;
         }
 
         const leagueType = seasonId === 4644 ? "ligat-haal" : "leumit";
         setLeague(leagueType);
 
+        console.log(
+          `זוהתה ליגה: ${
+            leagueType === "ligat-haal" ? "ליגת העל" : "ליגה לאומית"
+          }`
+        );
+
         const data = await fetchFixtures(seasonId);
 
         if (Array.isArray(data)) {
           setFixtures(data);
+          console.log(`נטענו ${data.length} משחקים`);
 
           // 🆕 חישוב תאריך סיום עונה רגילה
           const maxRound = leagueType === "ligat-haal" ? 26 : 30;
