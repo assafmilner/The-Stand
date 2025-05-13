@@ -7,7 +7,7 @@ import NextFixtures from "./layoutComponents/NextFixtures";
 import { useNavigate } from "react-router-dom";
 import "../index.css";
 
-const Layout = ({ children }) => {
+const Layout = ({ children, onChatSelect }) => {
   const navigate = useNavigate();
   const { user, loading } = useUser();
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
@@ -20,17 +20,17 @@ const Layout = ({ children }) => {
 
   return (
     <div className="home-container">
-      <Header user={user} />
+      <Header user={user} onChatSelect={onChatSelect} />
 
       <main className="home-main">
         <div className="dashboard-grid">
           {/* סרגל צד ימין */}
-          <RightSidebar user={user} colors={colors} />
+          <RightSidebar user={user} colors={colors} onChatSelect={onChatSelect} />
 
           {/* אזור תוכן מרכזי */}
           <section className="centered-content pt-6">{children}</section>
 
-          {/* אזור צד שמאל - ריק */}
+          {/* אזור צד שמאל */}
           <aside>
             <NextFixtures />
           </aside>

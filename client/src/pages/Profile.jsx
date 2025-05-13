@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Camera,
   Edit3,
@@ -20,7 +20,6 @@ import PostList from "../components/post/PostList";
 import teamColors from "../utils/teamStyles";
 import teamNameMap from "../utils/teams-hebrew";
 import CropModal from "../components/profile/CropModal";
-import getCroppedImg from "../utils/cropImage";
 import "../index.css";
 
 const Profile = () => {
@@ -36,6 +35,7 @@ const Profile = () => {
   const coverInputRef = useRef(null);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
+  const navigate = useNavigate();
 
   // בדיקה אם זה הפרופיל של המשתמש הנוכחי או של מישהו אחר
   const isOwnProfile = !userId || userId === currentUser?._id;
@@ -187,7 +187,9 @@ const Profile = () => {
       </div>
     );
   }
-  console.log("COVER:", coverImage);
+  const handleStartChat = () => {
+    navigate("/chat", { state: { userId: profileUser._id } });
+  };
 
   return (
     <ProfileLayout>
@@ -325,7 +327,10 @@ const Profile = () => {
                         <UserPlus size={18} />
                         הוסף לחברים
                       </button>
-                      <button className="profile-btn secondary">
+                      <button
+                        className="profile-btn secondary"
+                        onClick={handleStartChat}
+                      >
                         <MessageCircle size={18} />
                         שלח הודעה
                       </button>

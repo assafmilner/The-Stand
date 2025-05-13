@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     }
 
     targetUrl = decodeURIComponent(targetUrl);
-    console.log(`📡 Proxying request to: ${targetUrl}`);
+
 
     if (!targetUrl.startsWith('https://')) {
       console.error("Invalid URL - must start with https://");
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       return res.status(403).json({ error: "Domain not allowed" });
     }
 
-    console.log(`🔄 Fetching data from thesportsdb.com...`);
+
     
     // הוספת headers כדי לדמות דפדפן רגיל
     const response = await fetch(targetUrl, {
@@ -42,7 +42,6 @@ router.get('/', async (req, res) => {
       timeout: 15000, // 15 second timeout
     });
 
-    console.log(`📊 Response status: ${response.status}`);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -54,8 +53,7 @@ router.get('/', async (req, res) => {
     }
 
     const data = await response.json();
-    console.log(`✅ Successfully proxied data`);
-    
+ 
     // הוספת CORS headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

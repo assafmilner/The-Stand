@@ -1,11 +1,25 @@
 // components/Header.jsx
-import React from "react";
-import { MessageCircle, Bell, Settings } from "lucide-react";
+import React, { useState } from "react";
+import { MessageCircle, Bell, Settings, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../../index.css";
 
-const Header = ({ user }) => {
+const Header = ({ user, onChatSelect }) => {
   const navigate = useNavigate();
+  const [showChatDropdown, setShowChatDropdown] = useState(false);
+
+  // דמה של שיחות קיימות - זה יצריך להיות מחובר למסד הנתונים בפועל
+  const [existingChats, setExistingChats] = useState([
+    { id: 1, name: "יוסי אוהד", lastMessage: "איך המשחק הלך?", time: "10:30" },
+    { id: 2, name: "רחל ירוקה", lastMessage: "בואו נפגש במשחק", time: "09:15" },
+    {
+      id: 3,
+      name: "דוד כחול",
+      lastMessage: "מה השעה של המשחק?",
+      time: "08:45",
+    },
+  ]);
+
   return (
     <header className="top-navbar">
       <div className="navbar-content">
@@ -18,9 +32,54 @@ const Header = ({ user }) => {
           >
             <Settings size={20} />
           </button>
-          <button className="icon-button" aria-label="הודעות">
-            <MessageCircle size={20} />
-          </button>
+
+          {/* Chat dropdown button */}
+          <div className="chat-dropdown-container">
+            <button
+              className="icon-button"
+              aria-label="הודעות"
+              onClick={() => setShowChatDropdown(!showChatDropdown)}
+            >
+              <MessageCircle size={20} />
+              <ChevronDown size={12} />
+            </button>
+
+            {showChatDropdown && (
+              <div className="chat-dropdown">
+                <h4>שיחות</h4>
+                <div className="chat-list">
+                  {existingChats.map((chat) => (
+                    <div
+                      key={chat.id}
+                      className="chat-item"
+                      onClick={() => {
+                        onChatSelect({ name: chat.name, id: chat.id });
+                        setShowChatDropdown(false);
+                      }}
+                    >
+                      <div className="chat-item-header">
+                        <span className="chat-name">{chat.name}</span>
+                        <span className="chat-time">{chat.time}</span>
+                      </div>
+                      <div className="chat-last-message">
+                        {chat.lastMessage}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="new-chat-btn"
+                  onClick={() => {
+                    // כאן ניתן להוסיף פונקציה לפתיחת חלון בחירת משתמש
+                    setShowChatDropdown(false);
+                  }}
+                >
+                  שיחה חדשה
+                </button>
+              </div>
+            )}
+          </div>
+
           <button className="icon-button" aria-label="התראות">
             <Bell size={20} />
           </button>

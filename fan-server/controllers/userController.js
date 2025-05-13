@@ -150,6 +150,19 @@ const getPublicProfile = async (req, res) => {
   }
 };
 
+const getAllusers = async (req, res) => {
+  try {
+    const users = await User.find({}, 'name email profilePicture favoriteTeam location')
+      .limit(50) // הגבלה למקסימום 50 משתמשים
+      .sort({ createdAt: -1 });
+    
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 // עדכון module.exports להוסיף את הפונקציה החדשה
 module.exports = {
   getCurrentUser,
@@ -159,4 +172,5 @@ module.exports = {
   uploadCoverImage,  
   deleteAccount,
   getPublicProfile,
+  getAllusers,
 };

@@ -86,53 +86,51 @@ const NextFixtures = () => {
   }
 
   return (
-    <div className="side-bar left-0">
-      <div className=" dashboard-card upcoming-matches text-center">
-        <h2>המשחקים הקרובים </h2>
+    <div className=" dashboard-card upcoming-matches text-center">
+      <h2>המשחקים הקרובים </h2>
 
-        {fixtures.length === 0 ? (
-          <div>אין משחקים קרובים לקבוצה.</div>
-        ) : (
-          <ul className="space-y-4 text-right text-gray-700 mt-4">
-            {fixtures.slice(0, 3).map((match) => {
-              return (
-                <li
-                  key={match.id}
-                  className="p-3 rounded-md shadow-sm bg-white border border-gray-200"
-                >
-                  <div className="text-md font-semibold mb-1 text-center">
-                    {teamNameMap[match.homeTeam]?.name || match.homeTeam} נגד{" "}
-                    {teamNameMap[match.awayTeam]?.name || match.awayTeam}
+      {fixtures.length === 0 ? (
+        <div>אין משחקים קרובים לקבוצה.</div>
+      ) : (
+        <ul className="space-y-4 text-right text-gray-700 mt-4">
+          {fixtures.slice(0, 3).map((match) => {
+            return (
+              <li
+                key={match.id}
+                className="p-3 rounded-md shadow-sm bg-white border border-gray-200"
+              >
+                <div className="text-md font-semibold mb-1 text-center">
+                  {teamNameMap[match.homeTeam]?.name || match.homeTeam} נגד{" "}
+                  {teamNameMap[match.awayTeam]?.name || match.awayTeam}
+                </div>
+
+                {match.venue && (
+                  <div className="text-sm text-gray-500 text-center">
+                    ({stadiums[match.venue] || match.venue})
                   </div>
+                )}
 
-                  {match.venue && (
-                    <div className="text-sm text-gray-500 text-center">
-                      ({stadiums[match.venue] || match.venue})
-                    </div>
-                  )}
+                <div className="text-sm text-center text-gray-600">
+                  {new Date(match.date).toLocaleDateString("he-IL", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                  &nbsp;בשעה&nbsp;{match.time}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
-                  <div className="text-sm text-center text-gray-600">
-                    {new Date(match.date).toLocaleDateString("he-IL", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "long",
-                    })}
-                    &nbsp;בשעה&nbsp;{match.time}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <div className="text-center mt-4">
-          <button
-            onClick={() => navigate("/fixtures")}
-            className="join-group-button"
-          >
-            הצג את כל המשחקים
-          </button>
-        </div>
+      <div className="text-center mt-4">
+        <button
+          onClick={() => navigate("/fixtures")}
+          className="join-group-button"
+        >
+          הצג את כל המשחקים
+        </button>
       </div>
     </div>
   );

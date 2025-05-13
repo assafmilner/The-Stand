@@ -1,3 +1,4 @@
+
 // Team color configurations
 const teamColors = {
     "הפועל תל אביב": { primary: "#dc2626", secondary: "#FFFFFF" },

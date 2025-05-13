@@ -7,8 +7,11 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile'; 
 import { UserProvider, useUser } from './components/context/UserContext';
+import { ChatProvider } from './components/context/ChatContext';
 import teamColors from './utils/teamStyles';
 import Fixtures from './pages/fixtures';
+import Chat from './components/chat/Chat';
+import Messages from './pages/Messages';
 
 
 function ColorManager() {
@@ -29,6 +32,7 @@ function App() {
   return (
     
       <UserProvider>
+          <ChatProvider>
         <BrowserRouter>
         <ColorManager />
             <Routes>
@@ -39,11 +43,15 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/chat/:chatId?" element={<Chat />} />
               <Route path="/fixtures" element={<Fixtures/>} />
+              <Route path="/messages" element={<Messages />} />
               <Route path="/" element={<Login />} />
             </Routes>
+            
           <ColorManager />
         </BrowserRouter>
+        </ChatProvider>
       </UserProvider>
     
   );
