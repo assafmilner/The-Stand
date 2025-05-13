@@ -4,10 +4,10 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`🔄 Attempting to fetch (${attempt}/${maxRetries}): ${apiUrl}`);
+      
       
       const proxyUrl = `http://localhost:3001/api/proxy?url=${encodeURIComponent(apiUrl)}`;
-      console.log(`📡 Proxy URL: ${proxyUrl}`);
+     
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
@@ -18,7 +18,7 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
         timeout: 10000, // 10 seconds timeout
       });
       
-      console.log(`📊 Response status: ${response.status}`);
+    
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -27,7 +27,7 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
       }
       
       const data = await response.json();
-      console.log(`✅ Successfully fetched data (attempt ${attempt})`);
+     
       
       // בדיקה שהנתונים תקינים
       if (!data) {
@@ -37,7 +37,7 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
       return data;
     } catch (error) {
       lastError = error;
-      console.error(`❌ Attempt ${attempt} failed:`, error.message);
+    
       
       // אם זו לא הנסיון האחרון, חכה לפני הנסיון הבא
       if (attempt < maxRetries) {

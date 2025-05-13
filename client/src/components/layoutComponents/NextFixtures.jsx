@@ -111,7 +111,7 @@ const NextFixtures = () => {
                     </div>
                   )}
 
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-center text-gray-600">
                     {new Date(match.date).toLocaleDateString("he-IL", {
                       weekday: "short",
                       day: "numeric",
