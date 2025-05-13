@@ -130,6 +130,26 @@ const uploadCoverImage = async (req, res) => {
   }
 };
 
+const getPublicProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // לא מחזירים מידע רגיש כמו סיסמה, טוקנים וכו'
+    const user = await User.findById(userId).select(
+      "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpires -email"
+    );
+    
+    if (!user) {
+      return res.status(404).json({ error: "משתמש לא נמצא" });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "שגיאה בשרת" });
+  }
+};
+
 // עדכון module.exports להוסיף את הפונקציה החדשה
 module.exports = {
   getCurrentUser,
@@ -138,4 +158,5 @@ module.exports = {
   uploadProfilePicture,
   uploadCoverImage,  
   deleteAccount,
+  getPublicProfile,
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import {
   Camera,
   Edit3,
@@ -13,7 +14,7 @@ import {
   Mail,
 } from "lucide-react";
 import axios from "axios";
-import ProfileLayout from "../components/ProfileLayout";
+import ProfileLayout from "../components/profile/ProfileLayout";
 import { useUser } from "../components/context/UserContext";
 import PostList from "../components/post/PostList";
 import teamColors from "../utils/teamStyles";
@@ -21,20 +22,26 @@ import teamNameMap from "../utils/teams-hebrew";
 import "../index.css";
 
 const Profile = () => {
-  const { user, setUser } = useUser();
+  const { userId } = useParams(); // משיכת userId מה-URL
+  const { user: currentUser, setUser } = useUser();
+  const [profileUser, setProfileUser] = useState(null); // המשתמש שאת הפרופיל שלו אנחנו מציגים
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [coverImage, setCoverImage] = useState(user?.coverImage || null);
+  const [coverImage, setCoverImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [friendsCount, setFriendsCount] = useState(0);
   const coverInputRef = useRef(null);
-  const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
+
+  // בדיקה אם זה הפרופיל של המשתמש הנוכחי או של מישהו אחר
+  const isOwnProfile = !userId || userId === currentUser?._id;
+  const displayUser = isOwnProfile ? currentUser : profileUser;
+  const colors = teamColors[displayUser?.favoriteTeam || "הפועל תל אביב"];
 
   // Helper function to get team data
   const getTeamData = () => {
     const teamEnglishName = Object.keys(teamNameMap).find(
-      (key) => teamNameMap[key].name === user?.favoriteTeam
+      (key) => teamNameMap[key].name === displayUser?.favoriteTeam
     );
     return teamNameMap[teamEnglishName] || {};
   };
@@ -43,20 +50,38 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("accessToken");
+        let targetUserId = isOwnProfile ? currentUser._id : userId;
+
+        // אם זה לא הפרופיל שלנו, נשלוף את פרטי המשתמש
+        if (!isOwnProfile) {
+          const profileResponse = await axios.get(
+            `http://localhost:3001/api/users/profile/${userId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setProfileUser(profileResponse.data);
+          targetUserId = userId;
+        }
 
         // שליפת פוסטים של המשתמש
         const postsResponse = await axios.get(
-          `http://localhost:3001/api/posts?authorId=${user._id}`,
+          `http://localhost:3001/api/posts?authorId=${targetUserId}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         setUserPosts(postsResponse.data);
 
-        // סימולציה של מספר חברים (אפשר להחליף בקריאת API אמיתית)
+        // סימולציה של מספר חברים
         setFriendsCount(Math.floor(Math.random() * 500) + 50);
+
+        // הגדרת תמונת קאבר
+        if (isOwnProfile && currentUser.coverImage) {
+          setCoverImage(currentUser.coverImage);
+        } else if (!isOwnProfile && profileUser.coverImage) {
+          setCoverImage(profileUser.coverImage);
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -64,12 +89,15 @@ const Profile = () => {
       }
     };
 
-    if (user) {
+    if ((isOwnProfile && currentUser) || (!isOwnProfile && userId)) {
       fetchUserData();
     }
-  }, [user]);
+  }, [currentUser, userId, isOwnProfile, profileUser]);
 
   const handleCoverUpload = async (event) => {
+    // רק המשתמש עצמו יכול לעלות תמונת קאבר
+    if (!isOwnProfile) return;
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -139,6 +167,16 @@ const Profile = () => {
     );
   }
 
+  if (!displayUser) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">שגיאה</h2>
+        <p className="text-gray-600">הפרופיל לא נמצא</p>
+      </div>
+    );
+  }
+  console.log("COVER:", coverImage);
+
   return (
     <ProfileLayout>
       <div className="profile-container bg-gray-50" dir="rtl">
@@ -161,26 +199,31 @@ const Profile = () => {
 
           <div className="cover-overlay" />
 
-          <button
-            onClick={() => coverInputRef.current?.click()}
-            className="upload-cover-btn"
-            disabled={uploading}
-            title="שנה תמונת קאבר"
-          >
-            {uploading ? (
-              <div className="animate-spin text-2xl">⏳</div>
-            ) : (
-              <Camera size={20} className="text-gray-700" />
-            )}
-          </button>
+          {/* כפתור העלאת תמונת קאבר - רק למשתמש עצמו */}
+          {isOwnProfile && (
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="upload-cover-btn"
+              disabled={uploading}
+              title="שנה תמונת קאבר"
+            >
+              {uploading ? (
+                <div className="animate-spin text-2xl">⏳</div>
+              ) : (
+                <Camera size={20} className="text-gray-700" />
+              )}
+            </button>
+          )}
 
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleCoverUpload}
-            className="hidden"
-          />
+          {isOwnProfile && (
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              className="hidden"
+            />
+          )}
         </div>
 
         {/* מידע פרופיל */}
@@ -192,7 +235,7 @@ const Profile = () => {
                 <div className="relative">
                   <img
                     src={
-                      user.profilePicture ||
+                      displayUser.profilePicture ||
                       "http://localhost:3001/assets/defaultProfilePic.png"
                     }
                     alt="Profile"
@@ -206,13 +249,13 @@ const Profile = () => {
 
                 {/* שם המשתמש */}
                 <div className="pb-1">
-                  <h1 className="text-2xl md:text-3xl font-bold  mb-2">
-                    {user.name}
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                    {displayUser.name}
                   </h1>
                   <p className="text-gray-500 text-lg">
                     אוהד{" "}
                     <span style={{ color: colors.primary, fontWeight: "bold" }}>
-                      {user.favoriteTeam}
+                      {displayUser.favoriteTeam}
                     </span>
                   </p>
                 </div>
@@ -224,24 +267,24 @@ const Profile = () => {
                   <div className="profile-stat">
                     <div className="flex items-center gap-2">
                       <Users size={20} />
-                      <span className="font-bold ">{friendsCount}</span>
-                      <span className="font-bold ">חברים</span>
+                      <span className="font-bold">{friendsCount}</span>
+                      <span className="font-bold">חברים</span>
                     </div>
                   </div>
 
                   <div className="profile-stat">
                     <div className="flex items-center gap-2">
                       <Award size={20} />
-                      <span className="font-bold ">{userPosts.length}</span>
-                      <span className="font-bold ">פוסטים</span>
+                      <span className="font-bold">{userPosts.length}</span>
+                      <span className="font-bold">פוסטים</span>
                     </div>
                   </div>
 
                   <div className="profile-stat">
                     <div className="flex items-center gap-2">
                       <Calendar size={20} />
-                      <span className="font-bold ">
-                        הצטרף ב{formatJoinDate(user.createdAt)}
+                      <span className="font-bold">
+                        הצטרף ב{formatJoinDate(displayUser.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -249,21 +292,26 @@ const Profile = () => {
 
                 {/* כפתורי פעולה */}
                 <div className="profile-actions">
-                  <button className="profile-btn primary">
-                    <UserPlus size={18} />
-                    הוסף לחברים
-                  </button>
-                  <button className="profile-btn secondary">
-                    <MessageCircle size={18} />
-                    שלח הודעה
-                  </button>
-                  <button
-                    className="profile-btn secondary"
-                    onClick={() => (window.location.href = "/settings")}
-                  >
-                    <Edit3 size={18} />
-                    ערוך פרופיל
-                  </button>
+                  {isOwnProfile ? (
+                    <button
+                      className="profile-btn secondary"
+                      onClick={() => (window.location.href = "/settings")}
+                    >
+                      <Edit3 size={18} />
+                      ערוך פרופיל
+                    </button>
+                  ) : (
+                    <>
+                      <button className="profile-btn primary">
+                        <UserPlus size={18} />
+                        הוסף לחברים
+                      </button>
+                      <button className="profile-btn secondary">
+                        <MessageCircle size={18} />
+                        שלח הודעה
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -282,13 +330,13 @@ const Profile = () => {
                   פרטים אישיים
                 </h2>
 
-                {user.bio && (
+                {displayUser.bio && (
                   <div className="mb-4">
                     <p className="profile-bio">
-                      {showFullBio || user.bio.length <= 100
-                        ? user.bio
-                        : `${user.bio.substring(0, 100)}...`}
-                      {user.bio.length > 100 && (
+                      {showFullBio || displayUser.bio.length <= 100
+                        ? displayUser.bio
+                        : `${displayUser.bio.substring(0, 100)}...`}
+                      {displayUser.bio.length > 100 && (
                         <button
                           onClick={() => setShowFullBio(!showFullBio)}
                           className="bio-toggle-btn"
@@ -301,24 +349,26 @@ const Profile = () => {
                 )}
 
                 <div className="space-y-3">
-                  {user.location && (
+                  {displayUser.location && (
                     <div className="profile-info-item">
                       <MapPin size={18} className="profile-info-icon" />
-                      <span>מתגורר ב{user.location}</span>
+                      <span>מתגורר ב{displayUser.location}</span>
                     </div>
                   )}
 
-                  {user.email && (
+                  {/* הצגת אימייל רק למשתמש עצמו */}
+                  {isOwnProfile && displayUser.email && (
                     <div className="profile-info-item">
                       <Mail size={18} className="profile-info-icon" />
-                      <span>{user.email}</span>
+                      <span>{displayUser.email}</span>
                     </div>
                   )}
 
-                  {user.phone && (
+                  {/* הצגת טלפון רק למשתמש עצמו */}
+                  {isOwnProfile && displayUser.phone && (
                     <div className="profile-info-item">
                       <Phone size={18} className="profile-info-icon" />
-                      <span>{formatPhoneNumber(user.phone)}</span>
+                      <span>{formatPhoneNumber(displayUser.phone)}</span>
                     </div>
                   )}
 
@@ -326,7 +376,9 @@ const Profile = () => {
                     <Calendar size={18} className="profile-info-icon" />
                     <span>
                       הצטרף בתאריך{" "}
-                      {new Date(user.createdAt).toLocaleDateString("he-IL")}
+                      {new Date(displayUser.createdAt).toLocaleDateString(
+                        "he-IL"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -345,11 +397,13 @@ const Profile = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold">קבוצת הלב</h3>
-                    <p className="opacity-90 text-sm">{user.favoriteTeam}</p>
+                    <p className="opacity-90 text-sm">
+                      {displayUser.favoriteTeam}
+                    </p>
                     {getTeamData().badge && (
                       <img
                         src={getTeamData().badge}
-                        alt={user.favoriteTeam}
+                        alt={displayUser.favoriteTeam}
                         className="w-8 h-8 mt-2 rounded object-cover"
                       />
                     )}
@@ -362,23 +416,25 @@ const Profile = () => {
                 <h2>פרטים נוספים</h2>
 
                 <div className="space-y-3">
-                  {user.gender && (
+                  {displayUser.gender && (
                     <div className="profile-info-item">
                       <span className="w-5 h-5 flex-shrink-0 text-gray-500">
                         👤
                       </span>
-                      <span>{user.gender}</span>
+                      <span>{displayUser.gender}</span>
                     </div>
                   )}
 
-                  {user.birthDate && (
+                  {displayUser.birthDate && (
                     <div className="profile-info-item">
                       <span className="w-5 h-5 flex-shrink-0 text-gray-500">
                         🎂
                       </span>
                       <span>
                         נולד ב-
-                        {new Date(user.birthDate).toLocaleDateString("he-IL")}
+                        {new Date(displayUser.birthDate).toLocaleDateString(
+                          "he-IL"
+                        )}
                       </span>
                     </div>
                   )}
@@ -391,25 +447,33 @@ const Profile = () => {
               <div className="profile-posts">
                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                   <Award size={24} />
-                  הפוסטים שלי ({userPosts.length})
+                  {isOwnProfile
+                    ? `הפוסטים שלי (${userPosts.length})`
+                    : `פוסטים (${userPosts.length})`}
                 </h2>
 
                 {userPosts.length === 0 ? (
                   <div className="profile-empty-posts">
                     <div className="profile-empty-icon">📝</div>
                     <h3 className="text-lg font-semibold mb-2">
-                      עדיין לא פרסמת פוסטים
+                      {isOwnProfile
+                        ? "עדיין לא פרסמת פוסטים"
+                        : "המשתמש עדיין לא פרסם פוסטים"}
                     </h3>
-                    <p className="text-gray-500 mb-4">
-                      החל לשתף את המחשבות שלך על הכדורגל!
-                    </p>
-                    <button
-                      className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity"
-                      style={{ backgroundColor: colors.primary }}
-                      onClick={() => (window.location.href = "/home")}
-                    >
-                      צור פוסט ראשון
-                    </button>
+                    {isOwnProfile && (
+                      <>
+                        <p className="text-gray-500 mb-4">
+                          החל לשתף את המחשבות שלך על הכדורגל!
+                        </p>
+                        <button
+                          className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                          style={{ backgroundColor: colors.primary }}
+                          onClick={() => (window.location.href = "/home")}
+                        >
+                          צור פוסט ראשון
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <PostList

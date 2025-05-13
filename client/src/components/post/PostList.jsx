@@ -45,7 +45,6 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
 
       const res = await axios.get(url);
 
-      console.log("res.data:", res.data);
       if (pageNum === 1) {
         setPosts(res.data.posts || res.data); // תמיכה בשתי התבניות
       } else {
@@ -159,7 +158,7 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
 
   if (error) return <p>{error}</p>;
   if (!posts || posts.length === 0) return <p>אין עדיין פוסטים.</p>;
-  console.log("POSTS:", posts);
+
   return (
     <>
       <div className="post-list">

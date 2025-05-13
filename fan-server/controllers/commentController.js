@@ -172,6 +172,16 @@ const toggleLikeComment = async (req, res) => {
   }
 };
 
+const getCommentCountByPost = async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const count = await Comment.countDocuments({ postId });
+    res.status(200).json({ count });
+  } catch (err) {
+    res.status(500).json({ message: "Error counting comments" });
+  }
+};
+
 module.exports = {
   createComment,
   getCommentsByPost,
@@ -179,4 +189,5 @@ module.exports = {
   updateComment,
   deleteComment,
   toggleLikeComment,
+  getCommentCountByPost,
 };

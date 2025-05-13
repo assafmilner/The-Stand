@@ -4,8 +4,10 @@ import axios from "axios";
 import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "./LikeModal";
 import CommentsList from "../comment/CommentsList";
+import { useNavigate } from "react-router-dom";
 
 const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
+  const navigate = useNavigate();
   const isOwner = currentUser?.email === post.authorId.email;
   const currentUserId = currentUser?._id;
   const name = post.authorId.name || "משתמש";
@@ -34,7 +36,31 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
   const [likeDetails, setLikeDetails] = useState([]);
   const [showLikeModal, setShowLikeModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [commentCount, setCommentCount] = useState(post.commentsCount || 0);
+  const [commentCount, setCommentCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(
+          `http://localhost:3001/api/comments/count/${post._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setCommentCount(res.data.count);
+      } catch (err) {
+        console.error("שגיאה בטעינת מספר תגובות:", err);
+        setCommentCount(0);
+      }
+    };
+
+    fetchCommentCount();
+  }, [post._id]);
+  // נשאיר רק טיפול בלייקים
 
   useEffect(() => {
     const hasDetails =
@@ -143,7 +169,15 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
         </div>
 
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: "600", fontSize: "1rem", color: "#333" }}>
+          <div
+            style={{
+              fontWeight: "600",
+              fontSize: "1rem",
+              color: "#333",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate(`/profile/${post.authorId._id}`)}
+          >
             {name}
           </div>
           <div style={{ fontSize: "0.85rem", color: "#777" }}>
@@ -185,7 +219,6 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
       {post.media.length > 0 && (
         <div style={{ marginTop: "12px", paddingInline: "16px" }}>
           {post.media.map((url, i) => {
-            // בדיקה אם זה סרטון או תמונה על בסיס הסיומת או הURL
             const isVideo =
               url.includes("video/") ||
               url.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|3gp|m4v)$/i);
@@ -200,9 +233,8 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
                   borderRadius: "12px",
                   maxHeight: "500px",
                 }}
-                preload="metadata" // טעינה חכמה
-                playsInline // נגינה בתוך הדף במובייל
-                // הוספת poster (תמונה מקדימה) אוטומטי מCloudinary
+                preload="metadata"
+                playsInline
                 poster={url.replace(/\.[^/.]+$/, ".jpg")}
               >
                 הדפדפן שלך לא תומך בתגית וידאו.
@@ -312,8 +344,6 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
           currentUserId={currentUserId}
           currentUser={currentUser}
           onCountUpdate={setCommentCount}
-          initialComments={post.comments}
-          initialCommentsCount={post.commentsCount}
         />
       )}
 

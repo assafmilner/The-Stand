@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { ThumbsUp } from "lucide-react";
 import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "../post/LikeModal";
+import { useNavigate } from "react-router-dom";
 
 const Comment = ({ comment, currentUserId, onLike, onDelete, onReply }) => {
-  // כל הHooks חייבים להיות למעלה, לפני כל early return
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showLikeModal, setShowLikeModal] = useState(false);
@@ -33,7 +34,6 @@ const Comment = ({ comment, currentUserId, onLike, onDelete, onReply }) => {
     }
   }, [comment, currentUserId]);
 
-  // רק עכשיו אפשר לעשות early returns
   if (!comment) {
     return null;
   }
@@ -97,7 +97,10 @@ const Comment = ({ comment, currentUserId, onLike, onDelete, onReply }) => {
         />
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm text-gray-800">
+            <span
+              className="font-semibold text-sm text-gray-800 cursor-pointer hover:underline"
+              onClick={() => navigate(`/profile/${authorId._id}`)}
+            >
               {authorId?.name || "משתמש"}
             </span>
           </div>
