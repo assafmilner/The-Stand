@@ -1,0 +1,27 @@
+# Root node_modules
+/node_modules
+
+# Client node_modules
+/client/node_modules
+
+# Server node_modules
+/fan-server/node_modules
+
+# All other node_modules
+**/node_modules
+
+# Environment files
+.env
+*.env
+
+# Logs
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

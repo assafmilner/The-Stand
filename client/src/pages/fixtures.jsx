@@ -8,16 +8,18 @@ import teamNameMap from "../utils/teams-hebrew";
 import teamColors from "../utils/teamStyles";
 
 // אייקונים
-import { Calendar, Clock, Landmark } from "lucide-react";
+import { Calendar, Clock, Landmark, RefreshCw } from "lucide-react";
 
 function Fixtures() {
   const { user } = useUser();
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState(null);
+  const [error, setError] = useState(null);
+  const [fetchingProgress, setFetchingProgress] = useState("");
   const matchRefs = useRef({});
 
-  const [regularSeasonEndDate, setRegularSeasonEndDate] = useState(null); // 🆕 תאריך סיום עונה רגילה
+  const [regularSeasonEndDate, setRegularSeasonEndDate] = useState(null);
 
   // מיפוי הפוך: מעברית -> אנגלית
   const reverseTeamMap = Object.entries(teamNameMap).reduce(
@@ -30,46 +32,74 @@ function Fixtures() {
   const favoriteTeamEnglish = reverseTeamMap[user?.favoriteTeam];
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
-  useEffect(() => {
-    async function loadFixtures() {
-      try {
-        if (!user?.favoriteTeam) return;
+  const loadFixtures = async (forceRefresh = false) => {
+    setError(null);
+    setLoading(true);
+    setFetchingProgress("מזהה ליגה...");
 
-        const seasonId = await detectLeague(user.favoriteTeam);
-
-        if (!seasonId) {
-          console.error("לא הצלחנו לזהות את הליגה.");
-          return;
-        }
-
-        const leagueType = seasonId === 4644 ? "ligat-haal" : "leumit";
-        setLeague(leagueType);
-
-        const data = await fetchFixtures(seasonId);
-
-        if (Array.isArray(data)) {
-          setFixtures(data);
-
-          // 🆕 חישוב תאריך סיום עונה רגילה
-          const maxRound = leagueType === "ligat-haal" ? 26 : 30;
-          const lastRegularMatch = data
-            .filter((match) => match.round === maxRound)
-            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-
-          if (lastRegularMatch) {
-            setRegularSeasonEndDate(new Date(lastRegularMatch.date));
-          }
-        } else {
-          setFixtures([]);
-        }
-      } catch (error) {
-        console.error("שגיאה בטעינת מחזורים:", error);
-      } finally {
-        setLoading(false);
+    try {
+      if (!user?.favoriteTeam) {
+        setError("לא נבחרה קבוצה מועדפת");
+        return;
       }
-    }
 
-    loadFixtures();
+      const seasonId = await detectLeague(user.favoriteTeam);
+
+      if (!seasonId) {
+        setError("לא ניתן לזהות את הליגה של הקבוצה");
+        return;
+      }
+
+      const leagueType = seasonId === 4644 ? "ligat-haal" : "leumit";
+      setLeague(leagueType);
+
+      console.log(
+        `זוהתה ליגה: ${
+          leagueType === "ligat-haal" ? "ליגת העל" : "ליגה לאומית"
+        }`
+      );
+
+      setFetchingProgress("טוען משחקים...");
+
+      // אם זה refresh, נוקו את ה-cache
+      if (forceRefresh) {
+        const cacheKey = `fixtures_${seasonId}_2024-2025`;
+        localStorage.removeItem(cacheKey);
+      }
+
+      const data = await fetchFixtures(seasonId);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setFixtures(data);
+        console.log(`נטענו ${data.length} משחקים`);
+
+        // חישוב תאריך סיום עונה רגילה
+        const maxRound = leagueType === "ligat-haal" ? 26 : 30;
+        const lastRegularMatch = data
+          .filter((match) => match.round === maxRound)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+        if (lastRegularMatch) {
+          setRegularSeasonEndDate(new Date(lastRegularMatch.date));
+        }
+      } else {
+        setError("לא נמצאו משחקים לעונה הנוכחית");
+        setFixtures([]);
+      }
+    } catch (error) {
+      console.error("שגיאה בטעינת מחזורים:", error);
+      setError(`שגיאה בטעינת המשחקים: ${error.message}`);
+      setFixtures([]);
+    } finally {
+      setLoading(false);
+      setFetchingProgress("");
+    }
+  };
+
+  useEffect(() => {
+    if (user?.favoriteTeam) {
+      loadFixtures();
+    }
   }, [user?.favoriteTeam]);
 
   useEffect(() => {
@@ -87,7 +117,9 @@ function Fixtures() {
       const element = matchRefs.current[closestMatch.id];
 
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" }); // גלילה חלקה
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 1000);
       }
     }
   }, [fixtures]);
@@ -95,7 +127,35 @@ function Fixtures() {
   if (loading) {
     return (
       <Layout>
-        <div>טוען מחזורים...</div>
+        <div className="fixtures-container dashboard-card">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-6">טוען משחקים...</h2>
+            {fetchingProgress && (
+              <p className="text-lg text-gray-600 mb-4">{fetchingProgress}</p>
+            )}
+            <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="fixtures-container dashboard-card">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-6">שגיאה</h2>
+            <p className="text-red-500 mb-4">{error}</p>
+            <button
+              onClick={() => loadFixtures(true)}
+              className="bg-black text-white px-4 py-2 rounded  transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCw size={20} />
+              נסה שוב
+            </button>
+          </div>
+        </div>
       </Layout>
     );
   }
@@ -103,14 +163,25 @@ function Fixtures() {
   if (!fixtures.length) {
     return (
       <Layout>
-        <div>לא נמצאו מחזורים להצגה.</div>
+        <div className="fixtures-container dashboard-card">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-6">אין משחקים</h2>
+            <p className="text-gray-600 mb-4">לא נמצאו משחקים לקבוצה שלך</p>
+            <button
+              onClick={() => loadFixtures(true)}
+              className="bg-black text-white px-4 py-2 rounded  transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCw size={20} />
+              רענן
+            </button>
+          </div>
+        </div>
       </Layout>
     );
   }
 
-  // 🛠️ בניית מיפוי לפי מחזור
+  // בניית מיפוי לפי מחזור
   const roundsMap = {};
-
   fixtures.forEach((match) => {
     const round = match.round;
     if (!roundsMap[round]) {
@@ -131,9 +202,8 @@ function Fixtures() {
 
   // מיפוי של הפלייאוף לפי match.round אמיתי
   const playoffRounds = {};
-
   playoffFixtures.forEach((match) => {
-    const playoffRound = match.round; // שים לב - לא אינדקס! אלא המספר של המחזור
+    const playoffRound = match.round;
     if (!playoffRounds[playoffRound]) {
       playoffRounds[playoffRound] = [];
     }
@@ -142,10 +212,18 @@ function Fixtures() {
 
   return (
     <Layout>
-      <div className="fixtures-container dashboard-card ">
-        <h2 className="text-center text-4xl font-bold mb-6">
-          כל המשחקים הקרובים
-        </h2>
+      <div className="fixtures-container dashboard-card">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-4xl font-bold">כל המשחקים הקרובים</h2>
+          <button
+            onClick={() => loadFixtures(true)}
+            className=" text-white px-4 py-2 rounded bg-black transition-colors inline-flex items-center gap-2"
+            title="רענן משחקים"
+          >
+            <RefreshCw size={20} />
+            רענן
+          </button>
+        </div>
 
         {/* עונה רגילה */}
         {Object.keys(roundsMap)
@@ -153,7 +231,9 @@ function Fixtures() {
           .filter((round) => {
             const matchesInRound = roundsMap[round];
 
-            // 🆕 לבדוק אם יש לפחות משחק אחד שהתרחש לפני תאריך סיום העונה
+            // לבדוק אם יש לפחות משחק אחד שהתרחש לפני תאריך סיום העונה
+            if (!regularSeasonEndDate) return true; // אם אין תאריך סיום, הצג הכל
+
             const hasRegularSeasonMatch = matchesInRound.some(
               (match) => new Date(match.date) <= regularSeasonEndDate
             );
@@ -171,11 +251,11 @@ function Fixtures() {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* 🆕 מציגים רק משחקים שלפני תאריך סיום העונה */}
                 {roundsMap[round]
-                  .filter(
-                    (match) => new Date(match.date) <= regularSeasonEndDate
-                  )
+                  .filter((match) => {
+                    if (!regularSeasonEndDate) return true;
+                    return new Date(match.date) <= regularSeasonEndDate;
+                  })
                   .map((match) => {
                     const isFavoriteMatch =
                       match.homeTeam === favoriteTeamEnglish ||
@@ -185,7 +265,7 @@ function Fixtures() {
                       <div
                         ref={(el) => (matchRefs.current[match.id] = el)}
                         key={match.id}
-                        className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center relative"
+                        className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center relative transition-all hover:shadow-lg"
                         style={{
                           backgroundColor: "var(--card-bg)",
                           border: "1px solid var(--border-color)",
@@ -272,7 +352,7 @@ function Fixtures() {
                     <div
                       key={match.id}
                       ref={(el) => (matchRefs.current[match.id] = el)}
-                      className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center relative"
+                      className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center relative transition-all hover:shadow-lg"
                       style={{
                         backgroundColor: "var(--card-bg)",
                         border: "1px solid var(--border-color)",

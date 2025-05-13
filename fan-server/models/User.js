@@ -43,6 +43,11 @@ const UserSchema = new mongoose.Schema({
     default:"http://localhost:3001/assets/defaultProfilePic.png", 
   },
 
+  coverImage: {  
+    type: String,
+    default: null,
+  },
+
   phone: {
     type: String,
   },
@@ -65,6 +70,14 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
  },
+
+ isEmailVerified: {
+  type: Boolean,
+  default: false
+},
+
+emailVerificationToken: String,
+emailVerificationTokenExpires: Date,
 
 
 }, { timestamps: true }

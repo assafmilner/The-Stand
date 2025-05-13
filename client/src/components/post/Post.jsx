@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { ThumbsUp, MessageCircle } from "lucide-react";
 import axios from "axios";
+import formatTimeAgo from "../../utils/formatTimeAgo";
 import LikeModal from "./LikeModal";
 import CommentsList from "../comment/CommentsList";
-import { groupBy } from "lodash";
-import FriendActionButton from "../friendsComponents/FriendActionButton";
+import { useNavigate } from "react-router-dom";
 
 const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
+  const navigate = useNavigate();
   const isOwner = currentUser?.email === post.authorId.email;
   const currentUserId = currentUser?._id;
   const targetUserId = post.authorId?._id;
   const name = post.authorId.name || "משתמש";
   const profileImage = post.authorId.profilePicture;
-  const createdAt = new Date(post.createdAt).toLocaleString("he-IL");
+
+  let createdAt;
+  try {
+    if (post.createdAt) {
+      const date = new Date(post.createdAt);
+      if (isNaN(date.getTime())) {
+        createdAt = "תאריך לא תקין";
+      } else {
+        createdAt = date.toLocaleString("he-IL");
+      }
+    } else {
+      createdAt = "אין תאריך";
+    }
+  } catch (error) {
+    console.error("Error parsing date:", error);
+    createdAt = "תאריך לא תקין";
+  }
 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
@@ -20,6 +37,29 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
   const [showLikeModal, setShowLikeModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(
+          `http://localhost:3001/api/comments/count/${post._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setCommentCount(res.data.count);
+      } catch (err) {
+        console.error("שגיאה בטעינת מספר תגובות:", err);
+        setCommentCount(0);
+      }
+    };
+
+    fetchCommentCount();
+  }, [post._id]);
 
   useEffect(() => {
     const hasDetails =
@@ -84,34 +124,6 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchCommentCount = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        const res = await axios.get(
-          `http://localhost:3001/api/comments/post/${post._id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const grouped = groupBy(res.data, (c) => c.parentCommentId || "root");
-        const total =
-          (grouped.root?.length || 0) +
-          Object.entries(grouped)
-            .filter(([key]) => key !== "root")
-            .reduce((sum, [_, replies]) => sum + replies.length, 0);
-
-        setCommentCount(total);
-      } catch (err) {
-        console.error("שגיאה בטעינת תגובות:", err);
-      }
-    };
-
-    fetchCommentCount();
-  }, [post._id]);
-
   return (
     <div
       style={{
@@ -155,33 +167,21 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
         </div>
 
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: "600", fontSize: "1rem", color: "#333" }}>
+          <div
+            style={{
+              fontWeight: "600",
+              fontSize: "1rem",
+              color: "#333",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate(`/profile/${post.authorId._id}`)}
+          >
             {name}
           </div>
-          <div style={{ fontSize: "0.85rem", color: "#777" }}>{createdAt}</div>
-        </div>
-
-        {!isOwner && currentUserId && targetUserId && (
-          <FriendActionButton currentUserId={currentUserId} targetUserId={targetUserId} />
-        )}
-
-        {isOwner && (
-          <div style={{ display: "flex", gap: "6px" }}>
-            <button style={buttonStyle} onClick={() => onEdit(post)}>
-              ערוך
-            </button>
-            <button
-              style={{
-                ...buttonStyle,
-                backgroundColor: "#eee",
-                color: "#f44336",
-              }}
-              onClick={() => onDelete(post._id)}
-            >
-              מחק
-            </button>
+          <div style={{ fontSize: "0.85rem", color: "#777" }}>
+            {formatTimeAgo(post.createdAt)}
           </div>
-        )}
+        </div>
       </div>
 
       <div
@@ -198,19 +198,41 @@ const Post = ({ post, currentUser, onDelete, onEdit, colors }) => {
 
       {post.media.length > 0 && (
         <div style={{ marginTop: "12px", paddingInline: "16px" }}>
-          {post.media.map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              alt={`media-${i}`}
-              style={{
-                width: "100%",
-                borderRadius: "12px",
-                objectFit: "cover",
-                maxHeight: "500px",
-              }}
-            />
-          ))}
+          {post.media.map((url, i) => {
+            const isVideo =
+              url.includes("video/") ||
+              url.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|3gp|m4v)$/i);
+
+            return isVideo ? (
+              <video
+                key={i}
+                src={url}
+                controls
+                style={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  maxHeight: "500px",
+                }}
+                preload="metadata"
+                playsInline
+                poster={url.replace(/\.[^/.]+$/, ".jpg")}
+              >
+                הדפדפן שלך לא תומך בתגית וידאו.
+              </video>
+            ) : (
+              <img
+                key={i}
+                src={url}
+                alt={`media-${i}`}
+                style={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  objectFit: "cover",
+                  maxHeight: "500px",
+                }}
+              />
+            );
+          })}
         </div>
       )}
 

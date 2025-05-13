@@ -1,4 +1,4 @@
-import { User, Calendar, Bell, Settings, LogOut } from "lucide-react";
+import { User, Calendar, Bell, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const RightSidebar = ({ user, colors, onLogout }) => {
@@ -21,7 +21,7 @@ const RightSidebar = ({ user, colors, onLogout }) => {
             className="nav-item flex items-center gap-2"
             onClick={() => navigate("/home")}
           >
-            <User size={18} /> דף הבית
+            <Home size={18} /> דף הבית
           </li>
           <li
             className="nav-item flex items-center gap-2"
@@ -32,8 +32,11 @@ const RightSidebar = ({ user, colors, onLogout }) => {
           <li className="nav-item flex items-center gap-2">
             <Bell size={18} /> התראות
           </li>
-          <li className="nav-item flex items-center gap-2">
-            <Settings size={18} /> פרופיל
+          <li
+            className="nav-item flex items-center gap-2"
+            onClick={() => navigate("/profile")}
+          >
+            <User size={18} /> פרופיל
           </li>
           <li
             className="nav-item flex items-center gap-2 text-red-600"
@@ -43,23 +46,6 @@ const RightSidebar = ({ user, colors, onLogout }) => {
           </li>
         </ul>
       </nav>
-
-      <section
-        className="dashboard-card group-info"
-        style={{
-          marginBottom: "1.5rem",
-          borderTop: `4px solid ${colors.primary}`,
-        }}
-      >
-        <h3 className="card-title">הקבוצה שלך: {user?.favoriteTeam}</h3>
-        <p className="group-desc">זו הקבוצה שאתה עוקב אחריה בברירת מחדל.</p>
-        <button
-          className="join-group-button"
-          onClick={() => alert("בעתיד: דיאלוג בחירת קבוצה")}
-        >
-          שנה קבוצה
-        </button>
-      </section>
     </aside>
   );
 };

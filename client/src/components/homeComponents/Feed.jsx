@@ -8,7 +8,6 @@ function Feed({ colors, communityId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // שליפת פוסטים לפי קהילה (או כלליים)
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -16,7 +15,9 @@ function Feed({ colors, communityId }) {
           ? `http://localhost:3001/api/posts?communityId=${communityId}`
           : `http://localhost:3001/api/posts`;
         const res = await axios.get(url);
-        setPosts(res.data);
+
+        // התמודדות עם התגובה החדשה
+        setPosts(res.data.posts || res.data);
       } catch (err) {
         setError("בעיה בטעינת פוסטים");
       } finally {
@@ -28,7 +29,6 @@ function Feed({ colors, communityId }) {
   }, [communityId]);
 
   const handlePostCreated = (newPost) => {
-    // מוסיף את הפוסט החדש לראש הרשימה
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
@@ -37,7 +37,6 @@ function Feed({ colors, communityId }) {
 
   return (
     <section>
-      {/* תיבת יצירת פוסט */}
       <div
         className="dashboard-card post-box"
         style={{
@@ -54,8 +53,6 @@ function Feed({ colors, communityId }) {
       >
         <CreatePost colors={colors} onPostCreated={handlePostCreated} />
       </div>
-
-      {/* תצוגת הפוסטים */}
 
       <PostList posts={posts} colors={colors} />
     </section>
