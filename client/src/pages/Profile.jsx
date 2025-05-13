@@ -19,6 +19,8 @@ import { useUser } from "../components/context/UserContext";
 import PostList from "../components/post/PostList";
 import teamColors from "../utils/teamStyles";
 import teamNameMap from "../utils/teams-hebrew";
+import CropModal from "../components/profile/CropModal";
+import getCroppedImg from "../utils/cropImage";
 import "../index.css";
 
 const Profile = () => {
@@ -32,6 +34,8 @@ const Profile = () => {
   const [showFullBio, setShowFullBio] = useState(false);
   const [friendsCount, setFriendsCount] = useState(0);
   const coverInputRef = useRef(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
 
   // בדיקה אם זה הפרופיל של המשתמש הנוכחי או של מישהו אחר
   const isOwnProfile = !userId || userId === currentUser?._id;
@@ -94,27 +98,34 @@ const Profile = () => {
     }
   }, [currentUser, userId, isOwnProfile, profileUser]);
 
-  const handleCoverUpload = async (event) => {
-    // רק המשתמש עצמו יכול לעלות תמונת קאבר
+  const handleCoverUpload = (event) => {
     if (!isOwnProfile) return;
 
     const file = event.target.files[0];
     if (!file) return;
 
-    // בדיקת גודל קובץ (מקסימום 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert("הקובץ גדול מדי. גודל מקסימלי: 5MB");
       return;
     }
 
-    // בדיקת סוג קובץ
     if (!file.type.startsWith("image/")) {
       alert("אנא בחר קובץ תמונה בלבד");
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result); // מציג למשתמש את התמונה בתוך CropModal
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // בפונקציית onCropComplete של CropModal:
+  const uploadCroppedImage = async (croppedBlob) => {
     const formData = new FormData();
-    formData.append("coverImage", file);
+    formData.append("coverImage", croppedBlob);
 
     setUploading(true);
     try {
@@ -137,6 +148,7 @@ const Profile = () => {
       alert("שגיאה בהעלאת תמונת קאבר");
     } finally {
       setUploading(false);
+      setCropModalOpen(false);
     }
   };
 
@@ -222,6 +234,13 @@ const Profile = () => {
               accept="image/*"
               onChange={handleCoverUpload}
               className="hidden"
+            />
+          )}
+          {cropModalOpen && (
+            <CropModal
+              imageSrc={imageToCrop}
+              onCancel={() => setCropModalOpen(false)}
+              onCropComplete={uploadCroppedImage}
             />
           )}
         </div>

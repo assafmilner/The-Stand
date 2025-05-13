@@ -68,10 +68,8 @@ const storage = new CloudinaryStorage({
         // הגדרות לתמונות
         return [
           { 
-            width: 800, 
-            height: 800, 
-            crop: "limit",
-            quality: "auto",
+
+            quality: "100",
             fetch_format: "auto"
           }
         ];
