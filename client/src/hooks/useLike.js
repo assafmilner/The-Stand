@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import api from "../api";
+import api from "utils/api";
 
 export const useLike = ({ type = "post", id, initialLikes = [], userId }) => {
   const [isLiked, setIsLiked] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import teamsMap from "../../utils/teams-hebrew";
-import api from "../../api";
+import api from "utils/api";
 
 const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
@@ -96,9 +96,17 @@ const CreatePost = ({ onPostCreated, colors }) => {
       {previewUrl && (
         <div className="image-preview" style={{ position: "relative" }}>
           {mediaType === "video" ? (
-            <video src={previewUrl} controls style={{ width: "100%", borderRadius: "12px" }} />
+            <video
+              src={previewUrl}
+              controls
+              style={{ width: "100%", borderRadius: "12px" }}
+            />
           ) : (
-            <img src={previewUrl} alt="preview" style={{ width: "100%", borderRadius: "12px" }} />
+            <img
+              src={previewUrl}
+              alt="preview"
+              style={{ width: "100%", borderRadius: "12px" }}
+            />
           )}
           <button
             type="button"

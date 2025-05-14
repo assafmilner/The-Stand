@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
 import LikeButton from "./LikeButton";
 import LikeModal from "../modal/LikeModal";
-import api from "../../api";
+import api from "utils/api";
 
 const PostActions = ({ postId, likes = [], authorId }) => {
   const [showLikeModal, setShowLikeModal] = useState(false);

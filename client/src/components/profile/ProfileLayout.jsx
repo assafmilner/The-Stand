@@ -1,7 +1,7 @@
 import React from "react";
 import { useUser } from "../../context/UserContext";
 import Header from "../layoutComponents/Header";
-import "../../index.css";
+import "styles/index.css";
 
 const ProfileLayout = ({ children }) => {
   const { user } = useUser();

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import usePosts from "../../hooks/usePosts";
-import { useUser } from "../context/UserContext";
+import { useUser } from "context/UserContext";
 import Post from "./Post";
 import CreatePost from "./CreatePost";
 import PostViewerHandler from "../modal/PostViewerHandler";
-import api from "../../api";
+import api from "utils/api";
+
 
 const PostList = ({ authorId = null, communityId = null }) => {
   const { user } = useUser();

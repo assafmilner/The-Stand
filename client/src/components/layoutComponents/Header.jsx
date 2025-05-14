@@ -2,7 +2,7 @@
 import React from "react";
 import { MessageCircle, Bell, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import "../../index.css";
+import "styles/index.css";
 
 const Header = ({ user }) => {
   const navigate = useNavigate();

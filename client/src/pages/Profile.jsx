@@ -21,7 +21,7 @@ import teamColors from "../utils/teamStyles";
 import teamNameMap from "../utils/teams-hebrew";
 import CropModal from "../components/profile/CropModal";
 import getCroppedImg from "../utils/cropImage";
-import "../index.css";
+import "styles/index.css";
 
 const Profile = () => {
   const { userId } = useParams(); // משיכת userId מה-URL

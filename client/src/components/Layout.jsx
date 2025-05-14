@@ -1,45 +1,39 @@
 import React, { useEffect } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../context/useUserContext";
 import Header from "./layoutComponents/Header";
 import RightSidebar from "./layoutComponents/RightSidebar";
-import teamColors from "../utils/teamStyles";
 import NextFixtures from "./league/NextFixtures";
+import teamColors from "../utils/teamStyles";
+import "../styles/index.css";
 import { useNavigate } from "react-router-dom";
-import "../index.css";
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
   const { user, loading } = useUser();
-  const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
+  const colors = teamColors[user?.favoriteTeam] || {};
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
+    if (colors.primary) {
+      document.documentElement.style.setProperty("--color-primary", colors.primary);
+      document.documentElement.style.setProperty("--color-secondary", colors.secondary);
     }
-  }, [user, loading, navigate]);
+  }, [colors]);
+
+  if (loading) {
+    return <div className="text-center p-4">טוען...</div>;
+  }
 
   return (
-    <div className="home-container">
+    <div className="flex flex-col min-h-screen">
       <Header user={user} />
-
-      <main className="home-main">
-        <div className="dashboard-grid">
-          {/* סרגל צד ימין */}
-          <RightSidebar user={user} colors={colors} />
-
-          {/* אזור תוכן מרכזי */}
-          <section className="centered-content pt-6">{children}</section>
-
-          {/* אזור צד שמאל - ריק */}
-          <aside>
-            <NextFixtures />
-          </aside>
-        </div>
+      <main className="flex flex-1">
+        <RightSidebar />
+        <div className="flex-1 p-4">{children}</div>
+        <aside className="w-64 p-4">
+          <NextFixtures />
+        </aside>
       </main>
-
-      <footer className="home-footer">
-        © 2025 אסף מילנר וליאת מרלי | כל הזכויות שמורות
-      </footer>
+      <footer className="text-center py-4">© 2025 Matchday | כל הזכויות שמורות</footer>
     </div>
   );
 };

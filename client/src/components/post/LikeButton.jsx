@@ -1,7 +1,7 @@
 import React from "react";
 import { Heart, HeartOff } from "lucide-react";
 import { useLike } from "../../hooks/useLike";
-import { useUser } from "../context/UserContext";
+import { useUser } from "context/UserContext";
 
 const LikeButton = ({ postId, likes = [] }) => {
   const { user } = useUser();

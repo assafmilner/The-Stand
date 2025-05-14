@@ -1,6 +1,6 @@
 // FILE: client/src/components/modal/EditPostModal.jsx
 import React, { useState, useEffect } from "react";
-import "../../index.css";
+import "styles/index.css";
 
 const EditPostModal = ({ post, onSave, onCancel }) => {
   const [newContent, setNewContent] = useState(post.content || "");
@@ -56,24 +56,38 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
         />
 
         {previewUrl && (
-          <div className="image-preview" style={{ marginTop: "0.5rem", position: "relative" }}>
+          <div
+            className="image-preview"
+            style={{ marginTop: "0.5rem", position: "relative" }}
+          >
             {mediaType === "video" ? (
               <video src={previewUrl} controls style={{ width: "100%" }} />
             ) : (
               <img src={previewUrl} alt="preview" style={{ width: "100%" }} />
             )}
-            <button onClick={handleRemoveMedia} className="modal-remove-media">✕</button>
+            <button onClick={handleRemoveMedia} className="modal-remove-media">
+              ✕
+            </button>
           </div>
         )}
 
         <label className="upload-button">
           📷🎥 העלה מדיה
-          <input type="file" hidden accept="image/*,video/*" onChange={handleFileChange} />
+          <input
+            type="file"
+            hidden
+            accept="image/*,video/*"
+            onChange={handleFileChange}
+          />
         </label>
 
         <div className="modal-buttons">
-          <button className="modal-cancel" onClick={onCancel}>ביטול</button>
-          <button className="modal-save" onClick={handleSave}>שמור</button>
+          <button className="modal-cancel" onClick={onCancel}>
+            ביטול
+          </button>
+          <button className="modal-save" onClick={handleSave}>
+            שמור
+          </button>
         </div>
       </div>
     </div>

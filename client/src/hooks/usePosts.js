@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import api from "../api"; // זה הקובץ שמכיל את axios instance שלך
+import api from "utils/api";
 
 const DEFAULT_LIMIT = 20;
 
