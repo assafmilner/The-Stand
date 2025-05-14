@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import ProfileLayout from "../components/profile/ProfileLayout";
-import { useUser } from "../components/context/UserContext";
+import { useUser } from "../context/UserContext";
 import PostList from "../components/post/PostList";
 import teamColors from "../utils/teamStyles";
 import teamNameMap from "../utils/teams-hebrew";

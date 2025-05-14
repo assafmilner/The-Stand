@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
-import { calculateTable } from "./calculateTable";
+import { calculateTable } from "../homeComponents/calculateTable";
 import { fetchFromApi } from "../../utils/fetchFromApi";
 
 const getLeagueConfig = (league) => {

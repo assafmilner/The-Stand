@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 
 const ProfilePicture = ({ user }) => {
   const { setUser } = useUser();

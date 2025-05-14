@@ -1,4 +1,4 @@
-import { useUser } from "../components/context/UserContext";
+import { useUser } from "../context/UserContext";
 import { useState } from "react";
 import Layout from "../components/Layout"; // ✅ שימוש בלייאאוט
 import Feed from "../components/homeComponents/Feed";

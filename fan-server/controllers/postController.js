@@ -2,24 +2,39 @@ const Post = require("../models/Post");
 const User = require("../models/User");
 
 const getAllPosts = async (req, res) => {
-  const { communityId, authorId } = req.query; // הוספת authorId לשאילתה
-  
-  // בניית המסנן בצורה דינמית
+  const { communityId, authorId, page = 1, limit = 20 } = req.query;
   const filter = {};
   if (communityId) filter.communityId = communityId;
   if (authorId) filter.authorId = authorId;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
 
   try {
     const posts = await Post.find(filter)
       .populate("authorId", "name email profilePicture")
       .populate("likes", "name email profilePicture")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    res.status(200).json(posts);
+    const totalPosts = await Post.countDocuments(filter);
+
+    const hasMore = skip + posts.length < totalPosts;
+
+    res.status(200).json({
+      posts,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalPosts / limit),
+        hasMore,
+        totalPosts,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching posts", error });
   }
 };
+
 
 // שאר הפונקציות נשארות זהות
 const createPost = async (req, res) => {

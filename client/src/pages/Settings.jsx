@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useUser } from "../components/context/UserContext";
+import { useUser } from "../context/UserContext";
 import PersonalInfoTab from "../components/settingsComponents/PersonalInfo";
 import ChangePasswordTab from "../components/settingsComponents/ChangePassword";
 import ProfilePictureTab from "../components/settingsComponents/ProfilePicture";

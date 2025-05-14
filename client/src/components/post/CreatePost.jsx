@@ -1,84 +1,71 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import teamsMap from "../../utils/teams-hebrew";
+import api from "../../api";
 
 const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
   const [content, setContent] = useState("");
   const [mediaFile, setMediaFile] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [mediaType, setMediaType] = useState(""); // "image" או "video"
+  const [mediaType, setMediaType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef();
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setMediaFile(file);
+    if (!file) return;
 
-      // יצירת URL לתצוגה מקדימה
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-
-      // זיהוי סוג הקובץ
-      const fileType = file.type.startsWith("video/") ? "video" : "image";
-      setMediaType(fileType);
-    }
+    setMediaFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setMediaType(file.type.startsWith("video/") ? "video" : "image");
   };
 
   const handleRemoveMedia = () => {
     setMediaFile(null);
     setPreviewUrl("");
     setMediaType("");
-    // ניקוי ה-input
-    const input = document.querySelector('input[type="file"]');
-    if (input) input.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!content.trim() && !mediaFile) return;
+
     setLoading(true);
 
-    const englishTeamName = Object.keys(teamsMap).find(
+    const englishTeam = Object.keys(teamsMap).find(
       (key) => teamsMap[key].name === user.favoriteTeam
     );
-    const communityId = teamsMap[englishTeamName]?.communityId;
+    const communityId = teamsMap[englishTeam]?.communityId;
 
     const formData = new FormData();
     formData.append("authorId", user._id);
     formData.append("communityId", communityId);
     formData.append("content", content);
-    if (mediaFile) {
-      formData.append("image", mediaFile); // ה-field name נשאר "image" לתאימות עם השרת
-    }
+    if (mediaFile) formData.append("image", mediaFile);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/api/posts",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        }
-      );
-      setContent("");
-      setMediaFile(null);
-      setPreviewUrl("");
-      setMediaType("");
+      const { data } = await api.post("/posts", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      if (onPostCreated) {
-        const enrichedPost = {
-          ...res.data,
-          authorId: {
-            _id: user._id,
-            name: user.name,
-            profilePicture: user.profilePicture,
-          },
-        };
-        onPostCreated(enrichedPost);
-      }
-    } catch {
-      alert("Error posting.");
+      const enrichedPost = {
+        ...data,
+        authorId: {
+          _id: user._id,
+          name: user.name,
+          profilePicture: user.profilePicture,
+        },
+      };
+
+      if (onPostCreated) onPostCreated(enrichedPost);
+
+      setContent("");
+      handleRemoveMedia();
+    } catch (err) {
+      console.error("Error posting:", err);
+      alert("שגיאה בפרסום הפוסט");
     } finally {
       setLoading(false);
     }
@@ -106,40 +93,26 @@ const CreatePost = ({ onPostCreated, colors }) => {
         rows={3}
       />
 
-      {/* תצוגה מקדימה של מדיה */}
       {previewUrl && (
-        <div className="image-preview">
+        <div className="image-preview" style={{ position: "relative" }}>
           {mediaType === "video" ? (
-            <video
-              src={previewUrl}
-              controls
-              style={{ maxWidth: "100%", maxHeight: "400px" }}
-            >
-              הדפדפן שלך לא תומך בתגית וידאו.
-            </video>
+            <video src={previewUrl} controls style={{ width: "100%", borderRadius: "12px" }} />
           ) : (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              style={{ maxWidth: "100%", maxHeight: "400px" }}
-            />
+            <img src={previewUrl} alt="preview" style={{ width: "100%", borderRadius: "12px" }} />
           )}
           <button
             type="button"
             onClick={handleRemoveMedia}
             style={{
               position: "absolute",
-              top: "10px",
-              right: "10px",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              top: 10,
+              right: 10,
+              backgroundColor: "#fff",
               border: "none",
               borderRadius: "50%",
-              width: "30px",
-              height: "30px",
+              width: "28px",
+              height: "28px",
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             ✕
@@ -155,6 +128,7 @@ const CreatePost = ({ onPostCreated, colors }) => {
             <input
               type="file"
               hidden
+              ref={fileInputRef}
               onChange={handleMediaChange}
               accept="image/*,video/*"
             />
@@ -163,7 +137,7 @@ const CreatePost = ({ onPostCreated, colors }) => {
             type="submit"
             disabled={loading}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors?.primary || "#f87171",
               color: "white",
               border: "none",
               padding: "0.4rem 1rem",

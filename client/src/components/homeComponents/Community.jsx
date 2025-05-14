@@ -1,4 +1,4 @@
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import teamsMap from "../../utils/teams-hebrew";
 import PostList from "../post/PostList";
 

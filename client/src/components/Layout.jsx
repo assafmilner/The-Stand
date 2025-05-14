@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import { useUser } from "./context/UserContext";
+import { useUser } from "../context/UserContext";
 import Header from "./layoutComponents/Header";
 import RightSidebar from "./layoutComponents/RightSidebar";
 import teamColors from "../utils/teamStyles";
-import NextFixtures from "./layoutComponents/NextFixtures";
+import NextFixtures from "./league/NextFixtures";
 import { useNavigate } from "react-router-dom";
 import "../index.css";
 

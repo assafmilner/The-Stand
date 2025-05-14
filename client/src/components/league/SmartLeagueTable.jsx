@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import { detectLeague } from "../../utils/leagueUtils"; // ⚡ במקום לכתוב מחדש
 import LeagueTable from "./LeagueTable";
 

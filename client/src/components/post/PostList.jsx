@@ -1,101 +1,51 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import axios from "axios";
-import Post from "./Post";
+import React, { useEffect, useRef, useState } from "react";
+import usePosts from "../../hooks/usePosts";
 import { useUser } from "../context/UserContext";
-import EditModal from "../EditModal";
+import Post from "./Post";
+import CreatePost from "./CreatePost";
+import PostViewerHandler from "../modal/PostViewerHandler";
+import api from "../../api";
 
-const PostList = ({ communityId, colors, initialPosts = null }) => {
+const PostList = ({ authorId = null, communityId = null }) => {
   const { user } = useUser();
-  const [posts, setPosts] = useState(initialPosts || []);
-  const [loading, setLoading] = useState(!initialPosts);
-  const [error, setError] = useState("");
-  const [editingPost, setEditingPost] = useState(null);
-  const [page, setPage] = useState(initialPosts ? 2 : 1); // Start from 2 if we have initial posts
-  const [hasMore, setHasMore] = useState(!!communityId);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const observer = useRef();
+  const { posts, loading, error, hasMore, loadMore } = usePosts({
+    authorId,
+    communityId,
+  });
+  const [localPosts, setLocalPosts] = useState([]);
+  const observerRef = useRef();
 
-  // Intersection Observer callback for infinite scroll
-  const lastPostElementRef = useCallback(
-    (node) => {
-      if (loadingMore) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadMorePosts();
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [loadingMore, hasMore]
-  );
-
-  // Load initial posts if not provided
+  // Reset localPosts כאשר משתנים הפילטרים
   useEffect(() => {
-    if (!initialPosts) {
-      fetchPosts();
-    }
-  }, [communityId]);
+    setLocalPosts([]);
+  }, [authorId, communityId]);
 
-  const fetchPosts = async (pageNum = 1) => {
-    try {
-      const url = communityId
-        ? `http://localhost:3001/api/posts?communityId=${communityId}&page=${pageNum}&limit=20`
-        : `http://localhost:3001/api/posts?page=${pageNum}&limit=20`;
-
-      const res = await axios.get(url);
-
-      if (pageNum === 1) {
-        setPosts(res.data.posts || res.data); // תמיכה בשתי התבניות
-      } else {
-        setPosts((prev) => [...prev, ...(res.data.posts || res.data)]);
+  // חיבור ל-Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && hasMore) {
+        loadMore();
       }
+    });
 
-      // אם יש pagination, השתמש בו, אחרת השתמש בברירת מחדל
-      if (res.data.pagination) {
-        setHasMore(res.data.pagination.hasMore);
-      } else {
-        // אם אין pagination, בדוק אם הגיעו פוסטים פחות מהמבוקש
-        setHasMore((res.data.posts || res.data).length === 20);
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.disconnect();
       }
+    };
+  }, [hasMore, loadMore]);
 
-      setPage(pageNum);
-    } catch (err) {
-      console.error("Error loading posts:", err);
-      setError("Error loading posts.");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
+  // פוסט חדש לראש הרשימה
+  const handlePostCreated = (newPost) => {
+    setLocalPosts((prev) => [newPost, ...prev]);
   };
 
-  const loadMorePosts = async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    await fetchPosts(page + 1);
-  };
-
-  const handleDelete = async (postId) => {
-    const confirmed = window.confirm("האם את/ה בטוח/ה שברצונך למחוק את הפוסט?");
-    if (!confirmed) return;
-
-    try {
-      await axios.delete(`http://localhost:3001/api/posts/${postId}`, {
-        withCredentials: true,
-      });
-      setPosts((prev) => prev.filter((p) => p._id !== postId));
-    } catch (err) {
-      alert("שגיאה במחיקת הפוסט.");
-    }
-  };
-
-  const handleEdit = (post) => {
-    setEditingPost(post);
-  };
-
-  const handleUpdate = async ({ content, media, imageFile }) => {
-    if (!editingPost) return;
-
+  // עדכון פוסט קיים (עריכה)
+  const handleEditPost = async (postId, { content, media, imageFile }) => {
     try {
       let updatedPost;
 
@@ -104,23 +54,12 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
         formData.append("content", content);
         formData.append("image", imageFile);
 
-        const res = await axios.put(
-          `http://localhost:3001/api/posts/${editingPost._id}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            withCredentials: true,
-          }
-        );
+        const res = await api.put(`/posts/${postId}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         updatedPost = res.data;
       } else {
-        const res = await axios.put(
-          `http://localhost:3001/api/posts/${editingPost._id}`,
-          { content, media },
-          { withCredentials: true }
-        );
+        const res = await api.put(`/posts/${postId}`, { content, media });
         updatedPost = res.data;
       }
 
@@ -134,88 +73,61 @@ const PostList = ({ communityId, colors, initialPosts = null }) => {
         },
       };
 
-      setPosts((prev) =>
-        prev.map((p) => (p._id === editingPost._id ? enrichedPost : p))
+      setLocalPosts((prev) =>
+        prev.map((p) => (p._id === postId ? enrichedPost : p))
       );
-      setEditingPost(null);
     } catch (err) {
-      console.error("שגיאה בעת עדכון הפוסט:", err);
-      alert("שגיאה בעת עדכון הפוסט");
+      console.error("שגיאה בעדכון פוסט:", err);
+      alert("שגיאה בעדכון פוסט");
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingPost(null);
+  const handleDeletePost = async (postId) => {
+    try {
+      await api.delete(`/posts/${postId}`);
+      setLocalPosts((prev) => prev.filter((p) => p._id !== postId));
+    } catch (err) {
+      console.error("שגיאה במחיקת פוסט:", err);
+      alert("שגיאה במחיקת הפוסט");
+    }
   };
 
-  if (loading)
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>טוען פוסטים...</p>
-      </div>
-    );
-
-  if (error) return <p>{error}</p>;
-  if (!posts || posts.length === 0) return <p>אין עדיין פוסטים.</p>;
+  const combinedPosts = [...localPosts, ...posts];
 
   return (
-    <>
-      <div className="post-list">
-        {posts.map((post, index) => {
-          // Add ref to last post for infinite scroll
-          if (posts.length === index + 1) {
-            return (
-              <div ref={lastPostElementRef} key={post._id}>
-                <Post
-                  post={post}
-                  colors={colors}
-                  currentUser={user}
-                  currentUserId={user?._id}
-                  currentUserEmail={user.email}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                />
-              </div>
-            );
-          } else {
-            return (
-              <Post
-                key={post._id}
-                post={post}
-                colors={colors}
-                currentUser={user}
-                currentUserId={user?._id}
-                currentUserEmail={user.email}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            );
-          }
-        })}
-      </div>
-
-      {loadingMore && (
-        <div className="loading-container" style={{ padding: "20px" }}>
-          <div className="loading-spinner"></div>
-          <p>טוען עוד פוסטים...</p>
+    <div className="post-list">
+      {/* יצירת פוסט */}
+      {!authorId && user && (
+        <div style={{ marginBottom: "1rem" }}>
+          <CreatePost
+            onPostCreated={handlePostCreated}
+            colors={user?.teamColors}
+          />
         </div>
       )}
 
-      {!hasMore && posts.length > 0 && (
-        <div className="text-center text-gray-500 py-8">
-          <p>הגעת לסוף הפוסטים!</p>
-        </div>
-      )}
-
-      {editingPost && (
-        <EditModal
-          post={editingPost}
-          onCancel={handleCancelEdit}
-          onSave={handleUpdate}
+      {/* הצגת פוסטים */}
+      {combinedPosts.map((post) => (
+        <Post
+          key={post._id}
+          post={post}
+          currentUser={user}
+          colors={user?.teamColors}
+          onDelete={handleDeletePost}
         />
+      ))}
+
+      {loading && <p style={{ textAlign: "center" }}>טוען פוסטים...</p>}
+      {!loading && combinedPosts.length === 0 && (
+        <p style={{ textAlign: "center" }}>אין פוסטים להצגה</p>
       )}
-    </>
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+
+      <div ref={observerRef} style={{ height: 1 }} />
+
+      {/* הצגת מודאל עריכה בעת הצורך */}
+      <PostViewerHandler onEditPost={handleEditPost} />
+    </div>
   );
 };
 

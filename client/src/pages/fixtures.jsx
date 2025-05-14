@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
-import { useUser } from "../components/context/UserContext";
+import { useUser } from "../context/UserContext";
 import { fetchFixtures } from "../utils/fetchFixtures";
 import { detectLeague } from "../utils/leagueUtils";
 import stadiums from "../utils/stadiums";
