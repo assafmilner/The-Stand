@@ -18,25 +18,23 @@ api.interceptors.request.use(
 );
 
 // ✅ טיפול גלובלי בשגיאות
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status;
-
-    if (status === 401) {
-      // לא מחובר → נעבור לעמוד login
-      console.warn("Unauthorized – redirecting to /login");
-      window.location.href = "/login";
+axios.interceptors.response.use(
+    res => res,
+    err => {
+      const { config, response } = err;
+  
+      // אם זו קריאה ל־login או ל־verify-email או ל־resend-verification – תן ל־catch המקומי לטפל
+      if (
+        response?.status === 401 &&
+        config.url !== "/api/auth/login" &&
+        config.url !== "/api/auth/verify-email" &&
+        config.url !== "/api/auth/resend-verification"
+      ) {
+        window.location = "/login";
+      }
+  
+      return Promise.reject(err);
     }
-
-    if (status === 404) {
-      // עמוד לא נמצא → נעבור לעמוד שגיאה
-      console.warn("Resource not found – redirecting to /not-found");
-      window.location.href = "/not-found";
-    }
-
-    return Promise.reject(error);
-  }
-);
+  );
 
 export default api;

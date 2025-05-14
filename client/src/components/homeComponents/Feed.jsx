@@ -3,7 +3,7 @@ import axios from "axios";
 import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
 
-function Feed({ colors, communityId }) {
+function Feed({ colors, communityId, user }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,7 +54,7 @@ function Feed({ colors, communityId }) {
         <CreatePost colors={colors} onPostCreated={handlePostCreated} />
       </div>
 
-      <PostList posts={posts} colors={colors} />
+      <PostList posts={posts} colors={colors}  currentUser={user}  />
     </section>
   );
 }

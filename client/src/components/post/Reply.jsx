@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { useUser } from "../context/UserContext";
-import { useComments } from "../../hooks/useComments";
+import { useUser } from "context/UserContext";
+import useComments from "../../hooks/useComments";
 import LikeButton from "./LikeButton";
 import LikeModal from "../modal/LikeModal";
 import { useLike } from "../../hooks/useLike";
@@ -18,7 +18,7 @@ const Reply = ({ reply, postId, parentCommentId }) => {
     initialLikes: reply.likes || [],
     userId: user._id,
   });
-  
+
   if (!reply?.authorId) return null;
 
   const handleDelete = () => {

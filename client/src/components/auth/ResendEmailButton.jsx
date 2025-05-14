@@ -1,37 +1,32 @@
-import { useState } from "react";
+// src/components/auth/ResendEmailButton.jsx
+import React, { useState } from "react";
 import api from "../../utils/api";
 
+export default function ResendEmailButton({ email }) {
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
-const ResendEmailButton = ({ email }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleResend = async () => {
-    setIsLoading(true);
-    setError("");
-    setSuccess(false);
-
+  const handleResend = async (e) => {
+    e.preventDefault(); // למנוע כל התנהגות ברירת מחדל
+    setStatus("sending");
     try {
       await api.post("/api/auth/resend-verification", { email });
-      setSuccess(true);
-    } catch (err) {
-      console.error("Resend error:", err);
-      setError("שליחת מייל נכשלה.");
-    } finally {
-      setIsLoading(false);
+      setStatus("sent");
+    } catch {
+      setStatus("error");
     }
   };
 
   return (
-    <div className="resend-container">
-      <button onClick={handleResend} disabled={isLoading}>
-        {isLoading ? "שולח..." : "שלח שוב מייל אימות"}
-      </button>
-      {success && <p className="success-message">המייל נשלח בהצלחה!</p>}
-      {error && <p className="form-error">{error}</p>}
-    </div>
+    <button
+      type="button" // <— חיוני!
+      onClick={handleResend}
+      className="form-button mt-2"
+      disabled={status === "sending" || status === "sent"}
+    >
+      {status === "sending" && "שולח..."}
+      {status === "sent" && "נשלח בהצלחה!"}
+      {status === "idle" && "שלח אימות מחדש"}
+      {status === "error" && "שגיאה—נסה שוב"}
+    </button>
   );
-};
-
-export default ResendEmailButton;
+}

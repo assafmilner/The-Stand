@@ -1,11 +1,12 @@
-// components/Header.jsx
+// client/src/components/layoutComponents/Header.jsx
 import React from "react";
 import { MessageCircle, Bell, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import "styles/index.css";
+import "../../styles/index.css";
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
+
   return (
     <header className="top-navbar">
       <div className="navbar-content">
@@ -27,17 +28,14 @@ const Header = ({ user }) => {
         </div>
 
         {/* Search bar */}
-        <div
-          className="navbar-search"
-          style={{ flex: 1, display: "flex", justifyContent: "center" }}
-        >
+        <div className="navbar-search">
           <input type="text" placeholder="חפש אוהדים, קבוצות או פוסטים..." />
         </div>
 
         {/* Logo + avatar */}
         <div className="navbar-logo">
           <span
-            className="logo-text tracking-wide "
+            className="logo-text tracking-wide"
             onClick={() => navigate("/home")}
           >
             היציע

@@ -22,7 +22,7 @@ export default function usePosts({ authorId = null, communityId = null }) {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get("/posts", {
+        const { data } = await api.get("/api/posts", {
           params: {
             page,
             limit: DEFAULT_LIMIT,

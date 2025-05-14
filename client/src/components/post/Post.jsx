@@ -1,4 +1,3 @@
-// FILE: post/Post.jsx
 import React from "react";
 import PostHeader from "./PostHeader";
 import PostContent from "./PostContent";
@@ -10,16 +9,7 @@ const Post = ({ post, currentUser, onDelete, colors }) => {
   const { openPost } = usePostViewer();
 
   return (
-    <div
-      className="post-card"
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "12px",
-        marginBottom: "1rem",
-        padding: "1rem",
-        backgroundColor: "#fff",
-      }}
-    >
+    <div className="post-card">
       <PostHeader
         author={post.authorId}
         createdAt={post.createdAt}
@@ -31,21 +21,16 @@ const Post = ({ post, currentUser, onDelete, colors }) => {
       <PostContent content={post.content} media={post.media} />
 
       <button
+        className="view-post"
         onClick={() => openPost(post._id, post)}
-        style={{
-          marginTop: "0.5rem",
-          background: "transparent",
-          border: "none",
-          color: "#4f46e5",
-          fontSize: "0.85rem",
-          cursor: "pointer",
-        }}
       >
         צפה בפוסט
       </button>
 
       <PostActions
         postId={post._id}
+        likes={post.likes || []}
+        authorId={post.authorId._id}
         currentUser={currentUser}
         colors={colors}
       />

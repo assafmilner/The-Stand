@@ -1,57 +1,110 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import AuthHeader from "./AuthHeader";
-import VerifyEmailMessage from "./VerifyEmailMessage";
+// src/components/auth/VerifyEmail.jsx
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 
-const VerifyEmail = () => {
-  const [searchParams] = useSearchParams();
+export default function VerifyEmail() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState("loading"); // 'loading' | 'success' | 'error'
+  const [error, setError] = useState("");
+  const verificationAttempted = useRef(false);
 
-  const [status, setStatus] = useState("verifying"); // verifying | success | error | invalid
-  const [message, setMessage] = useState("");
+  // שולף את ?token= מה־query string
+  const token = useMemo(
+    () => new URLSearchParams(location.search).get("token"),
+    [location.search]
+  );
 
   useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (!token) {
-      setStatus("invalid");
-      setMessage("לא נמצא טוקן לאימות. נסה לחזור על הקישור במייל.");
-      return;
-    }
-
     const verifyEmail = async () => {
-      try {
-        await api.post("/api/auth/verify-email", { token });
-        setStatus("success");
-      } catch (error) {
-        console.error("Email verification failed:", error);
+      // Prevent multiple calls for same token
+      if (verificationAttempted.current) return;
+      verificationAttempted.current = true;
+
+      if (!token) {
         setStatus("error");
-        setMessage("האימות נכשל או שפג תוקף הקישור.");
+        setError("לא נמצא טוקן לאימות. נסה לחזור על הקישור במייל.");
+        return;
+      }
+
+      try {
+        // שולח GET עם query־param
+        await api.get(`/api/auth/verify-email/${encodeURIComponent(token)}`);
+
+        // הצלחה
+        setStatus("success");
+        // מוחק את הטוקן מה־URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+        // ניווט חזרה ללוגין אחרי 2 שניות
+        setTimeout(() => navigate("/login", { replace: true }), 2000);
+      } catch (err) {
+        console.error("Verification error:", err);
+        const resp = err.response;
+        // special case: כבר אומת בעבר
+        const msg = resp?.data?.message || resp?.data?.error;
+        if (
+          resp?.status === 400 &&
+          (msg === "Token already used" || msg === "Email already verified")
+        ) {
+          setStatus("success");
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+          setTimeout(() => navigate("/login", { replace: true }), 2000);
+          return;
+        }
+
+        // טיפול בשגיאות רגילות
+        setStatus("error");
+        if (resp) {
+          if (resp.status === 400) {
+            setError("הקישור שגוי. אנא בקש קישור אימות חדש.");
+          } else if (resp.status === 401) {
+            setError("פג תוקף הקישור. אנא בקש קישור אימות חדש.");
+          } else {
+            setError(msg || "אירעה שגיאה במהלך האימות.");
+          }
+        } else if (err.request) {
+          setError("השרת אינו מגיב. אנא נסה שוב מאוחר יותר.");
+        } else {
+          setError("אירעה שגיאה לא צפויה. אנא נסה שוב מאוחר יותר.");
+        }
       }
     };
 
     verifyEmail();
-  }, [searchParams]);
+  }, [token, location.search, navigate]);
 
-  return (
-    <div className="auth-container">
-      <div className="form-container">
-        <div className="form-content">
-          <AuthHeader
-            title="אימות אימייל"
-            subtitle={
-              status === "success"
-                ? "האימייל אומת בהצלחה!"
-                : status === "error"
-                ? "האימות נכשל או שפג תוקף הקישור."
-                : "מאמת את כתובת הדוא״ל שלך..."
-            }
-          />
-          <VerifyEmailMessage status={status} message={message} />
-        </div>
+  if (status === "loading") {
+    return <div className="text-center p-4">טוען אימות...</div>;
+  }
+  if (status === "success") {
+    return (
+      <div className="text-center p-4">
+        <h2>אימייל אומת בהצלחה!</h2>
+        <p>מעבירים אותך לעמוד ההתחברות…</p>
       </div>
+    );
+  }
+  // status === "error"
+  return (
+    <div className="text-center p-4">
+      <h2>אימות נכשל</h2>
+      <p>{error}</p>
+      <button
+        type="button"
+        onClick={() => navigate("/login", { replace: true })}
+        className="mt-4 form-button"
+      >
+        חזור להתחברות
+      </button>
     </div>
   );
-};
-
-export default VerifyEmail;
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import Layout from "../components/Layout";
+import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
 import { fetchFixtures } from "../utils/fetchFixtures";
 import { detectLeague } from "../utils/leagueUtils";

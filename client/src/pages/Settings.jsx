@@ -5,7 +5,7 @@ import ChangePasswordTab from "../components/settingsComponents/ChangePassword";
 import ProfilePictureTab from "../components/settingsComponents/ProfilePicture";
 import DeleteAccountTab from "../components/settingsComponents/DeleteAccount";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
+import Layout from "../components/layout/Layout";
 
 const Settings = () => {
   const { user, loading } = useUser();

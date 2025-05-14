@@ -1,20 +1,10 @@
-import SignupForm from "../components/auth/SignupForm";
+// src/pages/Signup.jsx
+import React from 'react';
+import SignupForm from '../components/auth/SignupForm';
+import '../styles/auth.css';
 
 const Signup = () => {
-  return (
-    <div className="auth-container">
-      <div className="form-container">
-        <div className="form-content">
-          <div className="form-header">
-            <h2 className="decorative-title">הצטרף ליציע!</h2>
-            <p className="decorative-text">הרשם כדי להתחבר לעולם הכדורגל.</p>
-          </div>
-
-          <SignupForm />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Signup;
+    return <SignupForm />;
+  };
+  
+  export default Signup;

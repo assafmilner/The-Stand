@@ -1,7 +1,7 @@
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
-import { useUser } from "../context/UserContext";
-import { useComments } from "../../hooks/useComments";
+import { useUser } from "context/UserContext";
+import useComments from "../../hooks/useComments";
 
 const Reply = ({ reply, postId, parentCommentId }) => {
   const { user } = useUser();

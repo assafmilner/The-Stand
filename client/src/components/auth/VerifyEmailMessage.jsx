@@ -23,7 +23,7 @@ const VerifyEmailMessage = ({ status, message }) => {
     return (
       <>
         <p className="form-subtitle">{message}</p>
-        <button onClick={() => navigate("/signup")} className="form-button">
+        <button onClick={() => navigate("/register")} className="form-button">
           חזור להרשמה
         </button>
       </>

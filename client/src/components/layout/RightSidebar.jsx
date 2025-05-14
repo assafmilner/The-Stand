@@ -1,7 +1,7 @@
 import { User, Calendar, Bell, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const RightSidebar = ({ user, colors, onLogout }) => {
+const RightSidebar = ({  colors, onLogout }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
     localStorage.clear();

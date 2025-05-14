@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { useUser } from "../context/UserContext";
-import { useComments } from "../../hooks/useComments";
+import { useUser } from "context/UserContext";
+import useComments from "../../hooks/useComments";
 import Reply from "./Reply";
 import ReplyInput from "./ReplyInput";
 import LikeModal from "../modal/LikeModal";

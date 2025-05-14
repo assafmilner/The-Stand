@@ -1,3 +1,6 @@
+/* ====== Post Structure ====== */
+
+/* הכרטיס של הפוסט */
 .post-card {
     border: 1px solid #ddd;
     border-radius: 12px;
@@ -7,6 +10,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
   
+  /* כותרת הפוסט (שם + תאריך) */
   .post-header {
     display: flex;
     align-items: center;
@@ -14,13 +18,13 @@
     margin-bottom: 0.5rem;
   }
   
+  /* תוכן הפוסט */
   .post-content p {
     font-size: 1rem;
     line-height: 1.5;
     white-space: pre-wrap;
     margin-bottom: 0.5rem;
   }
-  
   .post-content img,
   .post-content video {
     width: 100%;
@@ -28,6 +32,7 @@
     margin-top: 0.5rem;
   }
   
+  /* שורת הפעולות: לייק, תגובות, שיתוף */
   .post-actions {
     display: flex;
     justify-content: space-between;
@@ -36,19 +41,161 @@
     padding-top: 0.5rem;
     margin-top: 0.5rem;
     font-size: 0.85rem;
+  } 
+  
+  /* עיצוב פנימי לכפתורי לייק בתיבת הפעולות */
+  .post-actions label {
+    cursor: pointer;
+    font-size: 1.2rem;
   }
+  .post-actions button {
+    background-color: #f87171;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: bold;
+  } 
+  
+  
+  /* =====================
+   Comment List
+===================== */
+
+.comment-list {
+    margin-top: 1rem; /* מקור: COMMENTLIST style={{ marginTop: "1rem" }} :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1} */
+  }
+  
+  .comment-list form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem; /* מקור: form style gap ו־marginBottom :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3} */
+  }
+  
+  .comment-list form input {
+    flex: 1;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    padding: 0.5rem 1rem;
+    font-size: 1rem; /* מקור: input style :contentReference[oaicite:4]{index=4}:contentReference[oaicite:5]{index=5} */
+  }
+  
+  .comment-list form button {
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: none;
+    background-color: #4f46e5;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer; /* מקור: button style :contentReference[oaicite:6]{index=6}:contentReference[oaicite:7]{index=7} */
+  }
+  
+  
+  
+  /* =====================
+     Comment Item
+  ===================== */
   
   .comment {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    margin-bottom: 1rem; /* מקור: <div className="comment" style={{ marginBottom: "1rem" }}> :contentReference[oaicite:8]{index=8}:contentReference[oaicite:9]{index=9} */
   }
   
-  .reply {
-    margin-left: 3rem;
-    margin-top: 0.75rem;
+  .comment-body {
     display: flex;
+    align-items: flex-start;
+    gap: 0.75rem; /* מקור: style gap ו־alignItems :contentReference[oaicite:10]{index=10}:contentReference[oaicite:11]{index=11} */
+  }
+  
+  .comment-body img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%; /* מקור: img style :contentReference[oaicite:12]{index=12}:contentReference[oaicite:13]{index=13} */
+  }
+  
+  .comment-content {
+    flex: 1;
+  }
+  
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .comment-header strong {
+    /* המחבר */
+    font-weight: bold;
+  }
+  
+  .comment-header span {
+    color: #888;
+    font-size: 0.8rem; /* מקור: span style :contentReference[oaicite:14]{index=14}:contentReference[oaicite:15]{index=15} */
+  }
+  
+  .comment-text {
+    margin-top: 0.25rem;
+    white-space: pre-wrap; /* מקור: content style :contentReference[oaicite:16]{index=16}:contentReference[oaicite:17]{index=17} */
+  }
+  
+  .comment-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center; /* מקור: actions style :contentReference[oaicite:18]{index=18}:contentReference[oaicite:19]{index=19} */
+  }
+  
+  .comment-actions button {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer; /* מקור: buttons style בתוך Comment.jsx :contentReference[oaicite:20]{index=20}:contentReference[oaicite:21]{index=21} */
+  }
+  
+  .comment-replies {
+    margin-top: 0.5rem;
+  }
+  
+  
+  
+  /* =====================
+     Reply Item
+  ===================== */
+  
+  .reply {
+    display: flex;
+    align-items: flex-start;
     gap: 0.75rem;
+    margin-bottom: 1rem;
+    margin-left: 3rem; /* מקור: Reply style :contentReference[oaicite:22]{index=22}:contentReference[oaicite:23]{index=23} */
+  }
+  
+  .reply img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%; /* מקור: Reply img style :contentReference[oaicite:24]{index=24}:contentReference[oaicite:25]{index=25} */
+  }
+  
+  
+  
+  /* ====== Like Button ====== */
+  .like-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .like-btn.liked {
+    color: #1877f2; /* צבע ברירת מחדל של “לייק” */
+    fill: #1877f2;
+  }
+  .like-btn svg {
+    transition: transform 0.2s;
+  }
+  .like-btn.liked svg {
+    transform: scale(1.2);
   }
   
   .like-button {
@@ -57,30 +204,98 @@
     cursor: pointer;
     color: #e11d48;
   }
-  
   .like-button:hover {
     opacity: 0.8;
-  }
+  } 
   
-  .modal-backdrop {
+  
+  /* ====== Like Modal ====== */
+  
+  /* רקע מטושטש */
+  .like-modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 999;
+    justify-content: center;
+    z-index: 1000;
   }
   
-  .modal-content {
-    background-color: #fff;
-    padding: 2rem;
+  /* חלון המודאל עצמו */
+  .like-modal {
+    background: white;
+    padding: 20px 30px;
     border-radius: 12px;
+    max-width: 400px;
     width: 90%;
-    max-width: 500px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 80%;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    direction: rtl;
+  }
+  .like-modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+  }
+  .like-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .like-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .like-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ddd;
   }
   
+  /* כפתור סגירת המודאל */
+  .close-modal {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #888;
+  } 
+  /* post.css */
+
+/* הקונטיינר של כל המדיה (תמונות ו־וידאו) */
+.post-media {
+    width: 100%;
+    
+    max-width: 500px;        /* אפשר לכוון לגודל הרצוי */
+    margin: 0 auto 1rem;
+  }
+  
+  /* שימוש ב־aspect-ratio לשמירה על פרופורציה של 16:9 */
+  .post-media video,
+  .post-media img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;       /* גזירה אוטומטית אם צריך */
+    border-radius: 12px;
+    background: black; 
+  }
+  .post-media video {
+    object-fit: contain;
+    background: rgb(66, 57, 57);      /* letterbox אם צריך */
+  }

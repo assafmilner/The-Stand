@@ -3,44 +3,37 @@ import React from "react";
 const PostContent = ({ content = "", media = [] }) => {
   if (!content && media.length === 0) return null;
 
-  const mainMedia = media[0]; // כרגע תומכים רק בקובץ אחד
-  const isVideo = mainMedia?.match(/\.(mp4|webm|ogg)$/i);
-
   return (
-    <div className="post-content" style={{ margin: "0.5rem 0" }}>
-      {/* טקסט */}
-      {content && (
-        <p
-          style={{
-            fontSize: "1rem",
-            lineHeight: 1.5,
-            whiteSpace: "pre-wrap",
-            marginBottom: "0.5rem",
-          }}
-        >
-          {content}
-        </p>
-      )}
+    <div className="post-content">
+      {content && <p className="post-text">{content}</p>}
 
-      {/* מדיה – תמונה או וידאו */}
-      {mainMedia && (
-        <div
-          style={{
-            borderRadius: "12px",
-            overflow: "hidden",
-            maxHeight: "500px",
-            maxWidth: "100%",
-          }}
-        >
-          {isVideo ? (
-            <video src={mainMedia} controls style={{ width: "100%" }} />
-          ) : (
-            <img
-              src={mainMedia}
-              alt="media"
-              style={{ width: "100%", objectFit: "cover" }}
-            />
-          )}
+      {media.length > 0 && (
+        <div className="post-media">
+          {media.map((url, idx) => {
+            const isVideo =
+              /\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|3gp|m4v)$/i.test(url);
+
+            return isVideo ? (
+              <video
+                key={idx}
+                className="post-video"
+                src={url}
+                controls
+                preload="metadata"
+                playsInline
+                poster={url.replace(/\.[^/.]+$/, ".jpg")}
+              >
+                הדפדפן שלך לא תומך בתגית וידאו.
+              </video>
+            ) : (
+              <img
+                key={idx}
+                className="post-image"
+                src={url}
+                alt={`media-${idx}`}
+              />
+            );
+          })}
         </div>
       )}
     </div>
