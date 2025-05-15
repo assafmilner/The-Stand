@@ -2,10 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import usePosts from "../../hooks/usePosts";
 import { useUser } from "context/UserContext";
 import Post from "./Post";
-import CreatePost from "./CreatePost";
 import PostViewerHandler from "../modal/PostViewerHandler";
 import api from "utils/api";
-
 
 const PostList = ({ authorId = null, communityId = null }) => {
   const { user } = useUser();
@@ -55,12 +53,12 @@ const PostList = ({ authorId = null, communityId = null }) => {
         formData.append("content", content);
         formData.append("image", imageFile);
 
-        const res = await api.put(`/posts/${postId}`, formData, {
+        const res = await api.put(`/api/posts/${postId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         updatedPost = res.data;
       } else {
-        const res = await api.put(`/posts/${postId}`, { content, media });
+        const res = await api.put(`/api/posts/${postId}`, { content, media });
         updatedPost = res.data;
       }
 
@@ -74,9 +72,12 @@ const PostList = ({ authorId = null, communityId = null }) => {
         },
       };
 
-      setLocalPosts((prev) =>
-        prev.map((p) => (p._id === postId ? enrichedPost : p))
-      );
+      setLocalPosts((prev) => {
+        const exists = prev.some((p) => p._id === postId);
+        return exists
+          ? prev.map((p) => (p._id === postId ? enrichedPost : p))
+          : [enrichedPost, ...prev];
+      });
     } catch (err) {
       console.error("שגיאה בעדכון פוסט:", err);
       alert("שגיאה בעדכון פוסט");
@@ -85,7 +86,7 @@ const PostList = ({ authorId = null, communityId = null }) => {
 
   const handleDeletePost = async (postId) => {
     try {
-      await api.delete(`/posts/${postId}`);
+      await api.delete(`/api/posts/${postId}`);
       setLocalPosts((prev) => prev.filter((p) => p._id !== postId));
     } catch (err) {
       console.error("שגיאה במחיקת פוסט:", err);
@@ -93,22 +94,23 @@ const PostList = ({ authorId = null, communityId = null }) => {
     }
   };
 
-  const combinedPosts = [...localPosts, ...posts];
+  // שילוב חכם של localPosts עם posts לפי _id
+  const mergedPosts = posts.map((serverPost) => {
+    const localOverride = localPosts.find((p) => p._id === serverPost._id);
+    return localOverride || serverPost;
+  });
+
+  // הוספת פוסטים חדשים שאין ב־posts
+  const onlyLocalNew = localPosts.filter(
+    (lp) => !posts.some((sp) => sp._id === lp._id)
+  );
+
+  const finalPosts = [...onlyLocalNew, ...mergedPosts];
 
   return (
     <div className="post-list">
-      {/* יצירת פוסט */}
-      {!authorId && user && (
-        <div style={{ marginBottom: "1rem" }}>
-          <CreatePost
-            onPostCreated={handlePostCreated}
-            colors={user?.teamColors}
-          />
-        </div>
-      )}
-
       {/* הצגת פוסטים */}
-      {combinedPosts.map((post) => (
+      {finalPosts.map((post) => (
         <Post
           key={post._id}
           post={post}
@@ -119,7 +121,7 @@ const PostList = ({ authorId = null, communityId = null }) => {
       ))}
 
       {loading && <p style={{ textAlign: "center" }}>טוען פוסטים...</p>}
-      {!loading && combinedPosts.length === 0 && (
+      {!loading && finalPosts.length === 0 && (
         <p style={{ textAlign: "center" }}>אין פוסטים להצגה</p>
       )}
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}

@@ -1,11 +1,13 @@
-// src/components/post/CommentList.jsx
+// CommentList.jsx - תיקון לpassage של הפרמטרים הנכונים
 import React, { useState } from "react";
 import useComments from "../../hooks/useComments";
 import Comment from "./Comment";
 import { useUser } from "../../context/UserContext";
 
 const CommentList = ({ postId }) => {
-  const { comments, addComment } = useComments({ postId });
+  const { comments, addComment, deleteComment, updateComment } = useComments({
+    postId,
+  });
   const { user } = useUser();
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ const CommentList = ({ postId }) => {
           disabled={loading}
         />
         <button type="submit" disabled={loading}>
-          תגיב
+          הגב
         </button>
       </form>
 
@@ -43,6 +45,10 @@ const CommentList = ({ postId }) => {
           comment={comment}
           postId={postId}
           currentUserId={user?._id}
+          onDelete={() => deleteComment(comment._id)}
+          onEdit={(commentId, newContent) => {
+            updateComment(commentId, newContent);
+          }}
         />
       ))}
     </div>

@@ -19,6 +19,7 @@ api.interceptors.request.use(
 
 // ✅ טיפול גלובלי בשגיאות
 axios.interceptors.response.use(
+  
     res => res,
     err => {
       const { config, response } = err;

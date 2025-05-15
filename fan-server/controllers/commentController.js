@@ -1,3 +1,4 @@
+// commentController.js - תיקון בqontroller לוודא שהעדכון עובד בדאטה בייס
 const Comment = require("../models/Comment");
 const Post = require("../models/Post");
 const mongoose = require('mongoose');
@@ -22,7 +23,6 @@ const createComment = async (req, res) => {
   }
 };
 
-// Get all comments for a post with pagination
 const getCommentsByPost = async (req, res) => {
   const { postId } = req.params;
   const page = parseInt(req.query.page) || 1;
@@ -30,7 +30,6 @@ const getCommentsByPost = async (req, res) => {
   const skip = (page - 1) * limit;
   
   try {
-    // Get main comments (not replies)
     const mainComments = await Comment.find({ 
       postId, 
       parentCommentId: null 
@@ -41,14 +40,12 @@ const getCommentsByPost = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Get replies for each main comment (first 2 replies only)
     const commentsWithReplies = await Promise.all(
       mainComments.map(async (comment) => {
         const replies = await Comment.find({ parentCommentId: comment._id })
           .populate("authorId", "name profilePicture")
           .populate("likes", "name profilePicture")
-          .sort({ createdAt: 1 })
-          
+          .sort({ createdAt: 1 });
 
         const totalReplies = await Comment.countDocuments({ parentCommentId: comment._id });
 
@@ -61,7 +58,6 @@ const getCommentsByPost = async (req, res) => {
       })
     );
 
-    // Get total count for pagination
     const totalComments = await Comment.countDocuments({ 
       postId, 
       parentCommentId: null 
@@ -83,7 +79,6 @@ const getCommentsByPost = async (req, res) => {
   }
 };
 
-// Get replies for a specific comment
 const getRepliesByComment = async (req, res) => {
   const { commentId } = req.params;
   const page = parseInt(req.query.page) || 1;
@@ -121,13 +116,30 @@ const updateComment = async (req, res) => {
   const { content } = req.body;
 
   try {
-    const updatedComment = await Comment.findByIdAndUpdate(
-      id,
-      { content },
-      { new: true }
-    );
+    // בדוק שהמשתמש הוא בעל התגובה
+    const comment = await Comment.findById(id);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    // בדוק הרשאות
+    if (comment.authorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized to edit this comment" });
+    }
+
+    // עדכן את התגובה
+    comment.content = content;
+    comment.updatedAt = new Date(); // הוסף את updatedAt אם אין
+    await comment.save();
+
+    // החזר את התגובה המעודכנת עם הpopulate
+    const updatedComment = await Comment.findById(id)
+      .populate("authorId", "name profilePicture")
+      .populate("likes", "name profilePicture");
+
     res.status(200).json(updatedComment);
   } catch (err) {
+    console.error("❌ Error updating comment:", err);
     res.status(500).json({ message: "Error updating comment" });
   }
 };
@@ -135,9 +147,20 @@ const updateComment = async (req, res) => {
 const deleteComment = async (req, res) => {
   const { id } = req.params;
   try {
+    // בדוק שהמשתמש הוא בעל התגובה
+    const comment = await Comment.findById(id);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    if (comment.authorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized to delete this comment" });
+    }
+
     await Comment.findByIdAndDelete(id);
     res.status(200).json({ message: "Comment deleted" });
   } catch (err) {
+    console.error("❌ Error deleting comment:", err);
     res.status(500).json({ message: "Error deleting comment" });
   }
 };

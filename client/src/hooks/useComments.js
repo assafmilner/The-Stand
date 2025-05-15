@@ -1,8 +1,8 @@
-// src/hooks/useComments.js
+// useComments.js - תיקון הhook להוסיף את addComment
 import { useState, useEffect, useCallback } from 'react';
-import api from '../utils/api';  // ודא שב־api.baseURL הוגדר ל־http://localhost:3001
+import api from '../utils/api';
 
-const DEFAULT_LIMIT = 10; // תואם לברירת המחדל של השרת
+const DEFAULT_LIMIT = 10;
 
 export default function useComments({ postId, parentId = null }) {
   const [comments, setComments] = useState([]);
@@ -25,30 +25,26 @@ export default function useComments({ postId, parentId = null }) {
     const fetchComments = async () => {
       setLoading(true);
       try {
-        // אם יש parentId – נטען תגובות-לתגובה, אחרת תגובות ראשוניות
         const endpoint = parentId
-          ? `/api/comments/replies/${parentId}`       // GET /api/comments/replies/:commentId :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
-          : `/api/comments/post/${postId}`            // GET /api/comments/post/:postId :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
+          ? `/api/comments/replies/${parentId}`
+          : `/api/comments/post/${postId}`;
 
         const { data } = await api.get(endpoint, {
           params: { page, limit: DEFAULT_LIMIT },
         });
 
-        // מבנה התשובה: data.comments (לראשוניות) או data.replies (לתגובות)
-        const items = parentId ? data.replies : data.comments;  // :contentReference[oaicite:4]{index=4}:contentReference[oaicite:5]{index=5}
+        const items = parentId ? data.replies : data.comments;
 
         setComments(prev =>
           page === 1 ? items : [...prev, ...items]
         );
 
-        // pagination.hasMore מוחלף ב־hasMore
         setHasMore(
           data.pagination?.hasMore ??
           items.length === DEFAULT_LIMIT
         );
       } catch (err) {
         if (err.response?.status === 404) {
-          // לא נמצאו עוד פריטים → נגמרה הפאג'ינציה
           setHasMore(false);
         } else {
           console.error('שגיאה בטעינת תגובות:', err);
@@ -74,5 +70,70 @@ export default function useComments({ postId, parentId = null }) {
     setError(null);
   }, []);
 
-  return { comments, loading, error, hasMore, loadMore, reload };
+  // הוסף את הפונקציה addComment שחסרה
+  const addComment = async (content, parentId = null) => {
+    const res = await api.post("/api/comments", {
+      postId,
+      content,
+      parentCommentId: parentId,
+    });
+  
+    const newComment = res.data;
+  
+    if (!parentId) {
+      setComments((prev) => [newComment, ...prev]);
+    }
+  
+    return newComment; // ← מחזיר גם אם זה reply
+  };
+  
+  
+  // הוסף את הפונקציה deleteComment שחסרה
+  const deleteComment = async (commentId) => {
+    try {
+      await api.delete(`/api/comments/${commentId}`);
+      
+      setComments(prev => prev.filter(comment => comment._id !== commentId));
+    } catch (err) {
+      console.error("שגיאה במחיקת תגובה:", err);
+      alert("שגיאה במחיקת תגובה");
+    }
+  };
+
+  const updateComment = async (commentId, newContent) => {
+    try {
+      const res = await api.put(`/api/comments/${commentId}`, {
+        content: newContent,
+      });
+
+      const updated = res.data;
+
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment._id === commentId
+            ? {
+                ...comment,
+                content: updated.content,
+                updatedAt: updated.updatedAt,
+              }
+            : comment
+        )
+      );
+    } catch (err) {
+      console.error("שגיאה בעדכון תגובה:", err);
+      alert("שגיאה בעדכון תגובה");
+    }
+  };
+
+  return { 
+    comments, 
+    loading, 
+    error, 
+    hasMore, 
+    loadMore, 
+    reload, 
+    addComment,    
+    deleteComment, 
+    updateComment 
+  };
 }

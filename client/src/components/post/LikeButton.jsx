@@ -1,61 +1,54 @@
-// src/components/post/LikeButton.jsx
 import React, { useState, useEffect } from "react";
 import { ThumbsUp } from "lucide-react";
 import api from "../../utils/api";
 
 export default function LikeButton({
-  postId,
-  likes,
-  currentUser,
-  onLikeChange, // callback חדש
+  id,
+  type = "post",
+  likes = [],
+  userId,
+  onLikeToggle,
   className = "",
 }) {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(likes.length);
 
   useEffect(() => {
+    setLiked(likes.some((u) => (u._id || u) === userId));
     setCount(likes.length);
-    setLiked(likes.some((u) => (u._id || u) === currentUser?._id));
-  }, [likes, currentUser]);
+  }, [likes, userId]);
 
   const toggleLike = async () => {
-    const was = liked;
-    setLiked(!was);
-    const newCount = was ? count - 1 : count + 1;
-    setCount(newCount);
-
-    // אופטימיסטית: עדכון ההורה
-    if (onLikeChange) {
-      if (was) {
-        onLikeChange(likes.filter((u) => (u._id || u) !== currentUser._id));
-      } else {
-        onLikeChange([
-          ...likes,
-          { _id: currentUser._id, name: currentUser.name },
-        ]);
-      }
+    if (!id || !userId) {
+      console.error("❌ LikeButton: missing id or userId");
+      return;
     }
 
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+
+    const optimisticLikes = wasLiked
+      ? likes.filter((u) => (u._id || u) !== userId)
+      : [...likes, { _id: userId }];
+
+    onLikeToggle?.(optimisticLikes);
+
     try {
-      const res = await api.put(
-        `/api/posts/${postId}/like`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      // עדכון סופי לפי שרת
-      if (onLikeChange) onLikeChange(res.data.likes);
-      setCount(res.data.likes.length);
-      setLiked(res.data.likes.some((u) => u._id === currentUser._id));
+      const url =
+        type === "comment"
+          ? `/api/comments/${id}/like`
+          : `/api/posts/${id}/like`;
+
+      const res = await api.put(url);
+      const updatedLikes = res.data.likes;
+
+      setLiked(updatedLikes.some((u) => u._id === userId));
+      setCount(updatedLikes.length);
+      onLikeToggle?.(updatedLikes);
     } catch (err) {
       console.error("❌ like failed:", err);
-      // Rollback: נחזיר את המצב הקודם
-      setLiked(was);
-      setCount(likes.length);
-      if (onLikeChange) onLikeChange(likes);
+      setLiked(wasLiked);
+      onLikeToggle?.(likes);
     }
   };
 
@@ -63,10 +56,25 @@ export default function LikeButton({
     <button
       onClick={toggleLike}
       className={className}
-      style={{ color: liked ? "#1877f2" : "#888" }}
+      style={{
+        background: "none",
+        border: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        color: liked ? "#1877f2" : "#888",
+        fontSize: "0.85rem",
+      }}
     >
-      <ThumbsUp size={20} fill={liked ? "#1877f2" : "none"} />
-      <span>לייק </span>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+        <ThumbsUp size={20} fill={liked ? "#1877f2" : "none"} />
+        {count > 0 && (
+          <span style={{ fontSize: "1.5rem", color: "#444" }}>{count}</span>
+        )}
+      </div>
+      <span>לייק</span>
     </button>
   );
 }

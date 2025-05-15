@@ -5,22 +5,25 @@ const PostViewerContext = createContext();
 export const PostViewerProvider = ({ children }) => {
   const [activePostId, setActivePostId] = useState(null);
   const [activePostData, setActivePostData] = useState(null);
+  const [activePostMode, setActivePostMode] = useState('view');
 
-  const openPost = (postId, postData = null) => {
-    setActivePostId(postId);
-    if (postData) setActivePostData(postData);
+  const openPost = (id, data, mode = 'view') => {
+    setActivePostId(id);
+    setActivePostData(data);
+    setActivePostMode(mode);
   };
 
   const closePost = () => {
     setActivePostId(null);
     setActivePostData(null);
+    setActivePostMode('view');
   };
-
   return (
     <PostViewerContext.Provider
       value={{
         activePostId,
         activePostData,
+        activePostMode,
         openPost,
         closePost,
       }}

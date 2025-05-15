@@ -79,7 +79,7 @@ const CreatePost = ({ onPostCreated, colors }) => {
           src={user?.profilePicture || "/default.png"}
           alt="profile"
         />
-        <div className="post-meta">
+        <div className="post-meta" style={{ textAlign: "right" }}>
           <strong>{user?.name}</strong>
           <div className="privacy">ציבורי 🌐</div>
         </div>

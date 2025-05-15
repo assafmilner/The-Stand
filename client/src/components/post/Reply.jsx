@@ -1,41 +1,82 @@
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { useUser } from "context/UserContext";
-import useComments from "../../hooks/useComments";
-import LikeButton from "./LikeButton";
+import { he } from "date-fns/locale";
+import { useUser } from "../../context/UserContext";
+import { Trash2, Pencil } from "lucide-react";
 import LikeModal from "../modal/LikeModal";
+import LikeButton from "./LikeButton";
 import { useLike } from "../../hooks/useLike";
+import api from "utils/api";
 
-const Reply = ({ reply, postId, parentCommentId }) => {
+const Reply = ({ reply, postId, parentCommentId, onDelete }) => {
   const { user } = useUser();
-  const { deleteComment } = useComments({ postId });
   const isAuthor = user?._id === reply.authorId._id;
+
+  const [editMode, setEditMode] = useState(false);
+  const [editedContent, setEditedContent] = useState(reply.content);
+  const [likes, setLikes] = useState(reply.likes || []);
   const [showLikeModal, setShowLikeModal] = useState(false);
 
   const { isLiked, likeCount, toggleLike } = useLike({
-    type: "comment", // גם reply זו תגובה עם parentCommentId
+    type: "comment",
     id: reply._id,
-    initialLikes: reply.likes || [],
+    initialLikes: reply.likes,
     userId: user._id,
   });
 
-  if (!reply?.authorId) return null;
+  const handleDelete = async () => {
+    if (!window.confirm("למחוק את התגובה?")) return;
 
-  const handleDelete = () => {
-    if (window.confirm("למחוק את תגובת התגובה?")) {
-      deleteComment(reply._id);
+    try {
+      await api.delete(`/api/comments/${reply._id}`);
+      onDelete?.();
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403) {
+        alert("אין לך הרשאה למחוק תגובה זו.");
+      } else if (status === 404) {
+        alert("תגובה זו לא קיימת יותר.");
+        onDelete?.(); // מיידע את הקומפוננטה האב שהתגובה כבר לא קיימת
+      } else {
+        console.error("❌ שגיאה במחיקת תגובת בן:", err);
+        alert("שגיאה כללית במחיקת תגובה.");
+      }
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editedContent.trim()) return;
+
+    try {
+      const res = await api.put(
+        `/api/comments/${reply._id}`,
+        { content: editedContent },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      
+      
+
+      const updated = res.data;
+      setEditedContent(updated.content);
+      reply.content = updated.content;
+      setEditMode(false);
+    } catch (err) {
+      console.error("❌ שגיאה בעדכון תגובת בן:", err);
+      alert("שגיאה בשמירת תגובה.");
     }
   };
 
   return (
     <div
-      className="reply"
       style={{
+        marginRight: "2.5rem",
+        marginTop: "0.75rem",
         display: "flex",
-        alignItems: "flex-start",
         gap: "0.75rem",
-        marginBottom: "1rem",
-        marginLeft: "3rem",
       }}
     >
       <img
@@ -43,38 +84,73 @@ const Reply = ({ reply, postId, parentCommentId }) => {
         alt="avatar"
         style={{ width: 28, height: 28, borderRadius: "50%" }}
       />
-
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
             <strong>{reply.authorId.name}</strong>{" "}
-            <span style={{ color: "#888", fontSize: "0.8rem" }}>
+            <span style={{ fontSize: "0.75rem", color: "#888" }}>
               {formatDistanceToNow(new Date(reply.createdAt), {
                 addSuffix: true,
+                locale: he,
               })}
             </span>
           </div>
 
           {isAuthor && (
-            <button
-              onClick={handleDelete}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#888",
-                cursor: "pointer",
-              }}
-            >
-              🗑️
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                onClick={handleDelete}
+                title="מחק תגובה"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#888",
+                  cursor: "pointer",
+                }}
+              >
+                <Trash2 size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  setEditMode(true);
+                  setEditedContent(reply.content);
+                }}
+                title="ערוך תגובה"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#888",
+                  cursor: "pointer",
+                }}
+              >
+                <Pencil size={16} />
+              </button>
+            </div>
           )}
         </div>
 
-        <div style={{ marginTop: "0.25rem", whiteSpace: "pre-wrap" }}>
-          {reply.content}
+        <div style={{ marginTop: "0.25rem" }}>
+          {editMode ? (
+            <>
+              <textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={2}
+                style={{ width: "100%", borderRadius: "0.5rem" }}
+              />
+              <div
+                style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}
+              >
+                <button onClick={handleSaveEdit}>💾 שמור</button>
+                <button onClick={() => setEditMode(false)}>❌ בטל</button>
+              </div>
+            </>
+          ) : (
+            <div style={{ whiteSpace: "pre-wrap" }}>{reply.content}</div>
+          )}
         </div>
 
-        {/* פעולות: לייק + modal */}
+        {/* Like + Modal */}
         <div
           style={{
             marginTop: "0.5rem",
@@ -86,30 +162,31 @@ const Reply = ({ reply, postId, parentCommentId }) => {
           <LikeButton
             id={reply._id}
             type="comment"
-            likes={reply.likes}
+            likes={likes}
             userId={user._id}
+            onLikeToggle={setLikes}
           />
-          <button
-            onClick={() => setShowLikeModal(true)}
-            style={{
-              fontSize: "0.75rem",
-              border: "none",
-              background: "none",
-              color: "#4f46e5",
-              cursor: "pointer",
-            }}
-          >
-            ראו מי אהב
-          </button>
-        </div>
 
-        {showLikeModal && (
-          <LikeModal
-            users={reply.likes}
-            onClose={() => setShowLikeModal(false)}
-          />
-        )}
+          {likes.length > 0 && (
+            <button
+              onClick={() => setShowLikeModal(true)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#4f46e5",
+                fontSize: "0.75rem",
+                cursor: "pointer",
+              }}
+            >
+              ראו מי אהב
+            </button>
+          )}
+        </div>
       </div>
+
+      {showLikeModal && (
+        <LikeModal users={likes} onClose={() => setShowLikeModal(false)} />
+      )}
     </div>
   );
 };

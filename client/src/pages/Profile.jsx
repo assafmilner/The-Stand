@@ -187,7 +187,6 @@ const Profile = () => {
       </div>
     );
   }
-  console.log("COVER:", coverImage);
 
   return (
     <ProfileLayout>
@@ -496,7 +495,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <PostList
-                    initialPosts={userPosts}
+                    authorId={displayUser._id}
                     colors={colors}
                     showCreateButton={false}
                   />

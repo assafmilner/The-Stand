@@ -1,11 +1,11 @@
 // src/components/post/PostActions.jsx
 import React, { useState, useEffect } from "react";
-import { ThumbsUp, MessageCircle } from "lucide-react";
+import { Share2, ThumbsUp, MessageCircle } from "lucide-react";
 import LikeButton from "./LikeButton";
 import LikeModal from "../modal/LikeModal";
 import api from "utils/api";
 import useComments from "../../hooks/useComments";
-import Comment from "./Comment";
+import CommentList from "./CommentList";
 
 const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
   const [showLikeModal, setShowLikeModal] = useState(false);
@@ -38,7 +38,7 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
 
   return (
     <>
-      {/* like count, opens modal */}
+      {/* like count - רק modal בלחיצה */}
       <div
         style={{
           padding: "0 16px",
@@ -50,7 +50,7 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
         }}
         onClick={() => setShowLikeModal(true)}
       >
-        {localLikes.length} לייקים
+        לייקים
       </div>
 
       {/* actions row */}
@@ -67,11 +67,12 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
       >
         {/* like button */}
         <LikeButton
-          postId={postId}
+          id={postId}
+          type="post"
           likes={localLikes}
-          onLikeChange={setLocalLikes}
-          currentUser={currentUser}
-          className="action-btn like-btn"
+          userId={currentUser._id}
+          onLikeToggle={setLocalLikes}
+          className="post-action-button"
         />
 
         {/* comment toggle */}
@@ -83,18 +84,10 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
           }}
         >
           <button
+            className="post-action-button"
             onClick={() => setShowComments((v) => !v)}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "#888",
-            }}
           >
-            <MessageCircle size={20} color="#2196f3" />
+            <MessageCircle size={20} />
             <span>
               {showComments ? "הסתר תגובות" : `תגובה (${commentCount})`}
             </span>
@@ -102,28 +95,24 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
         </div>
 
         {/* share placeholder */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            color: "#999",
-            fontSize: "0.85rem",
-            cursor: "not-allowed",
+        <button
+          className="post-action-button"
+          onClick={() => {
+            const url = `${window.location.origin}/post/${postId}`;
+            navigator.clipboard.writeText(url);
+            alert("הקישור לפוסט הועתק");
           }}
-          title="בקרוב..."
         >
-          🔁 שתף
-        </div>
+          <Share2 size={20} />
+          <span>שתף</span>
+        </button>
       </div>
 
       {/* comments section */}
       {showComments && (
         <div style={{ marginTop: "1rem", padding: "0 16px" }}>
           {commentsError && <p style={{ color: "red" }}>{commentsError}</p>}
-          {comments.map((c) => (
-            <Comment key={c._id || c.id} comment={c} postId={postId} />
-          ))}
+          <CommentList postId={postId} />
           {commentsLoading && <p>טוען תגובות…</p>}
           {!commentsLoading && hasMore && (
             <button

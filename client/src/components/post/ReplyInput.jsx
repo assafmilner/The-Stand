@@ -1,69 +1,55 @@
-import React from "react";
-import { formatDistanceToNow } from "date-fns";
-import { useUser } from "context/UserContext";
+import React, { useState } from "react";
 import useComments from "../../hooks/useComments";
 
-const Reply = ({ reply, postId, parentCommentId }) => {
-  const { user } = useUser();
-  const { deleteComment } = useComments({ postId }); // באותה קריאה כמו תגובה רגילה
+const ReplyInput = ({ postId, parentCommentId, onFinish }) => {
+  const [replyText, setReplyText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { addComment } = useComments({ postId });
 
-  if (!reply?.authorId) return null;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
 
-  const isAuthor = user?._id === reply.authorId._id;
-
-  const handleDelete = () => {
-    if (window.confirm("למחוק את תגובת התגובה?")) {
-      deleteComment(reply._id); // מתבצע כרגיל
-    }
+    setLoading(true);
+    const newReply = await addComment(replyText, parentCommentId);
+    setReplyText("");
+    setLoading(false);
+    onFinish?.(newReply);
   };
 
   return (
-    <div
-      className="reply"
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "0.75rem",
-        marginBottom: "1rem",
-        marginLeft: "3rem",
-      }}
-    >
-      <img
-        src={reply.authorId.profilePicture || "/default-avatar.png"}
-        alt="avatar"
-        style={{ width: 28, height: 28, borderRadius: "50%" }}
+    <form onSubmit={handleSubmit} style={{ marginTop: "0.5rem" }}>
+      <input
+        type="text"
+        placeholder="כתוב תגובה לתגובה..."
+        value={replyText}
+        onChange={(e) => setReplyText(e.target.value)}
+        disabled={loading}
+        style={{
+          width: "100%",
+          borderRadius: "0.5rem",
+          padding: "0.4rem",
+          border: "1px solid #ccc",
+        }}
       />
-
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <div>
-            <strong>{reply.authorId.name}</strong>{" "}
-            <span style={{ color: "#888", fontSize: "0.8rem" }}>
-              {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
-            </span>
-          </div>
-
-          {isAuthor && (
-            <button
-              onClick={handleDelete}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#888",
-                cursor: "pointer",
-              }}
-            >
-              🗑️
-            </button>
-          )}
-        </div>
-
-        <div style={{ marginTop: "0.25rem", whiteSpace: "pre-wrap" }}>
-          {reply.content}
-        </div>
-      </div>
-    </div>
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          marginTop: "0.3rem",
+          fontSize: "0.85rem",
+          background: "#4f46e5",
+          color: "white",
+          border: "none",
+          padding: "0.4rem 0.8rem",
+          borderRadius: "0.4rem",
+          cursor: "pointer",
+        }}
+      >
+        הגב
+      </button>
+    </form>
   );
 };
 
-export default Reply;
+export default ReplyInput;
