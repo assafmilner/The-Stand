@@ -1,123 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useUser } from "../../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
-import { calculateTable } from "../homeComponents/calculateTable";
-import { fetchFromApi } from "../../utils/fetchFromApi";
-
-const getLeagueConfig = (league) => {
-  if (league === "ligat-haal") {
-    return { seasonId: 4644, playoffStartRound: 26, topPlayoffSize: 6 };
-  } else if (league === "leumit") {
-    return { seasonId: 4966, playoffStartRound: 30, topPlayoffSize: 8 };
-  } else {
-    return { seasonId: 0, playoffStartRound: 0, topPlayoffSize: 0 }; // ליתר ביטחון
-  }
-};
+import { useLeagueTable } from "../../hooks/useLeague";
 
 const LeagueTable = ({ league }) => {
   const [mode, setMode] = useState("regular");
-  const [loading, setLoading] = useState(true);
-  const [playoffLoading, setPlayoffLoading] = useState(false);
-  const [regularTable, setRegularTable] = useState([]);
-  const [topPlayoff, setTopPlayoff] = useState([]);
-  const [bottomPlayoff, setBottomPlayoff] = useState([]);
+  const {
+    regularTable,
+    topPlayoff,
+    bottomPlayoff,
+    loading,
+    playoffLoading,
+    fetchPlayoffData
+  } = useLeagueTable(league);
 
-  useEffect(() => {
-    const fetchRegularSeason = async () => {
-      try {
-        setLoading(true);
-        const { seasonId } = getLeagueConfig(league);
-
-        const data = await fetchFromApi(
-          `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${seasonId}&s=2024-2025`
-        );
-
-        if (!data.table) return;
-        const regular = data.table.map((team) => ({
-          team: team.strTeam,
-          rank: team.intRank,
-          badge: team.strBadge,
-          played: parseInt(team.intPlayed),
-          win: parseInt(team.intWin),
-          draw: parseInt(team.intDraw),
-          loss: parseInt(team.intLoss),
-          goalsFor: parseInt(team.intGoalsFor),
-          goalsAgainst: parseInt(team.intGoalsAgainst),
-          points: parseInt(team.intPoints),
-        }));
-        setRegularTable(regular);
-      } catch (err) {
-        console.error("❌ Regular table fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (league) {
-      fetchRegularSeason();
-    }
-  }, [league]);
-
-  useEffect(() => {
-    const fetchPlayoffData = async () => {
-      try {
-        setPlayoffLoading(true);
-        const { seasonId, playoffStartRound, topPlayoffSize } =
-          getLeagueConfig(league);
-
-        const lastRoundData = await fetchFromApi(
-          `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${playoffStartRound}&s=2024-2025`
-        );
-
-        const lastGames = lastRoundData.events || [];
-        const lastDate = lastGames
-          .map((e) => new Date(e.dateEvent))
-          .sort((a, b) => b - a)[0];
-
-        const rounds = Array.from({ length: 10 }, (_, i) => i + 1);
-        const playoffGames = [];
-
-        for (const r of rounds) {
-          const data = await fetchFromApi(
-            `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${r}&s=2024-2025`
-          );
-
-          if (data?.events) {
-            playoffGames.push(
-              ...data.events.filter((e) => new Date(e.dateEvent) > lastDate)
-            );
-          }
-        }
-
-        const { topPlayoffTable, bottomPlayoffTable } = calculateTable(
-          playoffGames,
-          regularTable,
-          { topPlayoffSize }
-        );
-
-        setTopPlayoff(topPlayoffTable);
-        setBottomPlayoff(bottomPlayoffTable);
-      } catch (err) {
-        console.error("❌ Playoff data error:", err);
-      } finally {
-        setPlayoffLoading(false);
-      }
-    };
-
-    if (
-      mode === "playoff" &&
-      topPlayoff.length === 0 &&
-      bottomPlayoff.length === 0
-    ) {
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    if (newMode === "playoff" && topPlayoff.length === 0 && bottomPlayoff.length === 0) {
       fetchPlayoffData();
     }
-  }, [mode, league, regularTable]);
+  };
 
   return (
     <div className="dashboard-card">
       <div className="flex justify-center border-b border-gray-200 mb-6">
         <button
-          onClick={() => setMode("regular")}
+          onClick={() => handleModeChange("regular")}
           className={`mx-4 pb-2 text-sm font-medium transition-all duration-200 bg-transparent ${
             mode === "regular"
               ? "text-red-600 border-b-2 border-red-600"
@@ -127,8 +35,8 @@ const LeagueTable = ({ league }) => {
           עונה סדירה
         </button>
         <button
-          onClick={() => setMode("playoff")}
-          className={`mx-4 pb-2 text-sm font-medium transition-all duration-200 bg-transparent  ${
+          onClick={() => handleModeChange("playoff")}
+          className={`mx-4 pb-2 text-sm font-medium transition-all duration-200 bg-transparent ${
             mode === "playoff"
               ? "text-red-600 border-b-2 border-red-600"
               : "text-gray-600 border-b-2 border-transparent"
@@ -216,7 +124,6 @@ const LeagueTableSection = ({ teams, showRank = true, badge = true, type }) => {
                 )}
                 <td className="p-2 border">
                   {teamNameMap[team.team]?.name || team.team}
-                  {isFavorite}
                 </td>
                 <td className="p-2 border">{team.played}</td>
                 <td className="p-2 border">{team.win}</td>

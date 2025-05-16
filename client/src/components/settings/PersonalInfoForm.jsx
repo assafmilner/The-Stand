@@ -14,7 +14,7 @@ const formatDate = (dateStr) => {
   });
 };
 
-const PersonalInfo = ({ user }) => {
+const PersonalInfoForm = ({ user }) => {
   const [selectedLocation, setSelectedLocation] = useState(
     user?.location || "אחר"
   );
@@ -164,4 +164,4 @@ const PersonalInfo = ({ user }) => {
   );
 };
 
-export default PersonalInfo;
+export default PersonalInfoForm;

@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
-const DeleteAccount = () => {
+const DeleteAccountForm = () => {
   const [confirmText, setConfirmText] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -79,4 +79,4 @@ const DeleteAccount = () => {
   );
 };
 
-export default DeleteAccount;
+export default DeleteAccountForm;

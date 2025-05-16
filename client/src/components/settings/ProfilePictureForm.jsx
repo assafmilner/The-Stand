@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import axios from "axios";
 import { useUser } from "../../context/UserContext";
 
-const ProfilePicture = ({ user }) => {
+const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
   const [preview, setPreview] = useState(
     user?.profilePicture || "http://localhost:3001/assets/defaultProfilePic.png"
@@ -114,4 +114,4 @@ const ProfilePicture = ({ user }) => {
   );
 };
 
-export default ProfilePicture;
+export default ProfilePictureForm;
