@@ -30,12 +30,13 @@ export default function usePosts({ authorId = null, communityId = null }) {
             ...(communityId && { communityId }),
           },
         });
-
+    
+        const postsArray = Array.isArray(data.posts) ? data.posts : [];
         setPosts(prev =>
-          page === 1 ? data.posts : [...prev, ...data.posts]
+          page === 1 ? postsArray : [...prev, ...postsArray]
         );
-
-        setHasMore(data.pagination?.hasMore ?? false);
+    
+        setHasMore(data.pagination?.hasMore ?? (postsArray.length === DEFAULT_LIMIT));
       } catch (err) {
         console.error("שגיאה בטעינת פוסטים:", err);
         setError("לא הצלחנו לטעון את הפוסטים");
@@ -43,6 +44,7 @@ export default function usePosts({ authorId = null, communityId = null }) {
         setLoading(false);
       }
     };
+    
 
     fetchPosts();
   }, [page, authorId, communityId]);

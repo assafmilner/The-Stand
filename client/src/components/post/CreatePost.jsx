@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useUser } from "../../context/UserContext";
 import teamsMap from "../../utils/teams-hebrew";
 import api from "utils/api";
+import { Globe, Image as ImageIcon } from "lucide-react";
 
 const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
@@ -46,7 +47,7 @@ const CreatePost = ({ onPostCreated, colors }) => {
     if (mediaFile) formData.append("image", mediaFile);
 
     try {
-      const { data } = await api.post("/posts", formData, {
+      const { data } = await api.post("/api/posts", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -79,9 +80,14 @@ const CreatePost = ({ onPostCreated, colors }) => {
           src={user?.profilePicture || "/default.png"}
           alt="profile"
         />
-        <div className="post-meta" style={{ textAlign: "right" }}>
+        <div className="post-meta" style={{ flex: 1, textAlign: "right" }}>
           <strong>{user?.name}</strong>
-          <div className="privacy">ציבורי 🌐</div>
+          <div
+            className="privacy"
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Globe size={14} /> ציבורי
+          </div>
         </div>
       </div>
 
@@ -129,10 +135,20 @@ const CreatePost = ({ onPostCreated, colors }) => {
       )}
 
       <div className="post-footer">
-        <span>{content.length}/500</span>
-        <div className="post-actions">
-          <label>
-            📷🎥
+        <div
+          className="post-actions"
+          style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+        >
+          <label
+            style={{
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              color: "#555",
+            }}
+          >
+            <ImageIcon size={18} />
             <input
               type="file"
               hidden
@@ -141,22 +157,23 @@ const CreatePost = ({ onPostCreated, colors }) => {
               accept="image/*,video/*"
             />
           </label>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              backgroundColor: colors?.primary || "#f87171",
-              color: "white",
-              border: "none",
-              padding: "0.4rem 1rem",
-              borderRadius: "999px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            {loading ? "מפרסם..." : "פרסם"}
-          </button>
         </div>
+        <span>{content.length}/500</span>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            backgroundColor: colors?.primary || "#f87171",
+            color: "white",
+            border: "none",
+            padding: "0.4rem 1rem",
+            borderRadius: "999px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {loading ? "מפרסם..." : "פרסם"}
+        </button>
       </div>
     </form>
   );

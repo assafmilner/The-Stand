@@ -3,6 +3,7 @@ import usePosts from "../../hooks/usePosts";
 import { useUser } from "context/UserContext";
 import Post from "./Post";
 import PostViewerHandler from "../modal/PostViewerHandler";
+import CreatePost from "./CreatePost"; 
 import api from "utils/api";
 
 const PostList = ({ authorId = null, communityId = null }) => {
@@ -14,12 +15,12 @@ const PostList = ({ authorId = null, communityId = null }) => {
   const [localPosts, setLocalPosts] = useState([]);
   const observerRef = useRef();
 
-  // Reset localPosts כאשר משתנים הפילטרים
+  const canCreatePost = !authorId || authorId === user?._id;
+
   useEffect(() => {
     setLocalPosts([]);
   }, [authorId, communityId]);
 
-  // חיבור ל-Infinite Scroll
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && hasMore) {
@@ -27,23 +28,17 @@ const PostList = ({ authorId = null, communityId = null }) => {
       }
     });
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
+    if (observerRef.current) observer.observe(observerRef.current);
 
     return () => {
-      if (observerRef.current) {
-        observer.disconnect();
-      }
+      if (observerRef.current) observer.disconnect();
     };
   }, [hasMore, loadMore]);
 
-  // פוסט חדש לראש הרשימה
   const handlePostCreated = (newPost) => {
     setLocalPosts((prev) => [newPost, ...prev]);
   };
 
-  // עדכון פוסט קיים (עריכה)
   const handleEditPost = async (postId, { content, media, imageFile }) => {
     try {
       let updatedPost;
@@ -94,13 +89,11 @@ const PostList = ({ authorId = null, communityId = null }) => {
     }
   };
 
-  // שילוב חכם של localPosts עם posts לפי _id
   const mergedPosts = posts.map((serverPost) => {
     const localOverride = localPosts.find((p) => p._id === serverPost._id);
     return localOverride || serverPost;
   });
 
-  // הוספת פוסטים חדשים שאין ב־posts
   const onlyLocalNew = localPosts.filter(
     (lp) => !posts.some((sp) => sp._id === lp._id)
   );
@@ -109,6 +102,29 @@ const PostList = ({ authorId = null, communityId = null }) => {
 
   return (
     <div className="post-list">
+      {/* תיבת יצירת פוסט רק כשמותר */}
+      {canCreatePost && (
+        <div
+          className="dashboard-card post-box"
+          style={{
+            marginBottom: "1.5rem",
+            padding: "1rem",
+            borderTop: `4px solid ${user?.teamColors?.primary || "#ccc"}`,
+            backgroundColor: "var(--card-bg)",
+            borderRadius: "1rem",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
+        >
+          <CreatePost
+            colors={user?.teamColors}
+            onPostCreated={handlePostCreated}
+          />
+        </div>
+      )}
+
       {/* הצגת פוסטים */}
       {finalPosts.map((post) => (
         <Post
@@ -127,8 +143,6 @@ const PostList = ({ authorId = null, communityId = null }) => {
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
       <div ref={observerRef} style={{ height: 1 }} />
-
-      {/* הצגת מודאל עריכה בעת הצורך */}
       <PostViewerHandler onEditPost={handleEditPost} />
     </div>
   );

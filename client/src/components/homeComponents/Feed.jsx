@@ -37,24 +37,7 @@ function Feed({ colors, communityId, user }) {
 
   return (
     <section>
-      <div
-        className="dashboard-card post-box"
-        style={{
-          marginBottom: "1.5rem",
-          padding: "1rem",
-          borderTop: `4px solid ${colors.primary}`,
-          backgroundColor: "var(--card-bg)",
-          borderRadius: "1rem",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <CreatePost colors={colors} onPostCreated={handlePostCreated} />
-      </div>
-
-      <PostList posts={posts} colors={colors}  currentUser={user}  />
+      <PostList posts={posts} colors={colors} currentUser={user} />
     </section>
   );
 }

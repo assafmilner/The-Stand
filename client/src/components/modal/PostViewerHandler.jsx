@@ -1,10 +1,10 @@
 import React from "react";
 import { usePostViewer } from "../../hooks/usePostViewer";
 import EditPostModal from "./EditPostModal";
-import PostModalViewOnly from "./PostModalViewOnly";
 
 const PostViewerHandler = ({ onEditPost }) => {
-  const { activePostId, activePostData, activePostMode, closePost } = usePostViewer();
+  const { activePostId, activePostData, activePostMode, closePost } =
+    usePostViewer();
 
   if (!activePostId || !activePostData) return null;
 
@@ -13,19 +13,12 @@ const PostViewerHandler = ({ onEditPost }) => {
     closePost();
   };
 
-  if (activePostMode === 'edit') {
+  if (activePostMode === "edit") {
     return (
       <EditPostModal
         post={activePostData}
         onSave={handleSave}
         onCancel={closePost}
-      />
-    );
-  } else {
-    return (
-      <PostModalViewOnly
-        post={activePostData}
-        onClose={closePost}
       />
     );
   }

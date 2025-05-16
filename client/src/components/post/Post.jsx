@@ -23,12 +23,7 @@ const Post = ({ post, onDelete, colors }) => {
 
       <PostContent content={post.content} media={post.media} />
 
-      <button
-        className="view-post"
-        onClick={() => openPost(post._id, post, "view")}
-      >
-        צפה בפוסט
-      </button>
+      
 
       <PostActions
         postId={post._id}
