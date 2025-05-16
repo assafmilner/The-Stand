@@ -18,7 +18,15 @@ const Post = ({ post, onDelete, colors }) => {
         createdAt={post.createdAt}
         isOwner={isOwner}
         onEdit={isOwner ? () => openPost(post._id, post, "edit") : null} // ← חשוב
-        onDelete={isOwner ? () => onDelete(post._id) : null} // ← חשוב
+        onDelete={
+          isOwner
+            ? () => {
+                if (window.confirm("האם אתה בטוח שברצונך למחוק את הפוסט?")) {
+                  onDelete(post._id);
+                }
+              }
+            : null
+        }
       />
 
       <PostContent content={post.content} media={post.media} />
