@@ -1,17 +1,21 @@
-import React, { useEffect, useRef } from "react";
+// client/src/pages/fixtures.jsx (Updated to use server API)
+import React, { useEffect, useRef, useState } from "react";
 import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Server, BarChart3 } from "lucide-react";
 import { useLeague, useFixtures } from "../hooks/useLeague";
 import { FixturesList } from "../components/league";
 import teamNameMap from "../utils/teams-hebrew";
 import teamColors from "../utils/teamStyles";
+import fixturesApi from "../utils/fixturesApi";
 
 function Fixtures() {
   const { user } = useUser();
   const { league, leagueType, loading: leagueLoading, error: leagueError } = useLeague(user?.favoriteTeam);
   const { fixtures, loading, error, refetch, regularSeasonEndDate } = useFixtures(league, leagueType);
   const fixtureRefs = useRef({});
+  const [cacheStats, setCacheStats] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
@@ -48,43 +52,42 @@ function Fixtures() {
   const findClosestUpcomingGame = () => {
     if (!fixtures.length || !favoriteTeamEnglish) return null;
 
-    const now = new Date();
-    
-    // Filter games for the favorite team
-    const teamFixtures = fixtures.filter(
-      (match) =>
-        match.homeTeam === favoriteTeamEnglish ||
-        match.awayTeam === favoriteTeamEnglish
-    );
-
-    // Find upcoming games
-    const upcomingGames = teamFixtures.filter((match) => {
-      const [year, month, day] = match.date.split("-");
-      let matchDateTime = new Date(
-        parseInt(year),
-        parseInt(month) - 1,
-        parseInt(day)
-      );
-
-      if (match.time) {
-        const [hours, minutes] = match.time.split(":");
-        matchDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      } else {
-        matchDateTime.setHours(23, 59, 59, 999);
-      }
-
-      return matchDateTime >= now;
-    });
-
-    // Sort by date and return the closest
-    const sortedGames = upcomingGames.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA - dateB;
-    });
-
-    return sortedGames.length > 0 ? sortedGames[0] : null;
+    return fixturesApi.getUpcomingFixturesForTeam(fixtures, favoriteTeamEnglish, 1)[0] || null;
   };
+
+  // Load cache statistics
+  const loadCacheStats = async () => {
+    try {
+      const stats = await fixturesApi.getCacheStats();
+      setCacheStats(stats.data);
+    } catch (error) {
+      console.error('Failed to load cache stats:', error);
+    }
+  };
+
+  // Handle manual refresh with cache clearing
+  const handleForceRefresh = async () => {
+    if (!league) return;
+    
+    setRefreshing(true);
+    try {
+      // Clear cache first
+      await fixturesApi.clearCache(`fixtures_${league}`);
+      // Then refresh data
+      refetch();
+      // Reload cache stats
+      setTimeout(loadCacheStats, 1000);
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Load cache stats on component mount
+  useEffect(() => {
+    loadCacheStats();
+  }, []);
 
   // Auto-scroll to closest game
   useEffect(() => {
@@ -93,7 +96,6 @@ function Fixtures() {
     const closestGame = findClosestUpcomingGame();
     
     if (closestGame && fixtureRefs.current[closestGame.id]) {
-      // Add a small delay to ensure the DOM is fully rendered
       const scrollTimeout = setTimeout(() => {
         const element = fixtureRefs.current[closestGame.id];
         if (element) {
@@ -126,6 +128,7 @@ function Fixtures() {
           <div className="text-center">
             <h2 className="text-4xl font-bold mb-6">טוען משחקים...</h2>
             <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full" />
+            <p className="mt-4 text-gray-600">טוען מהשרת...</p>
           </div>
         </div>
       </Layout>
@@ -177,17 +180,64 @@ function Fixtures() {
   return (
     <Layout>
       <div className="fixtures-container dashboard-card">
+        {/* Header with controls */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-4xl font-bold">כל המשחקים של {user?.favoriteTeam}</h2>
-          <button
-            onClick={refetch}
-            className="text-white px-4 py-2 rounded bg-black transition-colors inline-flex items-center gap-2"
-            title="רענן משחקים"
-          >
-            <RefreshCw size={20} />
-            רענן
-          </button>
+          <div className="flex gap-3">
+            {/* Cache stats */}
+            {cacheStats && (
+              <button
+                onClick={loadCacheStats}
+                className="text-blue-600 px-3 py-2 rounded bg-blue-50 transition-colors inline-flex items-center gap-2 text-sm"
+                title="סטטיסטיקות Cache"
+              >
+                <BarChart3 size={16} />
+                Cache: {cacheStats.totalEntries} entries
+              </button>
+            )}
+            
+            {/* Regular refresh */}
+            <button
+              onClick={refetch}
+              disabled={refreshing}
+              className="text-black px-4 py-2 rounded bg-gray-100 transition-colors inline-flex items-center gap-2"
+              title="רענן מהקש"
+            >
+              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
+              רענן
+            </button>
+            
+            {/* Force refresh */}
+            <button
+              onClick={handleForceRefresh}
+              disabled={refreshing}
+              className="text-white px-4 py-2 rounded bg-red-600 transition-colors inline-flex items-center gap-2"
+              title="רענן מהשרת (נקה Cache)"
+            >
+              <Server size={20} />
+              {refreshing ? 'מרענן...' : 'רענן מהשרת'}
+            </button>
+          </div>
         </div>
+
+        {/* Cache stats details */}
+        {cacheStats && (
+          <div className="mb-6 p-3 bg-blue-50 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-800 mb-2">סטטיסטיקות Cache</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              {cacheStats.entries.map((entry, idx) => (
+                <div key={idx} className="bg-white p-2 rounded">
+                  <div className="font-medium text-blue-900">{entry.key}</div>
+                  <div className="text-gray-600">
+                    גיל: {entry.ageMinutes} דקות | 
+                    גודל: {Math.round(entry.size / 1024)}KB |
+                    {entry.isValid ? ' ✅ תקף' : ' ❌ פג תוקף'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Show info about which game will be highlighted */}
         {nextGame && (
@@ -240,6 +290,8 @@ function Fixtures() {
             {regularSeasonEndDate && (
               <p>Regular Season End Date: {regularSeasonEndDate.toLocaleDateString()}</p>
             )}
+            <p>League ID: {league}</p>
+            <p>League Type: {leagueType}</p>
           </div>
         )}
       </div>
