@@ -92,13 +92,23 @@ const updatePost = async (req, res) => {
 const deletePost = async (req, res) => {
   const { id } = req.params;
   try {
-    const deletedPost = await Post.findByIdAndDelete(id);
-    if (!deletedPost) {
+    // First, find the post to check ownership
+    const post = await Post.findById(id);
+    if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
+
+    // Check if the user is the author of the post
+    if (post.authorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "You can only delete your own posts" });
+    }
+
+    // Delete the post
+    await Post.findByIdAndDelete(id);
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting post", error });
+    console.error("Error deleting post:", error);
+    res.status(500).json({ message: "Error deleting post", error: error.message });
   }
 };
 

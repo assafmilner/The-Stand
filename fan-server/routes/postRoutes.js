@@ -15,7 +15,7 @@ router.get("/", getAllPosts);
 
 router.post("/", upload.single('image'), createPost);
 router.put("/:id", upload.single("image"), updatePost);
-router.delete("/:id", deletePost);
+router.delete("/:id", authMiddleware, deletePost);
 router.put("/:id/like", authMiddleware, toggleLike);
 
 module.exports = router;

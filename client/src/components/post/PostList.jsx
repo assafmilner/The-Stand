@@ -3,7 +3,7 @@ import usePosts from "../../hooks/usePosts";
 import { useUser } from "context/UserContext";
 import Post from "./Post";
 import PostViewerHandler from "../modal/PostViewerHandler";
-import CreatePost from "./CreatePost"; 
+import CreatePost from "./CreatePost";
 import api from "utils/api";
 
 const PostList = ({ authorId = null, communityId = null }) => {
