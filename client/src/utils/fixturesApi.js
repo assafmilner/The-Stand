@@ -89,6 +89,7 @@ class FixturesApi {
       console.error('❌ Error checking API health:', error);
       throw error;
     }
+    
   }
 
   /**
