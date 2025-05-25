@@ -11,6 +11,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useUser } from "../../context/UserContext";
+import Layout from "../layout/Layout";
 import api from "../../utils/api";
 import teamNameMap from "../../utils/teams-hebrew";
 import stadiums from "../../utils/stadiums";
@@ -106,7 +107,7 @@ const TicketDetails = ({ colors }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <Layout>
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
@@ -365,7 +366,7 @@ const TicketDetails = ({ colors }) => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

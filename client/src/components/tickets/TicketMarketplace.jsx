@@ -1,10 +1,9 @@
-// client/src/components/tickets/TicketMarketplace.jsx
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Plus } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../../context/UserContext";
 import TicketCard from "./TicketCard";
 import api from "../../utils/api";
+import { useUser } from "../../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
 
 const TicketMarketplace = ({ colors }) => {
@@ -15,75 +14,53 @@ const TicketMarketplace = ({ colors }) => {
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter states
   const [filters, setFilters] = useState({
-    isHomeGame: false,
-    isAwayGame: false,
-    stadium: "",
     dateFrom: "",
     dateTo: "",
     priceMin: "",
     priceMax: "",
+    isHomeGame: false,
+    isAwayGame: false,
   });
-
-  // Get unique stadiums for filter dropdown
-  const [stadiumOptions, setStadiumOptions] = useState([]);
 
   useEffect(() => {
     fetchTickets();
   }, []);
 
-  const fetchTickets = async (filterParams = {}) => {
+  const fetchTickets = async () => {
     setLoading(true);
     setError("");
 
     try {
       const queryParams = new URLSearchParams();
-      const currentFilters = { ...filters, ...filterParams };
 
-      // Get user's favorite team in English for filtering
-      const reverseTeamMap = Object.entries(teamNameMap).reduce(
-        (acc, [eng, data]) => {
-          acc[data.name] = eng;
-          return acc;
-        },
-        {}
+      const favoriteTeamEnglish = Object.keys(teamNameMap).find(
+        (key) => teamNameMap[key].name === user?.favoriteTeam
       );
-      const favoriteTeamEnglish = reverseTeamMap[user?.favoriteTeam];
 
-      // Handle home/away game filtering
-      if (currentFilters.isHomeGame && !currentFilters.isAwayGame) {
+      if (filters.isHomeGame && !filters.isAwayGame) {
         queryParams.append("homeTeam", favoriteTeamEnglish);
-      } else if (currentFilters.isAwayGame && !currentFilters.isHomeGame) {
+      } else if (!filters.isHomeGame && filters.isAwayGame) {
         queryParams.append("awayTeam", favoriteTeamEnglish);
-      } else if (currentFilters.isHomeGame && currentFilters.isAwayGame) {
-        // Both checked - show all games of favorite team (will be handled by OR logic in backend)
-        queryParams.append("teamName", favoriteTeamEnglish);
       } else {
-        // Neither checked - show all games of favorite team
         queryParams.append("teamName", favoriteTeamEnglish);
       }
 
-      // Add other non-empty filters to query
-      ["stadium", "dateFrom", "dateTo", "priceMin", "priceMax"].forEach(
-        (key) => {
-          if (currentFilters[key] && currentFilters[key].toString().trim()) {
-            queryParams.append(key, currentFilters[key]);
-          }
-        }
-      );
+      Object.entries(filters).forEach(([key, value]) => {
+        if (
+          ["isHomeGame", "isAwayGame"].includes(key) ||
+          value === "" ||
+          value === false
+        )
+          return;
+        queryParams.append(key, value);
+      });
 
       const response = await api.get(`/api/tickets?${queryParams.toString()}`);
       setTickets(response.data.tickets || []);
-
-      // Extract unique stadiums for filter dropdown
-      const uniqueStadiums = [
-        ...new Set(response.data.tickets.map((t) => t.stadium)),
-      ];
-      setStadiumOptions(uniqueStadiums);
     } catch (err) {
       console.error("Error fetching tickets:", err);
-      setError("שגיאה בטעינת כרטיसים");
+      setError("שגיאה בטעינת כרטיסים");
     } finally {
       setLoading(false);
     }
@@ -95,47 +72,35 @@ const TicketMarketplace = ({ colors }) => {
   };
 
   const applyFilters = () => {
-    fetchTickets(filters);
+    fetchTickets();
     setShowFilters(false);
   };
 
   const clearFilters = () => {
-    const emptyFilters = {
-      isHomeGame: false,
-      isAwayGame: false,
+    const cleared = {
       stadium: "",
       dateFrom: "",
       dateTo: "",
       priceMin: "",
       priceMax: "",
+      isHomeGame: false,
+      isAwayGame: false,
     };
-    setFilters(emptyFilters);
+    setFilters(cleared);
     fetchTickets();
   };
 
-  const hasActiveFilters = Object.values(filters).some(
-    (value) => value && value.toString().trim()
-  );
-
-  if (loading && tickets.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <div className="loading-spinner mx-auto mb-4"></div>
-        <p>טוען כרטיסים...</p>
-      </div>
-    );
-  }
+  const hasActiveFilters = Object.values(filters).some((value) => !!value);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>
-          כרטיסים למשחקי {user?.favoriteTeam}
+        <h2 className="text-3xl font-bold" style={{ color: colors.primary }}>
+          שוק הכרטיסים
         </h2>
         <button
           onClick={() => navigate("/create-ticket")}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
           style={{ backgroundColor: colors.primary }}
         >
           <Plus size={18} />
@@ -143,9 +108,9 @@ const TicketMarketplace = ({ colors }) => {
         </button>
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center gap-4 mb-4">
+      {/* Filter Bar with button */}
+      <div className="rounded-lg shadow-sm border border-gray-200 p-4 bg-white w-fit">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border font-medium transition-colors ${
@@ -164,70 +129,17 @@ const TicketMarketplace = ({ colors }) => {
           </button>
 
           {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
+            <button onClick={clearFilters} className="text-sm underline">
               נקה סינון
             </button>
           )}
         </div>
+      </div>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                סוג משחק
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.isHomeGame}
-                    onChange={(e) =>
-                      handleFilterChange("isHomeGame", e.target.checked)
-                    }
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 ml-2"
-                  />
-                  <span className="text-sm">
-                    משחקי בית של {user?.favoriteTeam}
-                  </span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.isAwayGame}
-                    onChange={(e) =>
-                      handleFilterChange("isAwayGame", e.target.checked)
-                    }
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 ml-2"
-                  />
-                  <span className="text-sm">
-                    משחקי חוץ של {user?.favoriteTeam}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                אצטדיון
-              </label>
-              <select
-                value={filters.stadium}
-                onChange={(e) => handleFilterChange("stadium", e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">כל האצטדיונים</option>
-                {stadiumOptions.map((stadium) => (
-                  <option key={stadium} value={stadium}>
-                    {stadium}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+      {/* Filter Panel Separate */}
+      {showFilters && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 מחיר מקסימלי (₪)
@@ -237,47 +149,72 @@ const TicketMarketplace = ({ colors }) => {
                 placeholder="עד..."
                 value={filters.priceMax}
                 onChange={(e) => handleFilterChange("priceMax", e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-lg"
               />
             </div>
 
-            <div className="md:col-span-1">
+            <div className="flex items-center gap-2">
+              <input
+                id="home-game"
+                type="checkbox"
+                checked={filters.isHomeGame}
+                onChange={(e) => {
+                  handleFilterChange("isHomeGame", e.target.checked);
+                  setTimeout(fetchTickets, 0);
+                }}
+              />
+              <label htmlFor="home-game">משחק בית</label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="away-game"
+                type="checkbox"
+                checked={filters.isAwayGame}
+                onChange={(e) => {
+                  handleFilterChange("isAwayGame", e.target.checked);
+                  setTimeout(fetchTickets, 0);
+                }}
+              />
+              <label htmlFor="away-game">משחק חוץ</label>
+            </div>
+
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 טווח תאריכים
               </label>
-              <div className="space-y-2">
+              <div className="flex gap-2">
                 <input
                   type="date"
                   value={filters.dateFrom}
                   onChange={(e) =>
                     handleFilterChange("dateFrom", e.target.value)
                   }
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="מתאריך"
+                  className="flex-1 p-2 border border-gray-300 rounded-lg"
                 />
+                <span className="flex items-center text-gray-500">עד</span>
                 <input
                   type="date"
                   value={filters.dateTo}
                   onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="עד תאריך"
+                  className="flex-1 p-2 border border-gray-300 rounded-lg"
                 />
               </div>
             </div>
 
-            <div className="md:col-span-4 flex justify-center">
+            <div className="md:col-span-2 flex items-end gap-2">
               <button
                 onClick={applyFilters}
-                className="bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 החל סינון
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Error State */}
+      {/* Tickets grid */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600 text-center">{error}</p>
@@ -290,7 +227,6 @@ const TicketMarketplace = ({ colors }) => {
         </div>
       )}
 
-      {/* Tickets Grid */}
       {tickets.length === 0 && !loading ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🎫</div>
@@ -298,17 +234,8 @@ const TicketMarketplace = ({ colors }) => {
             אין כרטיסים זמינים
           </h3>
           <p className="text-gray-500 mb-4">
-            {hasActiveFilters
-              ? "לא נמצאו כרטיסים המתאימים לקריטריונים שבחרת"
-              : "אין כרטיסים למכירה כרגע"}
+            נסה לעדכן את הסינון או לבדוק שוב מאוחר יותר
           </p>
-          <button
-            onClick={() => navigate("/create-ticket")}
-            className="px-6 py-2 rounded-lg text-white font-medium"
-            style={{ backgroundColor: colors.primary }}
-          >
-            היה הראשון למכור כרטיס
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -319,13 +246,6 @@ const TicketMarketplace = ({ colors }) => {
               showSellerInfo={true}
             />
           ))}
-        </div>
-      )}
-
-      {/* Loading More */}
-      {loading && tickets.length > 0 && (
-        <div className="text-center py-4">
-          <div className="loading-spinner mx-auto"></div>
         </div>
       )}
     </div>

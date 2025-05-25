@@ -10,7 +10,7 @@ import Home from "./pages/Home";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
-import MyTickets from "./pages/MyTickets"; // ✨ New import
+import Tickets from "./pages/Tickets";
 
 // Ticket Components
 import CreateTicketForm from "./components/tickets/CreateTicketForm"; // ✨ New import
@@ -53,9 +53,9 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/fixtures" element={<Fixtures />} />
-        
-        {/* ✨ New Ticket Routes */}
-        <Route path="/my-tickets" element={<MyTickets />} />
+        <Route path="/tickets" element={<Tickets />} /> 
+
+
         <Route path="/create-ticket" element={<CreateTicketForm colors={colors} />} />
         <Route path="/tickets/:id" element={<TicketDetails colors={colors} />} />
       </Routes>

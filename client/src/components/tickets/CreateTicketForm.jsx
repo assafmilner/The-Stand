@@ -12,10 +12,7 @@ const CreateTicketForm = ({ colors }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { league } = useLeague(user?.favoriteTeam);
-  const { fixtures, loading: fixturesLoading } = useFixtures(
-    league,
-    user?.favoriteTeam
-  );
+  const { fixtures, loading: fixturesLoading } = useFixtures(league, user?.favoriteTeam);
 
   const [formData, setFormData] = useState({
     matchId: "",
@@ -43,13 +40,9 @@ const CreateTicketForm = ({ colors }) => {
 
       if (favoriteTeamEnglish) {
         // Filter matches for favorite team only (both home and away games)
-        const teamMatches = fixtures
-          .filter(
-            (match) =>
-              match.homeTeam === favoriteTeamEnglish ||
-              match.awayTeam === favoriteTeamEnglish
-          )
-          .slice(0, 30); // Show more matches for testing
+        const teamMatches = fixtures.filter(match => 
+          match.homeTeam === favoriteTeamEnglish || match.awayTeam === favoriteTeamEnglish
+        ).slice(0, 30); // Show more matches for testing
 
         setUpcomingMatches(teamMatches);
       }
@@ -57,10 +50,10 @@ const CreateTicketForm = ({ colors }) => {
   }, [fixtures, user?.favoriteTeam]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
     if (field === "matchId" && value) {
-      const match = upcomingMatches.find((m) => m.id === value);
+      const match = upcomingMatches.find(m => m.id === value);
       setSelectedMatch(match);
     }
   };
@@ -74,7 +67,7 @@ const CreateTicketForm = ({ colors }) => {
       {}
     );
     const favoriteTeamEnglish = reverseTeamMap[user?.favoriteTeam];
-
+    
     const homeTeam = teamNameMap[match.homeTeam]?.name || match.homeTeam;
     const awayTeam = teamNameMap[match.awayTeam]?.name || match.awayTeam;
     const date = new Date(match.date).toLocaleDateString("he-IL", {
@@ -84,11 +77,11 @@ const CreateTicketForm = ({ colors }) => {
       year: "numeric",
     });
     const stadium = stadiums[match.venue] || match.venue;
-
+    
     // Determine if it's home or away game for the user's favorite team
     const isHomeGame = match.homeTeam === favoriteTeamEnglish;
     const gameType = isHomeGame ? "(בית)" : "(חוץ)";
-
+    
     return `${homeTeam} נגד ${awayTeam} ${gameType} - ${date} - ${stadium}`;
   };
 
@@ -97,28 +90,28 @@ const CreateTicketForm = ({ colors }) => {
       setError("יש לבחור משחק");
       return false;
     }
-
+    
     if (!formData.quantity || formData.quantity < 1) {
       setError("כמות הכרטיסים חייבת להיות לפחות 1");
       return false;
     }
-
+    
     if (!formData.price || formData.price < 0) {
       setError("מחיר הכרטיס לא יכול להיות שלילי");
       return false;
     }
-
+    
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+    
     if (!validateForm()) return;
-
+    
     setLoading(true);
-
+    
     try {
       const ticketData = {
         matchId: selectedMatch.id,
@@ -133,11 +126,12 @@ const CreateTicketForm = ({ colors }) => {
       };
 
       await api.post("/api/tickets", ticketData);
-
+      
       // Success - redirect to my tickets page
-      navigate("/my-tickets", {
-        state: { message: "הכרטיס נוסף בהצלחה לשוק!" },
+      navigate("/tickets", { 
+        state: { message: "הכרטיס נוסף בהצלחה לשוק!" }
       });
+      
     } catch (err) {
       console.error("Error creating ticket:", err);
       setError(err.response?.data?.message || "שגיאה ביצירת הכרטיס");
@@ -194,7 +188,7 @@ const CreateTicketForm = ({ colors }) => {
               required
             >
               <option value="">בחר משחק של {user?.favoriteTeam}...</option>
-              {upcomingMatches.map((match) => (
+              {upcomingMatches.map(match => (
                 <option key={match.id} value={match.id}>
                   {formatMatchOption(match)}
                 </option>
@@ -210,9 +204,7 @@ const CreateTicketForm = ({ colors }) => {
           {/* Selected Match Preview */}
           {selectedMatch && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-800 mb-2">
-                פרטי המשחק הנבחר:
-              </h3>
+              <h3 className="font-semibold text-blue-800 mb-2">פרטי המשחק הנבחר:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-blue-700">
                   <Calendar size={16} />
@@ -230,9 +222,7 @@ const CreateTicketForm = ({ colors }) => {
                 </div>
                 <div className="flex items-center gap-2 text-blue-700">
                   <MapPin size={16} />
-                  <span>
-                    {stadiums[selectedMatch.venue] || selectedMatch.venue}
-                  </span>
+                  <span>{stadiums[selectedMatch.venue] || selectedMatch.venue}</span>
                 </div>
               </div>
             </div>
@@ -274,12 +264,9 @@ const CreateTicketForm = ({ colors }) => {
             />
             {formData.price && formData.quantity && (
               <p className="text-sm text-gray-600 mt-1">
-                סה"כ עבור {formData.quantity} כרטיסים:{" "}
+                סה"כ עבור {formData.quantity} כרטיסים: {" "}
                 <span className="font-semibold text-green-600">
-                  {(
-                    parseFloat(formData.price) * parseInt(formData.quantity)
-                  ).toLocaleString("he-IL")}{" "}
-                  ₪
+                  {(parseFloat(formData.price) * parseInt(formData.quantity)).toLocaleString("he-IL")} ₪
                 </span>
               </p>
             )}
@@ -308,17 +295,16 @@ const CreateTicketForm = ({ colors }) => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 border border-gray-300  rounded-lg font-medium  transition-colors"
             >
               ביטול
             </button>
             <button
               type="submit"
               disabled={loading || !selectedMatch}
-              className="flex-1 px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor:
-                  loading || !selectedMatch ? "#ccc" : colors.primary,
+              className="flex-1 px-6 py-3  rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: loading || !selectedMatch ? '#ccc' : colors.primary 
               }}
             >
               {loading ? "מפרסם..." : "פרסם כרטיס"}
@@ -329,9 +315,7 @@ const CreateTicketForm = ({ colors }) => {
 
       {/* Info Box */}
       <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <h3 className="font-semibold text-yellow-800 mb-2">
-          💡 טיפים למכירה מוצלחת:
-        </h3>
+        <h3 className="font-semibold text-yellow-800 mb-2">💡 טיפים למכירה מוצלחת:</h3>
         <ul className="text-sm text-yellow-700 space-y-1">
           <li>• הגדר מחיר הוגן בהשוואה לשוק</li>
           <li>• ציין מידע חשוב על מיקום הכרטיסים</li>

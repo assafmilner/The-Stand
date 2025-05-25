@@ -167,7 +167,7 @@ body {
 }
 
 .form-link {
-  color: #ffffff;
+  color: #166534;
   text-decoration: none;
   
   font-weight: 500;
@@ -175,7 +175,7 @@ body {
 }
 
 .form-link:hover {
-  color: #166534;
+  color: #000000;
   text-decoration: underline;
 }
 

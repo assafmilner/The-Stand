@@ -6,6 +6,7 @@
 @import "./base.css";
 @import "./league.css";
 @import "./variables.css";
+@import "./ticket.css";
 
 
 @tailwind base;

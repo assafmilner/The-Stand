@@ -5,7 +5,6 @@ import Layout from "../components/layout/Layout";
 import Feed from "../components/homeComponents/Feed";
 import SmartLeagueTable from "../components/league/SmartLeagueTable";
 import Community from "../components/homeComponents/Community";
-import TicketMarketplace from "../components/tickets/TicketMarketplace"; // ✨ New import
 
 import teamColors from "../utils/teamStyles";
 
@@ -47,7 +46,6 @@ const Home = () => {
           {[
             { key: "feed", label: "פיד" },
             { key: "groups", label: "קהילות" },
-            { key: "tickets", label: "כרטיסים" }, // ✨ New tab
             { key: "table", label: "טבלה" },
           ].map((tab) => (
             <button
@@ -81,11 +79,7 @@ const Home = () => {
           </div>
         )}
         {selectedTab === "groups" && <Community colors={colors} />}
-        {selectedTab === "tickets" && ( // ✨ New tab content
-          <div key="tickets" className="animate-fade-in">
-            <TicketMarketplace colors={colors} />
-          </div>
-        )}
+       
       </div>
     </Layout>
   );
