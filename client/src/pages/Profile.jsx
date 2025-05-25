@@ -8,6 +8,8 @@ import CoverImageUploader from "../components/profile/CoverImageUploader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfilePosts from "../components/profile/ProfilePosts";
 import ProfileInfo from "../components/profile/ProfileInfo";
+import ChatModal from "../components/chat/ChatModal";
+import { useMessageNotifications } from "../hooks/useMessageNotifications";
 import teamColors from "../utils/teamStyles";
 import "styles/index.css";
 
@@ -18,6 +20,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [friendsCount, setFriendsCount] = useState(0);
   const [activeTab, setActiveTab] = useState("posts");
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Get the markAsRead function from notifications hook
+  const { markAsRead } = useMessageNotifications(currentUser);
 
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?._id;
@@ -49,8 +55,16 @@ const Profile = () => {
 
   const handleCoverUpdate = (newCoverImage) => {
     if (isOwnProfile) {
-      setUser(prev => ({ ...prev, coverImage: newCoverImage }));
+      setUser((prev) => ({ ...prev, coverImage: newCoverImage }));
     }
+  };
+
+  const handleSendMessage = () => {
+    setIsChatOpen(true);
+  };
+
+  const handleCloseChatModal = () => {
+    setIsChatOpen(false);
   };
 
   const formatJoinDate = (date) => {
@@ -163,7 +177,10 @@ const Profile = () => {
                         <UserPlus size={18} />
                         הוסף לחברים
                       </button>
-                      <button className="profile-btn secondary">
+                      <button
+                        className="profile-btn secondary"
+                        onClick={handleSendMessage}
+                      >
                         <MessageCircle size={18} />
                         שלח הודעה
                       </button>
@@ -222,10 +239,17 @@ const Profile = () => {
                 )}
               </div>
             </div>
-           
           </div>
         </div>
       </div>
+
+      {/* Chat Modal with markAsRead function */}
+      <ChatModal
+        isOpen={isChatOpen}
+        onClose={handleCloseChatModal}
+        otherUser={displayUser}
+        onMarkAsRead={markAsRead}
+      />
     </ProfileLayout>
   );
 };

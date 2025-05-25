@@ -1,4 +1,4 @@
-// client/src/App.js (Updated with ticket routes)
+// client/src/App.js (Updated with Messages route)
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -11,10 +11,11 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
 import Tickets from "./pages/Tickets";
+import Messages from "./pages/Messages"; // ✨ New import
 
 // Ticket Components
-import CreateTicketForm from "./components/tickets/CreateTicketForm"; // ✨ New import
-import TicketDetails from "./components/tickets/TicketDetails"; // ✨ New import
+import CreateTicketForm from "./components/tickets/CreateTicketForm";
+import TicketDetails from "./components/tickets/TicketDetails";
 
 // Context
 import { useUser } from "./context/UserContext";
@@ -53,8 +54,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/fixtures" element={<Fixtures />} />
-        <Route path="/tickets" element={<Tickets />} /> 
-
+        <Route path="/tickets" element={<Tickets />} />
+        <Route path="/messages" element={<Messages />} /> {/* ✨ New route */}
 
         <Route path="/create-ticket" element={<CreateTicketForm colors={colors} />} />
         <Route path="/tickets/:id" element={<TicketDetails colors={colors} />} />

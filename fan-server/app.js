@@ -1,4 +1,4 @@
-// fan-server/app.js (Updated with fixtures route)
+// fan-server/app.js (Updated with message routes)
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -10,6 +10,7 @@ const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures"); 
 const ticketRoutes = require("./routes/ticketRoutes");
+const messageRoutes = require("./routes/messageRoutes"); // New import
 
 dotenv.config();
 const app = express();
@@ -35,6 +36,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/fixtures", fixturesRoutes); 
 app.use("/api/tickets", ticketRoutes);
+app.use("/api/messages", messageRoutes); // New route
 
 // Root check
 app.get("/", (req, res) => {

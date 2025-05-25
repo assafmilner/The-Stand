@@ -1,4 +1,12 @@
-import { User, Calendar, Bell, Home, LogOut, Ticket } from "lucide-react";
+import {
+  User,
+  Calendar,
+  Bell,
+  Home,
+  LogOut,
+  Ticket,
+  MessageCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const RightSidebar = ({ colors, onLogout }) => {
@@ -7,6 +15,7 @@ const RightSidebar = ({ colors, onLogout }) => {
     localStorage.clear();
     navigate("/login");
   };
+
   return (
     <aside className="side-bar right-0">
       <nav
@@ -28,6 +37,12 @@ const RightSidebar = ({ colors, onLogout }) => {
             onClick={() => navigate("/fixtures")}
           >
             <Calendar size={18} /> משחקים
+          </li>
+          <li
+            className="nav-item flex items-center gap-2"
+            onClick={() => navigate("/messages")}
+          >
+            <MessageCircle size={18} /> הודעות
           </li>
           <li className="nav-item flex items-center gap-2">
             <Bell size={18} /> התראות
