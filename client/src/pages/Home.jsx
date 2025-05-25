@@ -1,10 +1,11 @@
-// src/pages/Home.jsx
+// client/src/pages/Home.jsx (Updated with Tickets tab)
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import Layout from "../components/layout/Layout";
 import Feed from "../components/homeComponents/Feed";
 import SmartLeagueTable from "../components/league/SmartLeagueTable";
 import Community from "../components/homeComponents/Community";
+import TicketMarketplace from "../components/tickets/TicketMarketplace"; // ✨ New import
 
 import teamColors from "../utils/teamStyles";
 
@@ -15,7 +16,6 @@ const Home = () => {
   const [selectedTab, setSelectedTab] = useState("feed");
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
- 
   // loading / not authed
   if (loading) {
     return (
@@ -47,7 +47,7 @@ const Home = () => {
           {[
             { key: "feed", label: "פיד" },
             { key: "groups", label: "קהילות" },
-            { key: "tickets", label: "כרטיסים" },
+            { key: "tickets", label: "כרטיסים" }, // ✨ New tab
             { key: "table", label: "טבלה" },
           ].map((tab) => (
             <button
@@ -81,21 +81,12 @@ const Home = () => {
           </div>
         )}
         {selectedTab === "groups" && <Community colors={colors} />}
-        {selectedTab === "tickets" && (
-          <div
-            key="tickets"
-            className="animate-fade-in text-center text-gray-500"
-          >
-            כרטיסים - בקרוב
+        {selectedTab === "tickets" && ( // ✨ New tab content
+          <div key="tickets" className="animate-fade-in">
+            <TicketMarketplace colors={colors} />
           </div>
         )}
       </div>
-
-              
-           
-      
-   
-      
     </Layout>
   );
 };

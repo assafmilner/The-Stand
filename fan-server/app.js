@@ -8,7 +8,8 @@ const path = require("path");
 const proxyRouter = require('./proxy');
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
-const fixturesRoutes = require("./routes/fixtures"); // ✨ New fixtures route
+const fixturesRoutes = require("./routes/fixtures"); 
+const ticketRoutes = require("./routes/ticketRoutes");
 
 dotenv.config();
 const app = express();
@@ -32,7 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
-app.use("/api/fixtures", fixturesRoutes); // ✨ Add fixtures API
+app.use("/api/fixtures", fixturesRoutes); 
+app.use("/api/tickets", ticketRoutes);
 
 // Root check
 app.get("/", (req, res) => {

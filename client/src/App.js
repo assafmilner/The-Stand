@@ -1,3 +1,4 @@
+// client/src/App.js (Updated with ticket routes)
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -9,6 +10,11 @@ import Home from "./pages/Home";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
+import MyTickets from "./pages/MyTickets"; // ✨ New import
+
+// Ticket Components
+import CreateTicketForm from "./components/tickets/CreateTicketForm"; // ✨ New import
+import TicketDetails from "./components/tickets/TicketDetails"; // ✨ New import
 
 // Context
 import { useUser } from "./context/UserContext";
@@ -31,20 +37,30 @@ function ColorManager() {
 }
 
 function App() {
-  return (<BrowserRouter>
-    <ColorManager />
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Signup />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/home" element={<Home />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/profile/:userId" element={<Profile />} />
-      <Route path="/fixtures" element={<Fixtures />} />
-    </Routes>
-  </BrowserRouter>
-);
+  const { user } = useUser();
+  const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
+
+  return (
+    <BrowserRouter>
+      <ColorManager />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/fixtures" element={<Fixtures />} />
+        
+        {/* ✨ New Ticket Routes */}
+        <Route path="/my-tickets" element={<MyTickets />} />
+        <Route path="/create-ticket" element={<CreateTicketForm colors={colors} />} />
+        <Route path="/tickets/:id" element={<TicketDetails colors={colors} />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
+
 export default App;
