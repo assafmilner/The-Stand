@@ -1,4 +1,4 @@
-// client/src/services/socketService.js
+// client/src/services/socketService.js - OPTIMIZED VERSION
 import { io } from 'socket.io-client';
 
 class SocketService {
@@ -7,48 +7,65 @@ class SocketService {
     this.isConnected = false;
     this.isConnecting = false;
     this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
+    this.maxReconnectAttempts = 3;
     this.listeners = new Map();
+    this.messageQueue = []; // Queue for offline messages
+    this.connectionPromise = null; // Prevent multiple connection attempts
+    this.heartbeatInterval = null;
+    this.lastActivity = Date.now();
   }
 
   connect(token) {
-    // Prevent multiple connection attempts
-    if (this.isConnected || this.isConnecting) {
+    // Return existing connection promise if already connecting
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
+    // Return resolved promise if already connected
+    if (this.isConnected && this.socket?.connected) {
       return Promise.resolve();
     }
 
-    this.isConnecting = true;
-
-    return new Promise((resolve, reject) => {
+    this.connectionPromise = new Promise((resolve, reject) => {
       try {
-        // Disconnect existing socket if any
+        this.isConnecting = true;
+
+        // Clean up existing socket
         if (this.socket) {
+          this.socket.removeAllListeners();
           this.socket.disconnect();
         }
 
         this.socket = io(process.env.REACT_APP_SERVER_URL || 'http://localhost:3001', {
           auth: { token },
           autoConnect: false,
-          reconnection: true,
-          reconnectionAttempts: this.maxReconnectAttempts,
-          reconnectionDelay: 1000,
-          timeout: 10000
+          reconnection: false, // We'll handle reconnection manually
+          timeout: 5000, // Reduced timeout for faster failure detection
+          forceNew: true,
+          transports: ['websocket', 'polling'] // Prioritize websocket
         });
 
         // Connection successful
         this.socket.on('connect', () => {
-          console.log('✅ Socket connected');
+          console.log('✅ Socket connected:', this.socket.id);
           this.isConnected = true;
           this.isConnecting = false;
           this.reconnectAttempts = 0;
+          this.connectionPromise = null;
+          
+          // Process queued messages
+          this.processMessageQueue();
+          
+          // Start heartbeat
+          this.startHeartbeat();
+          
           resolve();
         });
 
         // Connection error
         this.socket.on('connect_error', (error) => {
-          console.error('❌ Socket connection error:', error);
-          this.isConnected = false;
-          this.isConnecting = false;
+          console.error('❌ Socket connection error:', error.message);
+          this.handleConnectionFailure();
           reject(error);
         });
 
@@ -56,126 +73,203 @@ class SocketService {
         this.socket.on('disconnect', (reason) => {
           console.log('🔌 Socket disconnected:', reason);
           this.isConnected = false;
-          this.isConnecting = false;
+          this.stopHeartbeat();
+          
+          // Auto-reconnect for client-side disconnections
+          if (reason === 'io client disconnect') return;
+          
+          this.scheduleReconnect(token);
         });
 
-        // Reconnection attempts
-        this.socket.on('reconnect_attempt', (attemptNumber) => {
-          console.log(`🔄 Reconnection attempt ${attemptNumber}`);
-          this.reconnectAttempts = attemptNumber;
+        // Efficient event handling
+        this.socket.on('receive_message', (message) => {
+          this.updateActivity();
+          this.emit('message_received', message);
         });
 
-        // Reconnection failed
-        this.socket.on('reconnect_failed', () => {
-          console.error('❌ Socket reconnection failed');
-          this.isConnected = false;
-          this.isConnecting = false;
+        this.socket.on('message_sent', (message) => {
+          this.updateActivity();
+          this.emit('message_sent_confirmed', message);
         });
 
-        // Actually connect
+        this.socket.on('message_error', (error) => {
+          this.emit('message_send_error', error);
+        });
+
+        this.socket.on('new_message_notification', (notification) => {
+          this.emit('notification_received', notification);
+        });
+
+        // Connect
         this.socket.connect();
 
       } catch (error) {
-        console.error('❌ Socket connection setup error:', error);
-        this.isConnecting = false;
+        console.error('❌ Socket setup error:', error);
+        this.handleConnectionFailure();
         reject(error);
       }
     });
+
+    return this.connectionPromise;
   }
 
   disconnect() {
+    this.stopHeartbeat();
+    
     if (this.socket) {
+      this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
+    
     this.isConnected = false;
     this.isConnecting = false;
+    this.connectionPromise = null;
     this.listeners.clear();
+    this.messageQueue = [];
   }
 
-  // Send message using your server's event name
+  // Optimized message sending with queue support
   sendMessage(receiverId, content) {
-    if (!this.isConnected || !this.socket) {
-      console.error('❌ Cannot send message: Socket not connected');
+    const messageData = {
+      receiverId,
+      content,
+      timestamp: new Date().toISOString(),
+      tempId: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    if (!this.isConnected || !this.socket?.connected) {
+      // Queue message for when connection is restored
+      this.messageQueue.push(messageData);
+      console.warn('⚠️ Message queued - socket disconnected');
+      return messageData.tempId;
+    }
+
+    this.socket.emit('send_message', messageData);
+    this.updateActivity();
+    return messageData.tempId;
+  }
+
+  // Process queued messages when connection is restored
+  processMessageQueue() {
+    if (this.messageQueue.length === 0) return;
+    
+    console.log(`📤 Processing ${this.messageQueue.length} queued messages`);
+    
+    this.messageQueue.forEach(messageData => {
+      this.socket.emit('send_message', messageData);
+    });
+    
+    this.messageQueue = [];
+  }
+
+  // Efficient event system
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
+    }
+    this.listeners.get(event).add(callback);
+  }
+
+  off(event, callback) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).delete(callback);
+    }
+  }
+
+  emit(event, data) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in ${event} listener:`, error);
+        }
+      });
+    }
+  }
+
+  // Connection management
+  handleConnectionFailure() {
+    this.isConnected = false;
+    this.isConnecting = false;
+    this.connectionPromise = null;
+  }
+
+  scheduleReconnect(token) {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('❌ Max reconnection attempts reached');
       return;
     }
 
-    const messageData = {
-      receiverId, // Using your server's field name
-      content,
-      timestamp: new Date().toISOString()
-    };
-
-    this.socket.emit('send_message', messageData); // Using your server's event name
-  }
-
-  // Listen for incoming messages using your server's event name
-  onReceiveMessage(callback) {
-    if (!this.socket) return;
-
-    // Remove existing listener to prevent duplicates
-    this.socket.off('receive_message');
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
+    this.reconnectAttempts++;
     
-    // Add new listener using your server's event name
-    this.socket.on('receive_message', callback);
-    this.listeners.set('receive_message', callback);
-  }
-
-  // Listen for message sent confirmation using your server's event name
-  onMessageSent(callback) {
-    if (!this.socket) return;
-
-    this.socket.off('message_sent');
-    this.socket.on('message_sent', callback); // Using your server's event name
-    this.listeners.set('message_sent', callback);
-  }
-
-  // Listen for message errors using your server's event name
-  onMessageError(callback) {
-    if (!this.socket) return;
-
-    this.socket.off('message_error');
-    this.socket.on('message_error', callback); // Using your server's event name
-    this.listeners.set('message_error', callback);
-  }
-
-  // Remove all listeners
-  removeAllListeners() {
-    if (!this.socket) return;
-
-    // Remove specific listeners
-    this.listeners.forEach((callback, event) => {
-      this.socket.off(event);
-    });
+    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
     
-    this.listeners.clear();
+    setTimeout(() => {
+      if (!this.isConnected) {
+        this.connect(token).catch(console.error);
+      }
+    }, delay);
   }
 
-  // Check connection status
+  // Heartbeat to detect connection issues
+  startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('ping');
+      }
+    }, 30000); // Every 30 seconds
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  updateActivity() {
+    this.lastActivity = Date.now();
+  }
+
+  // Public methods for components
   isSocketConnected() {
-    return this.isConnected && this.socket && this.socket.connected;
+    return this.isConnected && this.socket?.connected;
   }
 
-  // Get connection status
   getStatus() {
     return {
       isConnected: this.isConnected,
       isConnecting: this.isConnecting,
       reconnectAttempts: this.reconnectAttempts,
-      socketId: this.socket?.id || null
+      socketId: this.socket?.id || null,
+      queuedMessages: this.messageQueue.length,
+      lastActivity: this.lastActivity
     };
   }
 
-  // Manually trigger reconnection
-  reconnect(token) {
-    if (this.isConnecting) return;
-    
+  // Force reconnection
+  async reconnect(token) {
     console.log('🔄 Manual reconnection triggered');
     this.disconnect();
     return this.connect(token);
+  }
+
+  // Cleanup method for React components
+  cleanup() {
+    this.listeners.clear();
   }
 }
 
 // Export singleton instance
 const socketService = new SocketService();
+
+// Global error handling
+window.addEventListener('beforeunload', () => {
+  socketService.disconnect();
+});
+
 export default socketService;

@@ -11,8 +11,20 @@ const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures"); 
 const ticketRoutes = require("./routes/ticketRoutes");
 const messageRoutes = require("./routes/messageRoutes"); // New import
+const { performanceMonitor, mongooseQueryMonitor } = require('./utils/performanceMonitor');
+
 
 dotenv.config();
+mongoose
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1); // עצור את השרת אם אין DB
+  });
 const app = express();
 
 // Static files
@@ -37,6 +49,16 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/fixtures", fixturesRoutes); 
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/messages", messageRoutes); // New route
+app.use(performanceMonitor.trackRequest());
+
+
+// Enable database query monitoring
+mongooseQueryMonitor();
+
+// Add performance endpoint
+app.get('/api/performance', (req, res) => {
+  res.json(performanceMonitor.generateReport());
+});
 
 // Root check
 app.get("/", (req, res) => {

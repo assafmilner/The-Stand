@@ -22,20 +22,11 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("posts");
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Get the markAsRead function from optimized chat context
-  const { markAsRead, initializeSocket } = useChat();
 
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?._id;
   const displayUser = isOwnProfile ? currentUser : profileUser;
   const colors = teamColors[displayUser?.favoriteTeam || "הפועל תל אביב"];
-
-  // Initialize socket connection
-  useEffect(() => {
-    if (currentUser) {
-      initializeSocket(currentUser);
-    }
-  }, [currentUser, initializeSocket]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -250,12 +241,12 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Chat Modal with markAsRead function */}
+      {/* Chat Modal  */}
       <ChatModal
         isOpen={isChatOpen}
         onClose={handleCloseChatModal}
         otherUser={displayUser}
-        onMarkAsRead={markAsRead}
+      
       />
     </ProfileLayout>
   );

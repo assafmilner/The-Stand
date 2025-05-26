@@ -1,339 +1,466 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+// client/src/pages/Messages.js - OPTIMIZED VERSION
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Layout from "../components/layout/Layout";
-import api from "../utils/api";
-import { MessageCircle, Clock, Search, Users } from "lucide-react";
-import ChatModal from "../components/chat/ChatModal";
 import { useUser } from "../context/UserContext";
 import { useChat } from "../context/ChatContext";
+import useChatLogic from "../hooks/useChatLogic";
 import teamColors from "../utils/teamStyles";
+import { Send, Search, MoreVertical, Phone, Video } from "lucide-react";
 
-const Messages = React.memo(() => {
+// Memoized chat list item to prevent unnecessary re-renders
+const ChatListItem = React.memo(({ 
+  chat, 
+  isSelected, 
+  isUnread, 
+  onClick 
+}) => (
+  <div
+    onClick={onClick}
+    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 
+      ${isSelected ? "bg-blue-50 border-l-4 border-blue-500" : isUnread ? "bg-yellow-50" : ""} 
+      hover:bg-gray-100 hover:shadow-sm`}
+  >
+    <div className="relative">
+      <img
+        src={chat.user.profilePicture || "/defaultProfilePic.png"}
+        alt={chat.user.name}
+        className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+        loading="lazy"
+      />
+      {isUnread && (
+        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-white animate-pulse" />
+      )}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between mb-1">
+        <span className="font-semibold text-gray-900 truncate">{chat.user.name}</span>
+        {chat.lastMessageTime && (
+          <span className="text-xs text-gray-500 flex-shrink-0">
+            {formatMessageTime(chat.lastMessageTime)}
+          </span>
+        )}
+      </div>
+      {chat.lastMessage && (
+        <p className="text-sm text-gray-600 truncate">
+          {chat.lastMessage.length > 40 ? chat.lastMessage.slice(0, 40) + "..." : chat.lastMessage}
+        </p>
+      )}
+    </div>
+  </div>
+));
+
+// Memoized message bubble to prevent unnecessary re-renders
+const MessageBubble = React.memo(({ 
+  message, 
+  isOwn, 
+  showAvatar, 
+  colors 
+}) => (
+  <div
+    className={`flex items-end gap-2 mb-4 ${
+      isOwn ? "justify-end" : "justify-start"
+    }`}
+  >
+    {!isOwn && (
+      <img
+        src={message.senderId.profilePicture || "/defaultProfilePic.png"}
+        alt={message.senderId.name}
+        className={`w-8 h-8 rounded-full object-cover transition-opacity ${
+          showAvatar ? "opacity-100" : "opacity-0"
+        }`}
+        loading="lazy"
+      />
+    )}
+    
+    <div
+      className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${
+        isOwn
+          ? "text-white"
+          : "bg-white text-gray-900 border border-gray-200"
+      } ${message.isOptimistic ? "opacity-70" : ""}`}
+      style={{
+        backgroundColor: isOwn ? colors.primary : undefined,
+        borderRadius: isOwn ? "20px 20px 6px 20px" : "20px 20px 20px 6px",
+      }}
+    >
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+        {message.content}
+      </p>
+      <div className="flex items-center justify-between mt-2">
+        <p className={`text-xs ${isOwn ? "text-white/70" : "text-gray-500"}`}>
+          {formatMessageTime(message.createdAt)}
+        </p>
+        {message.isOptimistic && (
+          <span className="text-xs opacity-70">שולח...</span>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+// Utility function to format message time
+const formatMessageTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = (now - date) / (1000 * 60 * 60);
+  
+  if (diffInHours < 24) {
+    return date.toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } else if (diffInHours < 48) {
+    return "אתמול";
+  } else {
+    return date.toLocaleDateString("he-IL", {
+      day: "numeric",
+      month: "short",
+    });
+  }
+};
+
+const Messages = () => {
   const { user } = useUser();
-  const [chatUsers, setChatUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    recentChats,
+    loadRecentChats,
+    markAsRead,
+    notifications,
+    recentChatsLoading,
+    isSocketConnected,
+  } = useChat();
+
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+  
+  // Refs for optimization
+  const messagesEndRef = useRef(null);
+  const messageInputRef = useRef(null);
+  const searchInputRef = useRef(null);
 
-  // Use refs to prevent race conditions and unnecessary re-renders
-  const dataLoadedRef = useRef(false);
-  const mountedRef = useRef(true);
-  const currentRequestRef = useRef(null);
+  const otherUserId = selectedUser?._id;
 
+  const {
+    messages,
+    newMessage,
+    setNewMessage,
+    sendMessage,
+    loading,
+    error,
+    isConnected,
+    scrollToBottom,
+  } = useChatLogic({
+    user,
+    otherUserId,
+    isOpen: !!selectedUser,
+    onMarkAsRead: markAsRead,
+  });
+
+  // Load recent chats on mount
+  useEffect(() => {
+    loadRecentChats();
+  }, [loadRecentChats]);
+
+  // Memoized team colors
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
     [user?.favoriteTeam]
   );
 
-  // Get functions from chat context
-  const { markAsRead, initializeSocket } = useChat();
+  // Filter chats based on search query
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return recentChats;
+    
+    return recentChats.filter(chat =>
+      chat.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [recentChats, searchQuery]);
 
-  // Initialize socket connection once
-  useEffect(() => {
-    if (user) {
-      initializeSocket(user);
+  // Handle chat selection
+  const handleChatSelect = useCallback((chatUser) => {
+    setSelectedUser(chatUser);
+    markAsRead(chatUser._id);
+    setNewMessage("");
+    
+    // Focus message input after a short delay
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
+  }, [markAsRead, setNewMessage]);
+
+  // Handle message sending with typing indicator
+  const handleSendMessage = useCallback(async () => {
+    if (!newMessage.trim()) return;
+    
+    // Clear typing indicator
+    setIsTyping(false);
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
     }
-  }, [user, initializeSocket]);
+    
+    await sendMessage();
+    
+    // Focus input after sending
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
+  }, [newMessage, sendMessage, typingTimeout]);
 
-  // Optimized fetch function with proper cleanup
-  const fetchChatUsers = useCallback(async () => {
-    if (dataLoadedRef.current || loading) return;
-
-    // Cancel previous request if exists
-    if (currentRequestRef.current) {
-      currentRequestRef.current.cancel = true;
+  // Handle input changes with typing indicator
+  const handleInputChange = useCallback((e) => {
+    setNewMessage(e.target.value);
+    
+    // Typing indicator logic
+    if (!isTyping) {
+      setIsTyping(true);
+      // Here you would emit typing_start to socket
     }
-
-    const requestId = { cancel: false };
-    currentRequestRef.current = requestId;
-
-    setLoading(true);
-
-    try {
-      const response = await api.get("/api/messages/chats");
-
-      // Check if request was cancelled or component unmounted
-      if (requestId.cancel || !mountedRef.current) return;
-
-      if (response.data.success) {
-        setChatUsers(response.data.chatUsers || []);
-        dataLoadedRef.current = true;
-      }
-    } catch (error) {
-      console.error("Error fetching chat users:", error);
-      if (!requestId.cancel && mountedRef.current) {
-        setChatUsers([]);
-        dataLoadedRef.current = true; // Still mark as loaded to prevent retries
-      }
-    } finally {
-      if (!requestId.cancel && mountedRef.current) {
-        setLoading(false);
-      }
-      currentRequestRef.current = null;
+    
+    // Clear existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
     }
-  }, []); // Empty dependencies - only create once
+    
+    // Set new timeout to stop typing indicator
+    const timeout = setTimeout(() => {
+      setIsTyping(false);
+      // Here you would emit typing_stop to socket
+    }, 2000);
+    
+    setTypingTimeout(timeout);
+  }, [isTyping, typingTimeout, setNewMessage]);
 
-  // Load data only once on mount
-  useEffect(() => {
-    fetchChatUsers();
-  }, []); // Empty dependencies
+  // Handle key press for sending messages
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
 
-  // Cleanup on unmount
+  // Scroll to bottom when messages change
   useEffect(() => {
-    mountedRef.current = true;
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
     return () => {
-      mountedRef.current = false;
-      // Cancel any pending requests
-      if (currentRequestRef.current) {
-        currentRequestRef.current.cancel = true;
-        currentRequestRef.current = null;
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
       }
     };
-  }, []);
-
-  // Memoized handlers to prevent re-renders
-  const openChat = useCallback((chatUser) => {
-    setSelectedUser(chatUser);
-    setIsChatOpen(true);
-  }, []);
-
-  const handleCloseChatModal = useCallback(() => {
-    setIsChatOpen(false);
-    setSelectedUser(null);
-  }, []);
-
-  const handleSearchChange = useCallback((e) => {
-    setSearchTerm(e.target.value);
-  }, []);
-
-  // Memoized time formatter
-  const formatTime = useCallback((date) => {
-    const now = new Date();
-    const messageDate = new Date(date);
-    const diffInMs = now - messageDate;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return messageDate.toLocaleTimeString("he-IL", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } else if (diffInHours < 48) {
-      return "אתמול";
-    } else {
-      return messageDate.toLocaleDateString("he-IL", {
-        day: "numeric",
-        month: "numeric",
-      });
-    }
-  }, []);
-
-  // Memoized filtered chat users
-  const filteredChatUsers = useMemo(
-    () =>
-      chatUsers.filter((chatUser) =>
-        chatUser.user.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [chatUsers, searchTerm]
-  );
-
-  // Memoized chat user component to prevent re-renders
-  const ChatUserItem = React.memo(
-    ({ chatUser, onOpenChat, formatTime, colors }) => (
-      <div
-        onClick={() => onOpenChat(chatUser.user)}
-        className="group p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
-      >
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <img
-              src={
-                chatUser.user.profilePicture ||
-                "http://localhost:3001/assets/defaultProfilePic.png"
-              }
-              alt={chatUser.user.name}
-              className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
-            />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-gray-900 truncate">
-                {chatUser.user.name}
-              </h3>
-              {chatUser.lastMessageTime && (
-                <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <Clock size={14} />
-                  <span className="font-medium">
-                    {formatTime(chatUser.lastMessageTime)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {chatUser.lastMessage && (
-              <p className="text-gray-600 text-sm truncate mb-1">
-                {chatUser.lastMessage}
-              </p>
-            )}
-
-            <p className="text-xs text-gray-400">
-              {chatUser.user.favoriteTeam
-                ? `אוהד ${chatUser.user.favoriteTeam}`
-                : "אוהד כדורגל"}
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ backgroundColor: colors.primary }}
-            ></div>
-            {Math.random() > 0.7 && (
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                style={{ backgroundColor: colors.primary }}
-              >
-                {Math.floor(Math.random() * 3) + 1}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  );
-
-  ChatUserItem.displayName = "ChatUserItem";
-
-  // Show loading only on initial load
-  if (loading && !dataLoadedRef.current) {
-    return (
-      <Layout>
-        <div className="dashboard-card text-center">
-          <div
-            className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full mb-4"
-            style={{ borderColor: colors.primary }}
-          ></div>
-          <p className="text-gray-600">טוען הודעות...</p>
-        </div>
-      </Layout>
-    );
-  }
+  }, [typingTimeout]);
 
   return (
     <Layout>
-      <div className="space-6-y">
-        {/* Header Section */}
-        <div
-          className="dashboard-card mb-6"
-          style={{ borderTop: `4px solid ${colors.primary}` }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <div
-                className="p-3 rounded-full"
-                style={{ backgroundColor: `${colors.primary}20` }}
-              >
-                <MessageCircle size={32} style={{ color: colors.primary }} />
+      <div className="flex border rounded-xl overflow-hidden h-[85vh] bg-white shadow-lg">
+        {/* Chat List Sidebar */}
+        <div className="w-1/3 flex flex-col border-l bg-gray-50">
+          {/* Search Header */}
+          <div className="p-4 border-b bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-semibold text-gray-900">שיחות</h2>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-xs text-gray-500">
+                  {isSocketConnected ? 'מחובר' : 'מנותק'}
+                </span>
               </div>
-              הודעות
-            </h1>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Users size={18} />
-              <span>{chatUsers.length} שיחות</span>
+            </div>
+            
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="חפש שיחות..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="חפש שיחות..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full pr-10 pl-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 transition-all"
-              style={{
-                focusRingColor: colors.primary,
-                borderColor: searchTerm ? colors.primary : undefined,
-              }}
-            />
+          {/* Chat List */}
+          <div className="flex-1 overflow-y-auto">
+            {recentChatsLoading ? (
+              <div className="p-6 text-center">
+                <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full mb-2"></div>
+                <p className="text-gray-500">טוען שיחות...</p>
+              </div>
+            ) : filteredChats.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                {searchQuery ? "לא נמצאו שיחות" : "אין שיחות פעילות"}
+              </div>
+            ) : (
+              <div className="p-2">
+                {filteredChats.map((chat) => {
+                  const isUnread = notifications.some(
+                    (n) => n.senderId === chat.user._id
+                  );
+                  const isSelected = selectedUser?._id === chat.user._id;
+
+                  return (
+                    <ChatListItem
+                      key={chat.user._id}
+                      chat={chat}
+                      isSelected={isSelected}
+                      isUnread={isUnread}
+                      onClick={() => handleChatSelect(chat.user)}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Messages List */}
-        <div className="dashboard-card">
-          {filteredChatUsers.length === 0 ? (
-            <div className="text-center py-16">
-              <div
-                className="p-4 rounded-full mx-auto mb-6 w-24 h-24 flex items-center justify-center"
-                style={{ backgroundColor: `${colors.primary}10` }}
-              >
-                <MessageCircle size={48} style={{ color: colors.primary }} />
+        {/* Chat Window */}
+        <div className="flex-1 flex flex-col">
+          {selectedUser ? (
+            <>
+              {/* Chat Header */}
+              <div className="flex items-center justify-between p-4 border-b bg-white">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedUser.profilePicture || "/defaultProfilePic.png"}
+                    alt={selectedUser.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                    loading="lazy"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {selectedUser.name}
+                    </h3>
+                    {isTyping && (
+                      <p className="text-sm text-gray-500">כותב...</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Phone size={18} />
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Video size={18} />
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <MoreVertical size={18} />
+                  </button>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-600 mb-4">
-                {searchTerm ? "לא נמצאו שיחות" : "אין עדיין שיחות"}
-              </h2>
-              <p className="text-gray-500 mb-6">
-                {searchTerm
-                  ? "נסה לחפש משהו אחר"
-                  : "התחל לשוחח עם אוהדים אחרים!"}
-              </p>
-              {!searchTerm && (
-                <button
-                  onClick={() => (window.location.href = "/home")}
-                  className="px-6 py-3 text-white rounded-lg transition-colors font-medium"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  גלה אוהדים חדשים
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                {searchTerm
-                  ? `תוצאות חיפוש (${filteredChatUsers.length})`
-                  : "שיחות אחרונות"}
-              </h3>
 
-              {filteredChatUsers.map((chatUser) => (
-                <ChatUserItem
-                  key={chatUser.user._id}
-                  chatUser={chatUser}
-                  onOpenChat={openChat}
-                  formatTime={formatTime}
-                  colors={colors}
-                />
-              ))}
+              {/* Messages Area */}
+              <div className="flex-1 p-4 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
+                
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full mb-2"></div>
+                    <p className="text-gray-500">טוען הודעות...</p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div
+                      className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                      style={{ backgroundColor: `${colors.primary}20` }}
+                    >
+                      <Send size={24} style={{ color: colors.primary }} />
+                    </div>
+                    <p className="font-medium text-gray-700">התחל שיחה!</p>
+                    <p className="text-sm text-gray-500">
+                      שלח הודעה ראשונה ל{selectedUser.name}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {messages.map((message, index) => {
+                      const isOwn = message.senderId._id === user._id;
+                      const showAvatar =
+                        index === 0 ||
+                        messages[index - 1].senderId._id !== message.senderId._id;
+
+                      return (
+                        <MessageBubble
+                          key={message._id || `msg-${index}`}
+                          message={message}
+                          isOwn={isOwn}
+                          showAvatar={showAvatar}
+                          colors={colors}
+                        />
+                      );
+                    })}
+                    <div ref={messagesEndRef} id="chat-bottom-anchor" />
+                  </div>
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="p-4 border-t bg-white">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <textarea
+                      ref={messageInputRef}
+                      value={newMessage}
+                      onChange={handleInputChange}
+                      onKeyDown={handleKeyPress}
+                      placeholder={`שלח הודעה ל${selectedUser.name}...`}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
+                      rows={1}
+                      style={{ minHeight: '52px', maxHeight: '120px' }}
+                      onInput={(e) => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || !isConnected}
+                    className="p-3 rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    style={{
+                      backgroundColor: newMessage.trim() && isConnected
+                        ? colors.primary
+                        : "#ccc",
+                      transform: newMessage.trim() && isConnected ? "scale(1)" : "scale(0.95)",
+                    }}
+                  >
+                    <Send size={18} className="text-white" />
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <div
+                  className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
+                  style={{ backgroundColor: `${colors.primary}20` }}
+                >
+                  <Send size={32} style={{ color: colors.primary }} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  בחר שיחה מהרשימה
+                </h3>
+                <p className="text-gray-500">התחל להתכתב עם אוהדים אחרים</p>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Chat Modal - Only render when needed */}
-        {isChatOpen && selectedUser && (
-          <ChatModal
-            isOpen={isChatOpen}
-            onClose={handleCloseChatModal}
-            otherUser={selectedUser}
-            onMarkAsRead={markAsRead}
-          />
-        )}
       </div>
     </Layout>
   );
-});
-
-Messages.displayName = "Messages";
+};
 
 export default Messages;
