@@ -17,10 +17,12 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // Use refs to prevent race conditions
+  const historyLoadedRef = useRef(false);
   const messagesEndRef = useRef(null);
-  const cleanupRef = useRef(null);
-  const loadingRef = useRef(false);
+  const socketInitializedRef = useRef(false);
+  const currentRequestRef = useRef(null);
 
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
@@ -37,18 +39,31 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     }
   }, []);
 
-  // Load chat history - optimized with loading guard
+  // Load chat history - fixed race conditions
   const loadChatHistory = useCallback(async () => {
-    if (!otherUserId || loadingRef.current || historyLoaded) return;
+    if (!otherUserId || !isOpen || historyLoadedRef.current || loading) {
+      return;
+    }
 
-    loadingRef.current = true;
+    // Cancel previous request if exists
+    if (currentRequestRef.current) {
+      currentRequestRef.current.cancel = true;
+    }
+
+    const requestId = { cancel: false };
+    currentRequestRef.current = requestId;
+
     setLoading(true);
 
     try {
       const response = await api.get(`/api/messages/history/${otherUserId}`);
+
+      // Check if request was cancelled
+      if (requestId.cancel) return;
+
       if (response.data.success) {
         setMessages(response.data.messages || []);
-        setHistoryLoaded(true);
+        historyLoadedRef.current = true;
 
         // Mark as read after loading
         if (onMarkAsRead) {
@@ -56,14 +71,18 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
         }
       }
     } catch (error) {
-      console.error("Error loading chat history:", error);
-      setMessages([]); // Set empty array on error
-      setHistoryLoaded(true); // Still mark as loaded to prevent retries
+      if (!requestId.cancel) {
+        console.error("Error loading chat history:", error);
+        setMessages([]);
+        historyLoadedRef.current = true;
+      }
     } finally {
-      setLoading(false);
-      loadingRef.current = false;
+      if (!requestId.cancel) {
+        setLoading(false);
+      }
+      currentRequestRef.current = null;
     }
-  }, [otherUserId, historyLoaded, onMarkAsRead]);
+  }, [otherUserId, isOpen, loading, onMarkAsRead]);
 
   // Handle receiving messages
   const handleReceiveMessage = useCallback(
@@ -72,12 +91,12 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
         setMessages((prev) => [...prev, message]);
 
         // Auto-mark as read if chat is open
-        if (onMarkAsRead) {
+        if (onMarkAsRead && isOpen) {
           onMarkAsRead(otherUserId);
         }
       }
     },
-    [otherUserId, onMarkAsRead]
+    [otherUserId, onMarkAsRead, isOpen]
   );
 
   // Handle message sent confirmation
@@ -91,9 +110,9 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     alert("Failed to send message");
   }, []);
 
-  // Setup socket listeners - only when modal opens
+  // Setup socket listeners - only once per modal open
   useEffect(() => {
-    if (!isOpen || !otherUserId) return;
+    if (!isOpen || !otherUserId || socketInitializedRef.current) return;
 
     // Ensure socket is connected
     const token = localStorage.getItem("accessToken");
@@ -101,62 +120,56 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
       socketService.connect(token);
     }
 
-    // Set up listeners
+    // Set up listeners only once
     socketService.onReceiveMessage(handleReceiveMessage);
     socketService.onMessageSent(handleMessageSent);
     socketService.onMessageError(handleMessageError);
 
-    // Store cleanup function
-    cleanupRef.current = () => {
-      socketService.removeAllListeners();
-    };
+    socketInitializedRef.current = true;
 
-    // Load history if not loaded
-    if (!historyLoaded) {
+    // Load history once
+    if (!historyLoadedRef.current) {
       loadChatHistory();
     }
 
     return () => {
-      if (cleanupRef.current) {
-        cleanupRef.current();
-        cleanupRef.current = null;
-      }
+      socketService.removeAllListeners();
+      socketInitializedRef.current = false;
     };
-  }, [
-    isOpen,
-    otherUserId,
-    historyLoaded,
-    loadChatHistory,
-    handleReceiveMessage,
-    handleMessageSent,
-    handleMessageError,
-  ]);
+  }, [isOpen, otherUserId]); // Removed function dependencies to prevent re-runs
 
   // Reset state when modal closes or user changes
   useEffect(() => {
-    if (!isOpen || !otherUserId) {
+    if (!isOpen) {
       setMessages([]);
-      setHistoryLoaded(false);
+      historyLoadedRef.current = false;
       setLoading(false);
-      loadingRef.current = false;
-    }
-  }, [isOpen, otherUserId]);
+      socketInitializedRef.current = false;
 
-  // Scroll to bottom when messages change
+      // Cancel any pending requests
+      if (currentRequestRef.current) {
+        currentRequestRef.current.cancel = true;
+        currentRequestRef.current = null;
+      }
+    }
+  }, [isOpen]);
+
+  // Scroll to bottom when messages change (optimized)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && !loading) {
       const timer = setTimeout(scrollToBottom, 100);
       return () => clearTimeout(timer);
     }
-  }, [messages.length, scrollToBottom]);
+  }, [messages.length, loading, scrollToBottom]);
 
-  // Send message function
+  // Send message function - updated for your server
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !otherUserId) return;
 
     const messageText = newMessage.trim();
     setNewMessage("");
 
+    // Using receiverId to match your server's Message model
     socketService.sendMessage(otherUserId, messageText);
   }, [newMessage, otherUserId]);
 
@@ -227,13 +240,13 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+              className=" p-1 rounded-lg transition-colors"
             >
               {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
             </button>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+              className=" p-1 rounded-lg transition-colors"
             >
               <X size={18} />
             </button>
@@ -347,7 +360,7 @@ const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-3 rounded-full text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: newMessage.trim()
                       ? colors.primary

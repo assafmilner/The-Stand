@@ -143,14 +143,13 @@ const Header = ({ user }) => {
                         {unreadCount > 0 && (
                           <button
                             onClick={() => markAsRead()}
-                            className="text-xs text-blue-600 hover:text-blue-800"
+                            className="text-xs"
                           >
                             סמן הכל כנקרא
                           </button>
                         )}
                         <button
                           onClick={() => setShowDropdown(false)}
-                          className="text-gray-400 hover:text-gray-600"
                         >
                           <X size={16} />
                         </button>
@@ -264,7 +263,7 @@ const Header = ({ user }) => {
                         navigate("/messages");
                         setShowDropdown(false);
                       }}
-                      className="w-full text-center text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                      className="w-full text-center font-medium text-sm flex items-center justify-center gap-2 transition-colors"
                     >
                       צפה בכל ההודעות
                       <ArrowLeft size={14} />

@@ -20,11 +20,11 @@ const Messages = React.memo(() => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Use refs to prevent unnecessary re-renders
-  const loadingRef = useRef(false);
+  // Use refs to prevent race conditions and unnecessary re-renders
+  const dataLoadedRef = useRef(false);
   const mountedRef = useRef(true);
+  const currentRequestRef = useRef(null);
 
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
@@ -36,51 +36,64 @@ const Messages = React.memo(() => {
 
   // Initialize socket connection once
   useEffect(() => {
-    if (user && !loadingRef.current) {
+    if (user) {
       initializeSocket(user);
     }
   }, [user, initializeSocket]);
 
-  // Optimized fetch function with loading guard
+  // Optimized fetch function with proper cleanup
   const fetchChatUsers = useCallback(async () => {
-    if (loadingRef.current || dataLoaded) return;
+    if (dataLoadedRef.current || loading) return;
 
-    loadingRef.current = true;
+    // Cancel previous request if exists
+    if (currentRequestRef.current) {
+      currentRequestRef.current.cancel = true;
+    }
+
+    const requestId = { cancel: false };
+    currentRequestRef.current = requestId;
+
     setLoading(true);
 
     try {
       const response = await api.get("/api/messages/chats");
 
-      if (mountedRef.current && response.data.success) {
+      // Check if request was cancelled or component unmounted
+      if (requestId.cancel || !mountedRef.current) return;
+
+      if (response.data.success) {
         setChatUsers(response.data.chatUsers || []);
-        setDataLoaded(true);
+        dataLoadedRef.current = true;
       }
     } catch (error) {
       console.error("Error fetching chat users:", error);
-      if (mountedRef.current) {
+      if (!requestId.cancel && mountedRef.current) {
         setChatUsers([]);
-        setDataLoaded(true);
+        dataLoadedRef.current = true; // Still mark as loaded to prevent retries
       }
     } finally {
-      if (mountedRef.current) {
+      if (!requestId.cancel && mountedRef.current) {
         setLoading(false);
       }
-      loadingRef.current = false;
+      currentRequestRef.current = null;
     }
-  }, [dataLoaded]);
+  }, []); // Empty dependencies - only create once
 
-  // Load data only once
+  // Load data only once on mount
   useEffect(() => {
-    if (!dataLoaded) {
-      fetchChatUsers();
-    }
-  }, [dataLoaded, fetchChatUsers]);
+    fetchChatUsers();
+  }, []); // Empty dependencies
 
   // Cleanup on unmount
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      // Cancel any pending requests
+      if (currentRequestRef.current) {
+        currentRequestRef.current.cancel = true;
+        currentRequestRef.current = null;
+      }
     };
   }, []);
 
@@ -136,12 +149,6 @@ const Messages = React.memo(() => {
       <div
         onClick={() => onOpenChat(chatUser.user)}
         className="group p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
-        style={{
-          "&:hover": {
-            borderColor: `${colors.primary}40`,
-            boxShadow: `0 4px 12px ${colors.primary}20`,
-          },
-        }}
       >
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -205,7 +212,8 @@ const Messages = React.memo(() => {
 
   ChatUserItem.displayName = "ChatUserItem";
 
-  if (loading && !dataLoaded) {
+  // Show loading only on initial load
+  if (loading && !dataLoadedRef.current) {
     return (
       <Layout>
         <div className="dashboard-card text-center">
