@@ -9,7 +9,7 @@ import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfilePosts from "../components/profile/ProfilePosts";
 import ProfileInfo from "../components/profile/ProfileInfo";
 import ChatModal from "../components/chat/ChatModal";
-import { useMessageNotifications } from "../hooks/useMessageNotifications";
+import { useChat } from "../context/ChatContext";
 import teamColors from "../utils/teamStyles";
 import "styles/index.css";
 
@@ -22,13 +22,20 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("posts");
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Get the markAsRead function from notifications hook
-  const { markAsRead } = useMessageNotifications(currentUser);
+  // Get the markAsRead function from optimized chat context
+  const { markAsRead, initializeSocket } = useChat();
 
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?._id;
   const displayUser = isOwnProfile ? currentUser : profileUser;
   const colors = teamColors[displayUser?.favoriteTeam || "הפועל תל אביב"];
+
+  // Initialize socket connection
+  useEffect(() => {
+    if (currentUser) {
+      initializeSocket(currentUser);
+    }
+  }, [currentUser, initializeSocket]);
 
   useEffect(() => {
     const fetchUserData = async () => {

@@ -3,43 +3,65 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, Bell, Settings, X, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/index.css";
-import { useMessageNotifications } from "../../hooks/useMessageNotifications";
+import { useChat } from "../../context/ChatContext";
 import ChatModal from "../chat/ChatModal";
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const notificationRef = useRef(null);
-
-  const {
+  const [dropdownLoaded, setDropdownLoaded] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  const { 
     unreadCount,
     notifications,
     recentChats,
+    recentChatsLoading,
+    initializeSocket,
+    loadRecentChats,
     markAsRead,
-    clearNotification,
-  } = useMessageNotifications(user);
+    clearNotification
+  } = useChat();
 
-  // Close notifications when clicking outside
+  // Initialize socket connection when user is available (lightweight)
+  useEffect(() => {
+    if (user && !dropdownLoaded) {
+      initializeSocket(user);
+    }
+  }, [user, initializeSocket, dropdownLoaded]);
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target)
-      ) {
-        setShowNotifications(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDropdown]);
+
+  // Handle dropdown open (lazy load data)
+  const handleDropdownToggle = async () => {
+    const newShowState = !showDropdown;
+    setShowDropdown(newShowState);
+    
+    // Only load data when dropdown is opened for the first time
+    if (newShowState && !dropdownLoaded) {
+      setDropdownLoaded(true);
+      await loadRecentChats(); // This will fetch recent chats only when needed
+    }
+  };
 
   const handleOpenChat = (chatUser) => {
     setSelectedChatUser(chatUser);
     setIsChatOpen(true);
-    setShowNotifications(false);
+    setShowDropdown(false);
     // Mark notifications from this user as read
     markAsRead(chatUser._id);
   };
@@ -52,14 +74,14 @@ const Header = ({ user }) => {
   const formatNotificationTime = (date) => {
     const now = new Date();
     const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-
-    if (diffInMinutes < 1) return "עכשיו";
+    
+    if (diffInMinutes < 1) return 'עכשיו';
     if (diffInMinutes < 60) return `לפני ${diffInMinutes} דקות`;
-
+    
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `לפני ${diffInHours} שעות`;
-
-    return date.toLocaleDateString("he-IL");
+    
+    return date.toLocaleDateString('he-IL');
   };
 
   const formatLastMessageTime = (date) => {
@@ -68,16 +90,16 @@ const Header = ({ user }) => {
     const diffInHours = (now - messageDate) / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
-      return messageDate.toLocaleTimeString("he-IL", {
-        hour: "2-digit",
-        minute: "2-digit",
+      return messageDate.toLocaleTimeString('he-IL', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } else if (diffInHours < 48) {
       return "אתמול";
     } else {
-      return messageDate.toLocaleDateString("he-IL", {
-        day: "numeric",
-        month: "short",
+      return messageDate.toLocaleDateString('he-IL', {
+        day: 'numeric',
+        month: 'short'
       });
     }
   };
@@ -95,24 +117,24 @@ const Header = ({ user }) => {
             >
               <Settings size={20} />
             </button>
-
+            
             {/* Messages with notification badge and dropdown */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                className="icon-button relative"
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                className="icon-button relative" 
                 aria-label="הודעות"
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={handleDropdownToggle}
               >
                 <MessageCircle size={20} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
 
               {/* Chat Dropdown */}
-              {showNotifications && (
+              {showDropdown && (
                 <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
                   <div className="p-4 border-b border-gray-100">
                     <div className="flex items-center justify-between">
@@ -121,12 +143,15 @@ const Header = ({ user }) => {
                         {unreadCount > 0 && (
                           <button
                             onClick={() => markAsRead()}
-                            className="text-xs"
+                            className="text-xs text-blue-600 hover:text-blue-800"
                           >
                             סמן הכל כנקרא
                           </button>
                         )}
-                        <button onClick={() => setShowNotifications(false)}>
+                        <button
+                          onClick={() => setShowDropdown(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
                           <X size={16} />
                         </button>
                       </div>
@@ -134,24 +159,27 @@ const Header = ({ user }) => {
                   </div>
 
                   <div className="max-h-64 overflow-y-auto">
+                    {/* Loading State */}
+                    {recentChatsLoading && (
+                      <div className="p-6 text-center">
+                        <div className="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full mb-2"></div>
+                        <p className="text-sm text-gray-500">טוען שיחות...</p>
+                      </div>
+                    )}
+
                     {/* Recent Chats Section */}
-                    {recentChats.length > 0 && (
+                    {!recentChatsLoading && recentChats.length > 0 && (
                       <div className="p-3 border-b border-gray-100">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          שיחות אחרונות
-                        </h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">שיחות אחרונות</h4>
                         <div className="space-y-2">
                           {recentChats.map((chatUser) => (
                             <div
                               key={chatUser.user._id}
                               onClick={() => handleOpenChat(chatUser.user)}
-                              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
                             >
                               <img
-                                src={
-                                  chatUser.user.profilePicture ||
-                                  "http://localhost:3001/assets/defaultProfilePic.png"
-                                }
+                                src={chatUser.user.profilePicture || "http://localhost:3001/assets/defaultProfilePic.png"}
                                 alt={chatUser.user.name}
                                 className="w-8 h-8 rounded-full object-cover"
                               />
@@ -167,9 +195,7 @@ const Header = ({ user }) => {
                               </div>
                               {chatUser.lastMessageTime && (
                                 <span className="text-xs text-gray-400">
-                                  {formatLastMessageTime(
-                                    chatUser.lastMessageTime
-                                  )}
+                                  {formatLastMessageTime(chatUser.lastMessageTime)}
                                 </span>
                               )}
                             </div>
@@ -181,18 +207,16 @@ const Header = ({ user }) => {
                     {/* New Notifications Section */}
                     {notifications.length > 0 && (
                       <div className="p-3">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          הודעות חדשות
-                        </h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">הודעות חדשות</h4>
                         {notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className="p-2 hover:bg-gray-50 rounded-lg cursor-pointer mb-2"
+                            className="p-2 hover:bg-gray-50 rounded-lg cursor-pointer mb-2 transition-colors"
                             onClick={() => {
-                              const chatUser = {
+                              const chatUser = { 
                                 _id: notification.senderId,
                                 name: notification.senderName,
-                                profilePicture: notification.senderAvatar,
+                                profilePicture: notification.senderAvatar
                               };
                               handleOpenChat(chatUser);
                               clearNotification(notification.id);
@@ -200,10 +224,7 @@ const Header = ({ user }) => {
                           >
                             <div className="flex items-start gap-3">
                               <img
-                                src={
-                                  notification.senderAvatar ||
-                                  "http://localhost:3001/assets/defaultProfilePic.png"
-                                }
+                                src={notification.senderAvatar || "http://localhost:3001/assets/defaultProfilePic.png"}
                                 alt={notification.senderName}
                                 className="w-8 h-8 rounded-full object-cover"
                               />
@@ -213,9 +234,7 @@ const Header = ({ user }) => {
                                     {notification.senderName}
                                   </p>
                                   <span className="text-xs text-gray-500">
-                                    {formatNotificationTime(
-                                      notification.timestamp
-                                    )}
+                                    {formatNotificationTime(notification.timestamp)}
                                   </span>
                                 </div>
                                 <p className="text-xs text-gray-600 truncate">
@@ -229,12 +248,9 @@ const Header = ({ user }) => {
                     )}
 
                     {/* Empty State */}
-                    {recentChats.length === 0 && notifications.length === 0 && (
+                    {!recentChatsLoading && recentChats.length === 0 && notifications.length === 0 && (
                       <div className="p-6 text-center text-gray-500">
-                        <MessageCircle
-                          size={32}
-                          className="mx-auto mb-2 text-gray-300"
-                        />
+                        <MessageCircle size={32} className="mx-auto mb-2 text-gray-300" />
                         <p className="font-medium">אין הודעות</p>
                         <p className="text-sm">התחל לשוחח עם אוהדים אחרים</p>
                       </div>
@@ -246,9 +262,9 @@ const Header = ({ user }) => {
                     <button
                       onClick={() => {
                         navigate("/messages");
-                        setShowNotifications(false);
+                        setShowDropdown(false);
                       }}
-                      className="w-full text-center font-medium text-sm flex items-center justify-center gap-2"
+                      className="w-full text-center text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-center gap-2 transition-colors"
                     >
                       צפה בכל ההודעות
                       <ArrowLeft size={14} />
@@ -257,7 +273,7 @@ const Header = ({ user }) => {
                 </div>
               )}
             </div>
-
+            
             <button className="icon-button" aria-label="התראות">
               <Bell size={20} />
             </button>
@@ -276,10 +292,7 @@ const Header = ({ user }) => {
             >
               היציע
             </span>
-            <button
-              className="logo-circle"
-              onClick={() => navigate("/profile")}
-            >
+            <button className="logo-circle" onClick={() => navigate("/profile")}>
               <img
                 src={
                   user?.profilePicture ||
@@ -298,6 +311,7 @@ const Header = ({ user }) => {
         isOpen={isChatOpen}
         onClose={handleCloseChatModal}
         otherUser={selectedChatUser}
+        onMarkAsRead={markAsRead}
       />
     </>
   );

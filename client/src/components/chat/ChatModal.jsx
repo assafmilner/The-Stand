@@ -1,108 +1,178 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { X, Send, Minimize2, Maximize2 } from "lucide-react";
 import api from "../../utils/api";
 import socketService from "../../services/socketService";
 import { useUser } from "../../context/UserContext";
 import teamColors from "../../utils/teamStyles";
 
-const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
+const ChatModal = React.memo(({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef(null);
+  const cleanupRef = useRef(null);
+  const loadingRef = useRef(false);
 
-  const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
+  const colors = useMemo(
+    () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
+    [user?.favoriteTeam]
+  );
+
+  // Memoize other user ID to prevent unnecessary effects
+  const otherUserId = useMemo(() => otherUser?._id, [otherUser?._id]);
 
   // Scroll to bottom of messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Load chat history when modal opens
-  useEffect(() => {
-    if (isOpen && otherUser) {
-      loadChatHistory();
-
-      // Mark messages from this user as read
-      if (onMarkAsRead && otherUser._id) {
-        onMarkAsRead(otherUser._id);
-      }
-
-      // Connect socket if not connected
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        socketService.connect(token);
-      }
-
-      // Set up socket listeners
-      socketService.onReceiveMessage(handleReceiveMessage);
-      socketService.onMessageSent(handleMessageSent);
-      socketService.onMessageError(handleMessageError);
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+  }, []);
 
-    return () => {
-      // Clean up socket listeners when modal closes
-      socketService.removeAllListeners();
-    };
-  }, [isOpen, otherUser, onMarkAsRead]);
+  // Load chat history - optimized with loading guard
+  const loadChatHistory = useCallback(async () => {
+    if (!otherUserId || loadingRef.current || historyLoaded) return;
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    loadingRef.current = true;
+    setLoading(true);
 
-  const loadChatHistory = async () => {
     try {
-      setLoading(true);
-      const response = await api.get(`/api/messages/history/${otherUser._id}`);
+      const response = await api.get(`/api/messages/history/${otherUserId}`);
       if (response.data.success) {
-        setMessages(response.data.messages);
+        setMessages(response.data.messages || []);
+        setHistoryLoaded(true);
+
+        // Mark as read after loading
+        if (onMarkAsRead) {
+          onMarkAsRead(otherUserId);
+        }
       }
     } catch (error) {
       console.error("Error loading chat history:", error);
+      setMessages([]); // Set empty array on error
+      setHistoryLoaded(true); // Still mark as loaded to prevent retries
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, [otherUserId, historyLoaded, onMarkAsRead]);
 
-  const handleReceiveMessage = (message) => {
-    // Only add message if it's from the current chat partner
-    if (message.senderId._id === otherUser._id) {
-      setMessages((prev) => [...prev, message]);
-      // Also mark as read since the chat is open
-      if (onMarkAsRead) {
-        onMarkAsRead(otherUser._id);
+  // Handle receiving messages
+  const handleReceiveMessage = useCallback(
+    (message) => {
+      if (message.senderId._id === otherUserId) {
+        setMessages((prev) => [...prev, message]);
+
+        // Auto-mark as read if chat is open
+        if (onMarkAsRead) {
+          onMarkAsRead(otherUserId);
+        }
       }
-    }
-  };
+    },
+    [otherUserId, onMarkAsRead]
+  );
 
-  const handleMessageSent = (message) => {
+  // Handle message sent confirmation
+  const handleMessageSent = useCallback((message) => {
     setMessages((prev) => [...prev, message]);
-  };
+  }, []);
 
-  const handleMessageError = (error) => {
+  // Handle message errors
+  const handleMessageError = useCallback((error) => {
     console.error("Message error:", error);
     alert("Failed to send message");
-  };
+  }, []);
 
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
+  // Setup socket listeners - only when modal opens
+  useEffect(() => {
+    if (!isOpen || !otherUserId) return;
 
-    socketService.sendMessage(otherUser._id, newMessage.trim());
-    setNewMessage("");
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+    // Ensure socket is connected
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      socketService.connect(token);
     }
-  };
 
-  const formatMessageTime = (date) => {
+    // Set up listeners
+    socketService.onReceiveMessage(handleReceiveMessage);
+    socketService.onMessageSent(handleMessageSent);
+    socketService.onMessageError(handleMessageError);
+
+    // Store cleanup function
+    cleanupRef.current = () => {
+      socketService.removeAllListeners();
+    };
+
+    // Load history if not loaded
+    if (!historyLoaded) {
+      loadChatHistory();
+    }
+
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    };
+  }, [
+    isOpen,
+    otherUserId,
+    historyLoaded,
+    loadChatHistory,
+    handleReceiveMessage,
+    handleMessageSent,
+    handleMessageError,
+  ]);
+
+  // Reset state when modal closes or user changes
+  useEffect(() => {
+    if (!isOpen || !otherUserId) {
+      setMessages([]);
+      setHistoryLoaded(false);
+      setLoading(false);
+      loadingRef.current = false;
+    }
+  }, [isOpen, otherUserId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, scrollToBottom]);
+
+  // Send message function
+  const sendMessage = useCallback(() => {
+    if (!newMessage.trim() || !otherUserId) return;
+
+    const messageText = newMessage.trim();
+    setNewMessage("");
+
+    socketService.sendMessage(otherUserId, messageText);
+  }, [newMessage, otherUserId]);
+
+  // Handle key press
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    },
+    [sendMessage]
+  );
+
+  // Format message time
+  const formatMessageTime = useCallback((date) => {
     const now = new Date();
     const messageDate = new Date(date);
     const diffInHours = (now - messageDate) / (1000 * 60 * 60);
@@ -118,9 +188,9 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
         month: "short",
       });
     }
-  };
+  }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen || !otherUser) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -131,7 +201,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between p-4 border-b relative"
+          className="flex items-center justify-between p-4 border-b relative flex-shrink-0"
           style={{
             background: `linear-gradient(135deg, ${colors.primary}15, ${colors.primary}05)`,
             borderColor: `${colors.primary}20`,
@@ -141,31 +211,29 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
             <div className="relative">
               <img
                 src={
-                  otherUser?.profilePicture ||
+                  otherUser.profilePicture ||
                   "http://localhost:3001/assets/defaultProfilePic.png"
                 }
-                alt={otherUser?.name}
+                alt={otherUser.name}
                 className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
               />
-              {/* Online indicator */}
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{otherUser?.name}</h3>
-              {isTyping && <p className="text-xs text-gray-500">מקליד...</p>}
+              <h3 className="font-semibold text-gray-900">{otherUser.name}</h3>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className=" p-1 rounded-lg  transition-colors"
+              className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
             >
               {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
             </button>
             <button
               onClick={onClose}
-              className=" p-1 rounded-lg transition-colors"
+              className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <X size={18} />
             </button>
@@ -190,7 +258,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                     <Send size={24} style={{ color: colors.primary }} />
                   </div>
                   <p className="font-medium">התחל שיחה!</p>
-                  <p className="text-sm">שלח הודעה ראשונה ל{otherUser?.name}</p>
+                  <p className="text-sm">שלח הודעה ראשונה ל{otherUser.name}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -202,7 +270,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
                     return (
                       <div
-                        key={message._id || index}
+                        key={message._id || `msg-${index}`}
                         className={`flex items-end gap-2 ${
                           isCurrentUser ? "justify-end" : "justify-start"
                         }`}
@@ -255,14 +323,14 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t bg-white">
+            <div className="p-4 border-t bg-white flex-shrink-0">
               <div className="flex gap-3 items-end">
                 <div className="flex-1">
                   <textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder={`שלח הודעה ל${otherUser?.name}...`}
+                    placeholder={`שלח הודעה ל${otherUser.name}...`}
                     className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 resize-none transition-all"
                     style={{
                       focusRingColor: colors.primary,
@@ -279,7 +347,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-3 rounded-full text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
+                  className="p-3 rounded-full text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: newMessage.trim()
                       ? colors.primary
@@ -296,6 +364,8 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
       </div>
     </div>
   );
-};
+});
+
+ChatModal.displayName = "ChatModal";
 
 export default ChatModal;
