@@ -92,7 +92,7 @@ const CreatePost = ({ onPostCreated, colors }) => {
       </div>
 
       <textarea
-        placeholder="מה קורה בעולם הכדורגל?"
+        placeholder="מה קורה ביציע?"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         maxLength={500}

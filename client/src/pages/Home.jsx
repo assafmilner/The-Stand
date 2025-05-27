@@ -1,13 +1,10 @@
-// client/src/pages/Home.jsx (Updated with feedType)
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useUser } from "../context/UserContext";
 import Layout from "../components/layout/Layout";
-import Feed from "../components/homeComponents/Feed";
-import SmartLeagueTable from "../components/league/SmartLeagueTable";
+import FriendsFeed from "../components/homeComponents/FriendsFeed";
 import Community from "../components/homeComponents/Community";
-
+import SmartLeagueTable from "../components/league/SmartLeagueTable";
 import teamColors from "../utils/teamStyles";
-
 import "../styles/index.css";
 
 const Home = () => {
@@ -15,7 +12,6 @@ const Home = () => {
   const [selectedTab, setSelectedTab] = useState("feed");
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
-  // loading / not authed
   if (loading) {
     return (
       <Layout>
@@ -23,9 +19,15 @@ const Home = () => {
       </Layout>
     );
   }
+
   if (!user) return null;
 
-  // Main render
+  const tabItems = [
+    { key: "feed", label: "פיד " },
+    { key: "groups", label: `קהילת ${user.favoriteTeam || "הקבוצה שלי"}` },
+    { key: "table", label: "טבלה" },
+  ];
+
   return (
     <Layout>
       {/* Tab selector */}
@@ -43,11 +45,7 @@ const Home = () => {
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
           }}
         >
-          {[
-            { key: "feed", label: "פיד" },
-            { key: "groups", label: "קהילות" },
-            { key: "table", label: "טבלה" },
-          ].map((tab) => (
+          {tabItems.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setSelectedTab(tab.key)}
@@ -70,15 +68,21 @@ const Home = () => {
       <div className="transition-all duration-500 ease-in-out">
         {selectedTab === "feed" && (
           <div key="feed" className="animate-fade-in">
-            <Feed user={user} colors={colors} feedType="friends" />
+            <FriendsFeed user={user} colors={colors} />
           </div>
         )}
+
+        {selectedTab === "groups" && (
+          <div key="groups" className="animate-fade-in">
+            <Community colors={colors} />
+          </div>
+        )}
+
         {selectedTab === "table" && (
           <div key="table" className="animate-fade-in">
             <SmartLeagueTable />
           </div>
         )}
-        {selectedTab === "groups" && <Community colors={colors} />}
       </div>
     </Layout>
   );

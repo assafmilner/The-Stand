@@ -1,21 +1,19 @@
-// client/src/components/homeComponents/Community.jsx
+// client/src/components/homeComponents/Community.jsx - Final version
 import { useUser } from "../../context/UserContext";
-import Feed from "./Feed"; // Import the updated Feed component
+import TeamFeed from "./TeamFeed"; // Use the fixed TeamFeed component
 
 function Community({ colors }) {
   const { user } = useUser();
 
-  if (!user?.favoriteTeam) {
-    return <p>לא הוגדרה קבוצה אהודה.</p>;
-  }
+  console.log("🔥 CLIENT DEBUG: Community component rendered", {
+    user: user?.name,
+    favoriteTeam: user?.favoriteTeam,
+  });
 
   return (
     <section>
-      <Feed
-        colors={colors}
-        user={user}
-        feedType="team" // Pass team type to show community posts
-      />
+      {/* ✅ Use the fixed TeamFeed component that makes direct API calls */}
+      <TeamFeed colors={colors} user={user} />
     </section>
   );
 }

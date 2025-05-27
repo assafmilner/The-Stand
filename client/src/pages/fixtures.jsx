@@ -184,17 +184,7 @@ function Fixtures() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-4xl font-bold">כל המשחקים של {user?.favoriteTeam}</h2>
           <div className="flex gap-3">
-            {/* Cache stats */}
-            {cacheStats && (
-              <button
-                onClick={loadCacheStats}
-                className="text-blue-600 px-3 py-2 rounded bg-blue-50 transition-colors inline-flex items-center gap-2 text-sm"
-                title="סטטיסטיקות Cache"
-              >
-                <BarChart3 size={16} />
-                Cache: {cacheStats.totalEntries} entries
-              </button>
-            )}
+           
             
             {/* Regular refresh */}
             <button
@@ -220,24 +210,7 @@ function Fixtures() {
           </div>
         </div>
 
-        {/* Cache stats details */}
-        {cacheStats && (
-          <div className="mb-6 p-3 bg-blue-50 rounded-lg">
-            <h3 className="text-sm font-semibold text-blue-800 mb-2">סטטיסטיקות Cache</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              {cacheStats.entries.map((entry, idx) => (
-                <div key={idx} className="bg-white p-2 rounded">
-                  <div className="font-medium text-blue-900">{entry.key}</div>
-                  <div className="text-gray-600">
-                    גיל: {entry.ageMinutes} דקות | 
-                    גודל: {Math.round(entry.size / 1024)}KB |
-                    {entry.isValid ? ' ✅ תקף' : ' ❌ פג תוקף'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+       
 
         {/* Show info about which game will be highlighted */}
         {nextGame && (
@@ -281,19 +254,7 @@ function Fixtures() {
           />
         )}
 
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
-            <p>🔍 Debug Info:</p>
-            <p>Regular Season: {regularFixtures.length} games</p>
-            <p>Playoff: {playoffFixtures.length} games</p>
-            {regularSeasonEndDate && (
-              <p>Regular Season End Date: {regularSeasonEndDate.toLocaleDateString()}</p>
-            )}
-            <p>League ID: {league}</p>
-            <p>League Type: {leagueType}</p>
-          </div>
-        )}
+       
       </div>
     </Layout>
   );

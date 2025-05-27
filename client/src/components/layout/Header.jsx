@@ -153,9 +153,6 @@ const Header = ({ user }) => {
     }
   };
 
-  // Get cache stats for development
-  const cacheStats = getCacheStats();
-
   return (
     <>
       <header className="top-navbar">
@@ -188,12 +185,6 @@ const Header = ({ user }) => {
                   <div className="p-4 border-b flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-900">הודעות</h3>
-                      {/* Cache indicator for development */}
-                      {process.env.NODE_ENV === "development" && (
-                        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                          Cache: {cacheStats.cachedChats}
-                        </span>
-                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
@@ -255,13 +246,6 @@ const Header = ({ user }) => {
                                   )}
                                 </span>
                               )}
-                              {/* Cache indicator for this specific chat */}
-                              {process.env.NODE_ENV === "development" &&
-                                cacheStats.cachedChats > 0 && (
-                                  <span className="text-xs text-green-500">
-                                    ⚡
-                                  </span>
-                                )}
                             </div>
                           </div>
                         ))}

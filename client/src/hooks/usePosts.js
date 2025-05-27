@@ -1,3 +1,4 @@
+// client/src/hooks/usePosts.js - Fixed version
 import { useState, useEffect, useCallback } from "react";
 import api from "utils/api";
 
@@ -6,8 +7,8 @@ const DEFAULT_LIMIT = 20;
 export default function usePosts({ 
   authorId = null, 
   communityId = null, 
-  friendsOnly = false, // New parameter
-  teamOnly = false // New parameter for team posts
+  friendsOnly = false,
+  teamOnly = false
 }) {
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
@@ -27,27 +28,38 @@ export default function usePosts({
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        let endpoint = "/api/posts/team";
+        let endpoint;
         let params = {
           page,
           limit: DEFAULT_LIMIT,
         };
 
-        // Handle friends only posts
+        // ✅ Fixed endpoint selection logic
         if (friendsOnly) {
-          endpoint = "/api/posts/friends";
-        }
-        // Handle team only posts
-        else if (teamOnly) {
-          endpoint = "/api/posts/team";
-        }
-        // Handle other filters
-        else {
+          endpoint = "/api/posts/friends"; // ✅ Correct endpoint
+          console.log("🔥 usePosts: Using FRIENDS endpoint:", endpoint);
+        } else if (teamOnly) {
+          endpoint = "/api/posts/team"; // ✅ Correct endpoint  
+          console.log("🔥 usePosts: Using TEAM endpoint:", endpoint);
+        } else {
+          // Generic endpoint for other cases
+          endpoint = "/api/posts"; // ✅ Fixed: removed trailing slash
+          console.log("🔥 usePosts: Using GENERIC endpoint:", endpoint);
+          
+          // Add filters for generic endpoint
           if (authorId) params.authorId = authorId;
           if (communityId) params.communityId = communityId;
         }
 
+        console.log("🔥 usePosts: Making request to:", endpoint, "with params:", params);
+
         const { data } = await api.get(endpoint, { params });
+        
+        console.log("🔥 usePosts: Response received:", {
+          success: data.success,
+          postsCount: data.posts?.length,
+          feedType: data.feedType
+        });
         
         if (data.success) {
           const postsArray = Array.isArray(data.posts) ? data.posts : [];
@@ -60,7 +72,13 @@ export default function usePosts({
           setError("Failed to load posts");
         }
       } catch (err) {
-        console.error("שגיאה בטעינת פוסטים:", err);
+        console.error("🔥 usePosts ERROR:", err);
+        console.error("🔥 usePosts ERROR details:", {
+          friendsOnly,
+          teamOnly,
+          status: err.response?.status,
+          url: err.config?.url
+        });
         
         if (friendsOnly && err.response?.status === 401) {
           setError("נדרשת התחברות לצפייה בפוסטים מחברים");
@@ -94,17 +112,14 @@ export default function usePosts({
     setError(null);
   }, []);
 
-  // Add a post to the beginning of the list (for when user creates a new post)
   const addPost = useCallback((newPost) => {
     setPosts(prev => [newPost, ...prev]);
   }, []);
 
-  // Remove a post (for when user deletes a post)
   const removePost = useCallback((postId) => {
     setPosts(prev => prev.filter(post => post._id !== postId));
   }, []);
 
-  // Update a post (for when user edits a post)
   const updatePost = useCallback((postId, updatedPost) => {
     setPosts(prev => 
       prev.map(post => 
@@ -126,12 +141,13 @@ export default function usePosts({
   };
 }
 
-// Export a specific hook for friends posts
+// ✅ Export specific hooks that explicitly use the correct endpoints
 export const useFriendsPosts = () => {
+  console.log("🔥 useFriendsPosts: Hook called");
   return usePosts({ friendsOnly: true });
 };
 
-// Export a specific hook for team posts
 export const useTeamPosts = () => {
+  console.log("🔥 useTeamPosts: Hook called");
   return usePosts({ teamOnly: true });
 };
