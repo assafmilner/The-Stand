@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
 
     const forceRefresh = force === 'true';
     
-    console.log(`📡 API Request: /api/fixtures?seasonId=${seasonId}&season=${season}&force=${force}`);
+    
     
     // Fetch fixtures from service
     const result = await fixturesService.fetchAllFixtures(
@@ -148,7 +148,7 @@ router.get('/debug/:seasonId', async (req, res) => {
     const { seasonId } = req.params;
     const { season = '2024-2025', round = null } = req.query;
     
-    console.log(`🔍 Debug request for season ${seasonId}, round ${round || 'all'}`);
+
     
     // Get cached data
     const cacheKey = `fixtures_${seasonId}_${season}`;

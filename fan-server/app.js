@@ -1,3 +1,4 @@
+
 // fan-server/app.js (Updated with message routes)
 const express = require("express");
 const cors = require("cors");
@@ -11,8 +12,6 @@ const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures"); 
 const ticketRoutes = require("./routes/ticketRoutes");
 const messageRoutes = require("./routes/messageRoutes"); // New import
-const { performanceMonitor, mongooseQueryMonitor } = require('./utils/performanceMonitor');
-
 
 dotenv.config();
 mongoose
@@ -49,16 +48,6 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/fixtures", fixturesRoutes); 
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/messages", messageRoutes); // New route
-app.use(performanceMonitor.trackRequest());
-
-
-// Enable database query monitoring
-mongooseQueryMonitor();
-
-// Add performance endpoint
-app.get('/api/performance', (req, res) => {
-  res.json(performanceMonitor.generateReport());
-});
 
 // Root check
 app.get("/", (req, res) => {

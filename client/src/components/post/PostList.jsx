@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import usePosts from "../../hooks/usePosts";
 import { useUser } from "context/UserContext";
 import Post from "./Post";
 import PostViewerHandler from "../modal/PostViewerHandler";
 import CreatePost from "./CreatePost";
 import api from "utils/api";
+import teamColors from "utils/teamStyles";
 
 const PostList = ({ authorId = null, communityId = null }) => {
   const { user } = useUser();
@@ -16,6 +17,11 @@ const PostList = ({ authorId = null, communityId = null }) => {
   const observerRef = useRef();
 
   const canCreatePost = !authorId || authorId === user?._id;
+
+  const colors = useMemo(
+    () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
+    [user?.favoriteTeam]
+  );
 
   useEffect(() => {
     setLocalPosts([]);
@@ -102,14 +108,13 @@ const PostList = ({ authorId = null, communityId = null }) => {
 
   return (
     <div className="post-list">
-      {/* תיבת יצירת פוסט רק כשמותר */}
       {canCreatePost && (
         <div
           className="dashboard-card post-box"
           style={{
             marginBottom: "1.5rem",
             padding: "1rem",
-            borderTop: `4px solid ${user?.teamColors?.primary || "#ccc"}`,
+            borderTop: `4px solid ${colors.primary}`,
             backgroundColor: "var(--card-bg)",
             borderRadius: "1rem",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
@@ -118,20 +123,16 @@ const PostList = ({ authorId = null, communityId = null }) => {
             gap: "1rem",
           }}
         >
-          <CreatePost
-            colors={user?.teamColors}
-            onPostCreated={handlePostCreated}
-          />
+          <CreatePost colors={colors} onPostCreated={handlePostCreated} />
         </div>
       )}
 
-      {/* הצגת פוסטים */}
       {finalPosts.map((post) => (
         <Post
           key={post._id}
           post={post}
           currentUser={user}
-          colors={user?.teamColors}
+          colors={colors}
           onDelete={handleDeletePost}
         />
       ))}

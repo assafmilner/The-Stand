@@ -1,458 +1,247 @@
-// client/src/components/chat/ChatModal.js - OPTIMIZED VERSION
-import React, { 
-  useMemo, 
-  useState, 
-  useCallback, 
-  useRef, 
-  useEffect 
-} from "react";
-import { 
-  X, 
-  Send, 
-  Minimize2, 
-  Maximize2, 
-  Phone, 
-  Video,
-  MoreVertical,
-  Smile
-} from "lucide-react";
+// client/src/components/chat/ChatModal.jsx
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Send, Minimize2, Maximize2 } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import teamColors from "../../utils/teamStyles";
-import useChatLogic from "../../hooks/useChatLogic";
-
-// Memoized message component to prevent unnecessary re-renders
-const MessageItem = React.memo(({ 
-  message, 
-  isCurrentUser, 
-  showAvatar, 
-  colors,
-  userInfo 
-}) => (
-  <div
-    className={`flex items-end gap-2 mb-3 ${
-      isCurrentUser ? "justify-end" : "justify-start"
-    }`}
-  >
-    {!isCurrentUser && (
-      <img
-        src={message.senderId.profilePicture || "/defaultProfilePic.png"}
-        alt={message.senderId.name}
-        className={`w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm transition-opacity ${
-          showAvatar ? "opacity-100" : "opacity-0"
-        }`}
-        loading="lazy"
-      />
-    )}
-
-    <div
-      className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm transition-all duration-200 ${
-        isCurrentUser
-          ? "text-white"
-          : "bg-white text-gray-800 border border-gray-100"
-      } ${message.isOptimistic ? "opacity-70 transform scale-95" : ""}`}
-      style={{
-        backgroundColor: isCurrentUser ? colors.primary : undefined,
-        borderRadius: isCurrentUser
-          ? "20px 20px 6px 20px"
-          : "20px 20px 20px 6px",
-      }}
-    >
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-        {message.content}
-      </p>
-      <div className="flex items-center justify-between mt-1">
-        <p
-          className={`text-xs ${
-            isCurrentUser ? "text-white/70" : "text-gray-500"
-          }`}
-        >
-          {new Date(message.createdAt).toLocaleTimeString("he-IL", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-        {message.isOptimistic && (
-          <span className="text-xs opacity-70 animate-pulse">שולח...</span>
-        )}
-      </div>
-    </div>
-  </div>
-));
-
-// Typing indicator component
-const TypingIndicator = React.memo(({ colors }) => (
-  <div className="flex items-center gap-2 mb-3 opacity-70">
-    <div className="flex gap-1">
-      <div 
-        className="w-2 h-2 rounded-full animate-bounce"
-        style={{ backgroundColor: colors.primary, animationDelay: '0ms' }}
-      />
-      <div 
-        className="w-2 h-2 rounded-full animate-bounce"
-        style={{ backgroundColor: colors.primary, animationDelay: '150ms' }}
-      />
-      <div 
-        className="w-2 h-2 rounded-full animate-bounce"
-        style={{ backgroundColor: colors.primary, animationDelay: '300ms' }}
-      />
-    </div>
-    <span className="text-xs text-gray-500">כותב...</span>
-  </div>
-));
+import socketService from "../../services/socketService";
+import { useSharedChatCache } from "../../hooks/useSharedChatCache";
 
 const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const { user } = useUser();
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [typingTimeout, setTypingTimeout] = useState(null);
-  
-  // Refs for optimization
-  const messagesContainerRef = useRef(null);
-  const textareaRef = useRef(null);
-  const modalRef = useRef(null);
-
-  const otherUserId = useMemo(() => otherUser?._id, [otherUser]);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const {
-    messages,
-    newMessage,
-    setNewMessage,
-    sendMessage,
-    loading,
-    error,
-    isConnected,
-    scrollToBottom,
-  } = useChatLogic({ 
-    user, 
-    otherUserId, 
-    isOpen: isOpen && !isMinimized, 
-    onMarkAsRead 
-  });
+    loadChatHistory,
+    addMessageToCache,
+    invalidateRecentChats
+  } = useSharedChatCache();
 
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
     [user?.favoriteTeam]
   );
 
-  // Handle message sending with optimizations
-  const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim()) return;
-    
-    // Clear typing indicator
-    setIsTyping(false);
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-      setTypingTimeout(null);
+  // Load chat history when modal opens
+  useEffect(() => {
+    if (!isOpen || !otherUser?._id) {
+      setMessages([]);
+      return;
     }
-    
-    await sendMessage();
-    
-    // Focus textarea after sending
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 100);
-  }, [newMessage, sendMessage, typingTimeout]);
 
-  // Handle input changes with typing indicator
-  const handleInputChange = useCallback((e) => {
-    setNewMessage(e.target.value);
-    
-    // Auto-resize textarea
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
-    }
-    
-    // Typing indicator logic
-    if (!isTyping && e.target.value.trim()) {
-      setIsTyping(true);
-      // Here you would emit typing_start to socket
-    }
-    
-    // Clear existing timeout
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-    
-    // Set new timeout to stop typing indicator
-    if (e.target.value.trim()) {
-      const timeout = setTimeout(() => {
-        setIsTyping(false);
-        // Here you would emit typing_stop to socket
-      }, 2000);
-      setTypingTimeout(timeout);
-    } else {
-      setIsTyping(false);
-    }
-  }, [isTyping, typingTimeout, setNewMessage]);
+    const loadMessages = async () => {
+      setLoading(true);
+      try {
+        const result = await loadChatHistory(otherUser._id);
+        setMessages(result.data);
+        
+        if (result.fromCache) {
+          // If loaded from cache, mark as read immediately
+          onMarkAsRead?.(otherUser._id);
+        }
+      } catch (err) {
+        console.error("Failed to load chat:", err);
+        setMessages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handle key press for sending
-  const handleKeyPress = useCallback((e) => {
+    loadMessages();
+  }, [isOpen, otherUser?._id, loadChatHistory, onMarkAsRead]);
+
+  // Setup socket listeners
+  useEffect(() => {
+    if (!isOpen || !otherUser?._id) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (token && !socketService.isSocketConnected()) {
+      socketService.connect(token);
+    }
+
+    const handleReceiveMessage = (msg) => {
+      if (msg.senderId._id === otherUser._id) {
+        // Update cache and local state
+        const updatedMessages = addMessageToCache(otherUser._id, msg);
+        setMessages(updatedMessages);
+        
+        // Mark as read since chat is open
+        onMarkAsRead?.(otherUser._id);
+        
+        // Invalidate recent chats to refresh the list
+        invalidateRecentChats();
+        
+        // Auto scroll
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    };
+
+    const handleMessageSent = (msg) => {
+      if (msg.receiverId._id === otherUser._id) {
+        // Update cache and local state
+        const updatedMessages = addMessageToCache(otherUser._id, msg);
+        setMessages(updatedMessages);
+        
+        // Invalidate recent chats to refresh the list
+        invalidateRecentChats();
+        
+        // Auto scroll
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    };
+
+    const handleMessageError = (err) => {
+      console.error("Message send error:", err);
+      alert("שליחת ההודעה נכשלה");
+    };
+
+    socketService.onReceiveMessage(handleReceiveMessage);
+    socketService.onMessageSent(handleMessageSent);
+    socketService.onMessageError(handleMessageError);
+
+    return () => {
+      socketService.removeAllListeners();
+    };
+  }, [isOpen, otherUser?._id, addMessageToCache, invalidateRecentChats, onMarkAsRead]);
+
+  const sendMessage = () => {
+    if (!newMessage.trim() || !otherUser?._id) return;
+    
+    socketService.sendMessage(otherUser._id, newMessage.trim());
+    setNewMessage("");
+  };
+
+  const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      sendMessage();
     }
-  }, [handleSendMessage]);
+  };
 
-  // Handle modal close with cleanup
-  const handleClose = useCallback(() => {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-    setIsTyping(false);
-    setShowEmojiPicker(false);
-    onClose();
-  }, [onClose, typingTimeout]);
+  const scrollToBottom = () => {
+    const el = document.getElementById("chat-bottom-anchor");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
-  // Toggle minimize
-  const toggleMinimize = useCallback(() => {
-    setIsMinimized(prev => !prev);
-    if (isMinimized) {
-      // Focus input when maximizing
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
-    }
-  }, [isMinimized]);
-
-  // Scroll to bottom when messages change
+  // Auto scroll when messages change
   useEffect(() => {
-    if (!isMinimized) {
+    if (messages.length > 0) {
       scrollToBottom();
     }
-  }, [messages, isMinimized, scrollToBottom]);
-
-  // Focus input when modal opens
-  useEffect(() => {
-    if (isOpen && !isMinimized) {
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 200);
-    }
-  }, [isOpen, isMinimized]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-    };
-  }, [typingTimeout]);
-
-  // Click outside to close emoji picker
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setShowEmojiPicker(false);
-      }
-    };
-
-    if (showEmojiPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showEmojiPicker]);
+  }, [messages]);
 
   if (!isOpen || !otherUser) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div
-        ref={modalRef}
-        className={`bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
-          isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
-        } flex flex-col overflow-hidden`}
-        style={{
-          transform: isMinimized ? 'translateY(20px)' : 'translateY(0)',
-        }}
-      >
+      <div className={`bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
+        isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
+      } flex flex-col overflow-hidden`}>
+        
         {/* Header */}
-        <div
-          className="flex items-center justify-between p-4 border-b flex-shrink-0"
-          style={{
-            background: `linear-gradient(135deg, ${colors.primary}15, ${colors.primary}05)`,
-            borderColor: `${colors.primary}20`,
-          }}
-        >
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src={otherUser.profilePicture || "/defaultProfilePic.png"}
-                alt={otherUser.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                loading="lazy"
-              />
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 border-2 border-white rounded-full animate-pulse"></div>
-            </div>
+            <img
+              src={otherUser.profilePicture || "/defaultProfilePic.png"}
+              alt={otherUser.name}
+              className="w-10 h-10 rounded-full object-cover border-2 border-white"
+            />
             <div>
               <h3 className="font-semibold text-gray-900">{otherUser.name}</h3>
-              {!isMinimized && isConnected && (
-                <p className="text-xs text-gray-500">
-                  {isTyping ? 'כותב...' : 'פעיל'}
-                </p>
+              {loading && (
+                <span className="text-xs text-blue-600">טוען הודעות...</span>
               )}
             </div>
           </div>
-
-          <div className="flex items-center gap-1">
-            {!isMinimized && (
-              <>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Phone size={16} />
-                </button>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Video size={16} />
-                </button>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <MoreVertical size={16} />
-                </button>
-              </>
-            )}
+          
+          <div className="flex items-center gap-2">
             <button
-              onClick={toggleMinimize}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
             >
-              {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+              {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
             </button>
             <button
-              onClick={handleClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {!isMinimized && (
           <>
-            {/* Connection Status */}
-            {!isConnected && (
-              <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
-                <p className="text-xs text-yellow-700">מנותק - מנסה להתחבר מחדש...</p>
-              </div>
-            )}
-
-            {/* Error Display */}
-            {error && (
-              <div className="bg-red-50 border-b border-red-200 px-4 py-2">
-                <p className="text-xs text-red-700">{error}</p>
-              </div>
-            )}
-
             {/* Messages */}
-            <div 
-              ref={messagesContainerRef}
-              className="flex-1 p-4 overflow-y-auto bg-gradient-to-b from-gray-50 to-white"
-            >
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
               {loading ? (
                 <div className="text-center text-gray-500 py-8">
-                  <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full mb-2"></div>
+                  <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-2"></div>
                   <p>טוען הודעות...</p>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
-                  <div
-                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: `${colors.primary}20` }}
-                  >
-                    <Send size={24} style={{ color: colors.primary }} />
-                  </div>
+                  <Send size={32} className="mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">התחל שיחה!</p>
                   <p className="text-sm">שלח הודעה ראשונה ל{otherUser.name}</p>
                 </div>
               ) : (
-                <div>
+                <div className="space-y-4">
                   {messages.map((message, index) => {
-                    const isCurrentUser = message.senderId._id === user._id;
-                    const showAvatar =
-                      index === 0 ||
-                      messages[index - 1].senderId._id !== message.senderId._id;
-
+                    const isOwn = message.senderId._id === user._id;
                     return (
-                      <MessageItem
-                        key={message._id || `msg-${index}`}
-                        message={message}
-                        isCurrentUser={isCurrentUser}
-                        showAvatar={showAvatar}
-                        colors={colors}
-                        userInfo={user}
-                      />
+                      <div key={message._id || index} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm ${
+                            isOwn ? "text-white" : "bg-white text-gray-800 border"
+                          }`}
+                          style={{
+                            backgroundColor: isOwn ? colors.primary : undefined,
+                            borderRadius: isOwn ? "20px 20px 6px 20px" : "20px 20px 20px 6px"
+                          }}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${isOwn ? "text-white/70" : "text-gray-500"}`}>
+                            {new Date(message.createdAt).toLocaleTimeString("he-IL", {
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </p>
+                        </div>
+                      </div>
                     );
                   })}
-                  
-                  {isTyping && <TypingIndicator colors={colors} />}
-                  
                   <div id="chat-bottom-anchor" />
                 </div>
               )}
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 border-t bg-white flex-shrink-0">
+            {/* Input */}
+            <div className="p-4 border-t bg-white">
               <div className="flex gap-3 items-end">
-                <div className="flex-1 relative">
-                  <textarea
-                    ref={textareaRef}
-                    value={newMessage}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyPress}
-                    placeholder={`שלח הודעה ל${otherUser.name}...`}
-                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent resize-none transition-all"
-                    style={{ 
-                      focusRingColor: colors.primary,
-                      minHeight: '52px',
-                      maxHeight: '120px'
-                    }}
-                    rows={1}
-                    disabled={!isConnected}
-                  />
-                  
-                  {/* Emoji Button */}
-                  <button
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="absolute left-3 bottom-3 p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <Smile size={18} className="text-gray-400" />
-                  </button>
-                </div>
-                
+                <textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={`שלח הודעה ל${otherUser.name}...`}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 resize-none"
+                  style={{ focusRingColor: colors.primary }}
+                  rows={1}
+                  maxLength={500}
+                />
                 <button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || !isConnected}
-                  className="p-3 rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                  className="p-3 rounded-full text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
                   style={{
-                    backgroundColor: newMessage.trim() && isConnected
-                      ? colors.primary
-                      : "#ccc",
-                    transform: newMessage.trim() && isConnected ? "scale(1)" : "scale(0.95)",
+                    backgroundColor: newMessage.trim() ? colors.primary : "#ccc"
                   }}
                 >
-                  <Send size={18} className="text-white" />
+                  <Send size={18} />
                 </button>
               </div>
-
-              {/* Simple Emoji Picker */}
-              {showEmojiPicker && (
-                <div className="absolute bottom-20 left-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
-                  <div className="grid grid-cols-6 gap-2">
-                    {['😀', '😂', '😍', '🥰', '😘', '😊', '😉', '😎', '🤔', '👍', '👌', '❤️', '🔥', '💯', '🎉', '🙏'].map(emoji => (
-                      <button
-                        key={emoji}
-                        onClick={() => {
-                          setNewMessage(prev => prev + emoji);
-                          setShowEmojiPicker(false);
-                          textareaRef.current?.focus();
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded text-lg"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
@@ -461,4 +250,4 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   );
 };
 
-export default React.memo(ChatModal);
+export default ChatModal;

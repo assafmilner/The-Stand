@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
+import api from "utils/api";
 
 function Feed({ colors, communityId, user }) {
   const [posts, setPosts] = useState([]);
@@ -14,7 +14,7 @@ function Feed({ colors, communityId, user }) {
         const url = communityId
           ? `http://localhost:3001/api/posts?communityId=${communityId}`
           : `http://localhost:3001/api/posts`;
-        const res = await axios.get(url);
+        const res = await api.get(url);
 
         // התמודדות עם התגובה החדשה
         setPosts(res.data.posts || res.data);
@@ -28,9 +28,7 @@ function Feed({ colors, communityId, user }) {
     fetchPosts();
   }, [communityId]);
 
-  const handlePostCreated = (newPost) => {
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
-  };
+
 
   if (loading) return <p>טוען פוסטים...</p>;
   if (error) return <p>{error}</p>;

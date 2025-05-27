@@ -1,5 +1,5 @@
 // client/src/components/tickets/TicketDetails.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,19 +11,27 @@ import {
   Shield,
 } from "lucide-react";
 import { useUser } from "../../context/UserContext";
+import { useChat } from "../../context/ChatContext";
 import Layout from "../layout/Layout";
 import api from "../../utils/api";
 import teamNameMap from "../../utils/teams-hebrew";
 import stadiums from "../../utils/stadiums";
 
+const ChatModal = lazy(() => import("../chat/ChatModal"));
+
 const TicketDetails = ({ colors }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { markAsRead } = useChat();
 
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Chat modal state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState(null);
 
   useEffect(() => {
     fetchTicketDetails();
@@ -69,8 +77,25 @@ const TicketDetails = ({ colors }) => {
   };
 
   const handleContactSeller = () => {
-    // TODO: Implement chat functionality
-    alert("תכונת הצ'אט תתווסף בקרוב!");
+    if (!ticket || !ticket.sellerId) {
+      alert("שגיאה: לא ניתן לפתוח צ'אט עם המוכר");
+      return;
+    }
+
+    // Prepare seller data for chat modal
+    const sellerData = {
+      _id: ticket.sellerId._id,
+      name: ticket.sellerId.name,
+      profilePicture: ticket.sellerId.profilePicture,
+    };
+
+    setSelectedSeller(sellerData);
+    setIsChatOpen(true);
+  };
+
+  const handleCloseChatModal = () => {
+    setIsChatOpen(false);
+    setSelectedSeller(null);
   };
 
   const isOwnTicket = user && ticket && ticket.sellerId._id === user._id;
@@ -296,7 +321,7 @@ const TicketDetails = ({ colors }) => {
             {!isOwnTicket && !ticket.isSoldOut && (
               <button
                 onClick={handleContactSeller}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
               >
                 <MessageCircle size={20} />
                 צור קשר עם המוכר
@@ -307,6 +332,14 @@ const TicketDetails = ({ colors }) => {
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <p className="text-sm text-yellow-700 text-center">
                   זה הכרטיס שלך
+                </p>
+              </div>
+            )}
+
+            {ticket.isSoldOut && !isOwnTicket && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-700 text-center font-medium">
+                  כרטיס זה נמכר
                 </p>
               </div>
             )}
@@ -366,6 +399,26 @@ const TicketDetails = ({ colors }) => {
           </div>
         </div>
       </div>
+
+      {/* Chat Modal */}
+      {isChatOpen && selectedSeller && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg">
+                <p>טוען צ'אט...</p>
+              </div>
+            </div>
+          }
+        >
+          <ChatModal
+            isOpen={isChatOpen}
+            onClose={handleCloseChatModal}
+            otherUser={selectedSeller}
+            onMarkAsRead={markAsRead}
+          />
+        </Suspense>
+      )}
     </Layout>
   );
 };

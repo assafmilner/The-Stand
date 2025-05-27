@@ -49,7 +49,7 @@ export const useFixtures = (seasonId, leagueType) => {
     const season = "2024-2025";
     
     try {
-      console.log(`🔄 Fetching fixtures from server API for season ${seasonId}`);
+
       
       // Call the server-side API instead of fetching directly
       const response = await api.get('/api/fixtures', {
@@ -76,8 +76,7 @@ export const useFixtures = (seasonId, leagueType) => {
       setFixtures(allFixtures);
       setRegularSeasonEndDate(regularSeasonEnd);
       
-      console.log(`✅ Loaded ${allFixtures.length} fixtures from server`);
-      console.log(`📊 Regular: ${data.regularFixtures?.length || 0}, Playoff: ${data.playoffFixtures?.length || 0}`);
+
       
     } catch (err) {
       console.error('❌ Error fetching fixtures:', err);
@@ -88,7 +87,7 @@ export const useFixtures = (seasonId, leagueType) => {
   };
 
   const refetch = () => {
-    console.log(`🔄 Force refreshing fixtures for season ${seasonId}`);
+
     fetchAllFixtures(true);
   };
 
@@ -127,7 +126,7 @@ export const useLeagueTable = (league) => {
       setLoading(true);
       const { seasonId } = getLeagueConfig(league);
       
-      console.log(`🔄 Fetching table for league ${seasonId}`);
+
       const data = await fetchFromApi(
         `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${seasonId}&s=2024-2025`
       );
@@ -148,7 +147,7 @@ export const useLeagueTable = (league) => {
       }));
       
       setRegularTable(regular);
-      console.log(`✅ Loaded table for league ${seasonId}`);
+ 
     } catch (err) {
       console.error("Error fetching regular table:", err);
     } finally {

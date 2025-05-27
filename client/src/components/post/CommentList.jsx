@@ -24,19 +24,7 @@ const CommentList = ({ postId }) => {
 
   return (
     <div className="comment-list">
-      {/* טופס תגובה */}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="כתוב תגובה..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          disabled={loading}
-        />
-        <button type="submit" disabled={loading}>
-          הגב
-        </button>
-      </form>
+    
 
       {/* רשימת תגובות */}
       {comments.map((comment) => (
@@ -51,6 +39,19 @@ const CommentList = ({ postId }) => {
           }}
         />
       ))}
+        {/* טופס תגובה */}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="כתוב תגובה..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          disabled={loading}
+        />
+        <button type="submit" disabled={loading}>
+          הגב
+        </button>
+      </form>
     </div>
   );
 };

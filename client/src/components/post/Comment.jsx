@@ -47,8 +47,10 @@ const Comment = ({ comment, postId, onDelete, onEdit }) => {
         />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>
-              <strong>{comment.authorId.name}</strong>{" "}
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+            >
+              <strong>{comment.authorId.name}</strong>
               <span style={{ color: "#888", fontSize: "0.8rem" }}>
                 {formatDistanceToNow(new Date(comment.createdAt), {
                   addSuffix: true,

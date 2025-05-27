@@ -45,12 +45,12 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
           paddingTop: "8px",
           textAlign: "right",
           fontSize: "1rem",
-          color: "#555",
+          color: "#4f46e5",
           cursor: "pointer",
         }}
         onClick={() => setShowLikeModal(true)}
       >
-        לייקים
+        ראה מי אהב
       </div>
 
       {/* actions row */}
@@ -93,19 +93,6 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
             </span>
           </button>
         </div>
-
-        {/* share placeholder */}
-        <button
-          className="post-action-button"
-          onClick={() => {
-            const url = `${window.location.origin}/post/${postId}`;
-            navigator.clipboard.writeText(url);
-            alert("הקישור לפוסט הועתק");
-          }}
-        >
-          <Share2 size={20} />
-          <span>שתף</span>
-        </button>
       </div>
 
       {/* comments section */}

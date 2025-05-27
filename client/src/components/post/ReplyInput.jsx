@@ -21,7 +21,7 @@ const ReplyInput = ({ postId, parentCommentId, onFinish }) => {
     <form onSubmit={handleSubmit} style={{ marginTop: "0.5rem" }}>
       <input
         type="text"
-        placeholder="כתוב תגובה לתגובה..."
+        placeholder="השב לתגובה.."
         value={replyText}
         onChange={(e) => setReplyText(e.target.value)}
         disabled={loading}
@@ -35,18 +35,9 @@ const ReplyInput = ({ postId, parentCommentId, onFinish }) => {
       <button
         type="submit"
         disabled={loading}
-        style={{
-          marginTop: "0.3rem",
-          fontSize: "0.85rem",
-          background: "#4f46e5",
-          color: "white",
-          border: "none",
-          padding: "0.4rem 0.8rem",
-          borderRadius: "0.4rem",
-          cursor: "pointer",
-        }}
+        
       >
-        הגב
+        השב
       </button>
     </form>
   );

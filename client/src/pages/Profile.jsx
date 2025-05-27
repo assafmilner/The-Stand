@@ -9,7 +9,6 @@ import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfilePosts from "../components/profile/ProfilePosts";
 import ProfileInfo from "../components/profile/ProfileInfo";
 import ChatModal from "../components/chat/ChatModal";
-import { useChat } from "../context/ChatContext";
 import teamColors from "../utils/teamStyles";
 import "styles/index.css";
 

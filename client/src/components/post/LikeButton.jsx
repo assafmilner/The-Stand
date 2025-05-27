@@ -59,22 +59,17 @@ export default function LikeButton({
       style={{
         background: "none",
         border: "none",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        color: "#4f46e5", // צבע אחיד לכולם
+        fontSize: "0.9rem",
         cursor: "pointer",
-        color: liked ? "#1877f2" : "#888",
-        fontSize: "0.85rem",
+        padding: 0,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-        <ThumbsUp size={20} fill={liked ? "#1877f2" : "none"} />
-        {count > 0 && (
-          <span style={{ fontSize: "1.5rem", color: "#444" }}>{count}</span>
-        )}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+        <ThumbsUp size={18} fill={liked ? "#1877f2" : "none"} />
+        <span style={{ fontWeight: 500 }}>{count > 0 ? count : null}</span>
+        <span style={{ fontWeight: 500 }}>לייק</span>
       </div>
-      <span>לייק</span>
     </button>
   );
 }

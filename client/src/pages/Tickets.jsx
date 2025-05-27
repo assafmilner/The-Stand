@@ -5,6 +5,7 @@ import MyTickets from "../components/tickets/MyTickets";
 import { useUser } from "../context/UserContext";
 import teamColors from "../utils/teamStyles";
 
+
 const TicketsPage = () => {
   const { user } = useUser();
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
