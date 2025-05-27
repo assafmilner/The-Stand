@@ -1,5 +1,4 @@
-
-// fan-server/app.js (Updated with message routes)
+// fan-server/app.js (Updated with Friend routes)
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -11,7 +10,8 @@ const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures"); 
 const ticketRoutes = require("./routes/ticketRoutes");
-const messageRoutes = require("./routes/messageRoutes"); // New import
+const messageRoutes = require("./routes/messageRoutes");
+const friendRoutes = require("./routes/friendRoutes"); // New import
 
 dotenv.config();
 mongoose
@@ -47,7 +47,8 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/fixtures", fixturesRoutes); 
 app.use("/api/tickets", ticketRoutes);
-app.use("/api/messages", messageRoutes); // New route
+app.use("/api/messages", messageRoutes);
+app.use("/api/friends", friendRoutes); // New route
 
 // Root check
 app.get("/", (req, res) => {

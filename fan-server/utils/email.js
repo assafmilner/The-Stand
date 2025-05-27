@@ -58,7 +58,7 @@ const sendVerificationEmail = async (to, token, userName) => {
     
     // For development: If you want to test without email delivery
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Development mode: Returning success despite email error');
+     
       return true;
     }
     

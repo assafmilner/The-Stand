@@ -1,39 +1,66 @@
 // client/src/components/layout/Header.jsx
 import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
-import { MessageCircle, Bell, Settings, X, ArrowLeft } from "lucide-react";
+import {
+  MessageCircle,
+  Bell,
+  Settings,
+  X,
+  ArrowLeft,
+  Users,
+  UserPlus,
+  Check,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/index.css";
 import { useChat } from "../../context/ChatContext";
 import { useSharedChatCache } from "../../hooks/useSharedChatCache";
+import { useFriends } from "../../hooks/useFriends"; // New import
 
 const ChatModal = lazy(() => import("../chat/ChatModal"));
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showFriendsDropdown, setShowFriendsDropdown] = useState(false); // New state
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
+  const friendsDropdownRef = useRef(null); // New ref
 
   const { unreadCount, notifications, markAsRead } = useChat();
-
   const { loadRecentChats, getCacheStats } = useSharedChatCache();
+
+  // Friends functionality
+  const {
+    receivedRequests,
+    receivedRequestsCount,
+    getReceivedRequests,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    requestLoading,
+  } = useFriends();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
+      if (
+        friendsDropdownRef.current &&
+        !friendsDropdownRef.current.contains(event.target)
+      ) {
+        setShowFriendsDropdown(false);
+      }
     };
 
-    if (showDropdown) {
+    if (showDropdown || showFriendsDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showDropdown]);
+  }, [showDropdown, showFriendsDropdown]);
 
   const handleDropdownToggle = async () => {
     const newShowState = !showDropdown;
@@ -54,11 +81,43 @@ const Header = ({ user }) => {
     }
   };
 
+  // New function for friends dropdown
+  const handleFriendsDropdownToggle = async () => {
+    const newShowState = !showFriendsDropdown;
+    setShowFriendsDropdown(newShowState);
+
+    if (newShowState) {
+      // Load friend requests
+      try {
+        await getReceivedRequests();
+      } catch (err) {
+        console.error("Failed to load friend requests:", err);
+      }
+    }
+  };
+
   const handleOpenChat = (chatUser) => {
     setSelectedChatUser(chatUser);
     setIsChatOpen(true);
     setShowDropdown(false);
     markAsRead(chatUser._id);
+  };
+
+  // New functions for friend requests
+  const handleAcceptRequest = async (request) => {
+    const result = await acceptFriendRequest(request.id);
+    if (result.success) {
+      // Refresh requests
+      getReceivedRequests();
+    }
+  };
+
+  const handleRejectRequest = async (request) => {
+    const result = await rejectFriendRequest(request.id);
+    if (result.success) {
+      // Refresh requests
+      getReceivedRequests();
+    }
   };
 
   const formatTime = (date) => {
@@ -110,6 +169,7 @@ const Header = ({ user }) => {
               <Settings size={20} />
             </button>
 
+            {/* Messages dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 className="icon-button relative"
@@ -277,6 +337,105 @@ const Header = ({ user }) => {
                       className="w-full text-center font-medium text-sm flex items-center justify-center gap-2 transition-colors"
                     >
                       צפה בכל ההודעות
+                      <ArrowLeft size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Friends dropdown - NEW */}
+            <div className="relative" ref={friendsDropdownRef}>
+              <button
+                className="icon-button relative"
+                onClick={handleFriendsDropdownToggle}
+              >
+                <Users size={20} />
+                {receivedRequestsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    {receivedRequestsCount > 9 ? "9+" : receivedRequestsCount}
+                  </span>
+                )}
+              </button>
+
+              {showFriendsDropdown && (
+                <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border z-50 max-h-96 overflow-hidden">
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-900">בקשות חברות</h3>
+                    <button onClick={() => setShowFriendsDropdown(false)}>
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto">
+                    {receivedRequests.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500">
+                        <UserPlus
+                          size={32}
+                          className="mx-auto mb-2 text-gray-300"
+                        />
+                        <p className="font-medium">אין בקשות חברות חדשות</p>
+                        <p className="text-sm">בקשות חברות יופיעו כאן</p>
+                      </div>
+                    ) : (
+                      <div className="p-3">
+                        {receivedRequests.slice(0, 5).map((request) => (
+                          <div
+                            key={request.id}
+                            className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg mb-2"
+                          >
+                            <img
+                              src={
+                                request.sender.profilePicture ||
+                                "/defaultProfilePic.png"
+                              }
+                              alt={request.sender.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 truncate text-sm">
+                                {request.sender.name}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                אוהד {request.sender.favoriteTeam}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {formatTime(new Date(request.createdAt))}
+                              </p>
+                            </div>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleAcceptRequest(request)}
+                                disabled={requestLoading}
+                                className="p-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                                title="אשר"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleRejectRequest(request)}
+                                disabled={requestLoading}
+                                className="p-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+                                title="דחה"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3 border-t">
+                    <button
+                      onClick={() => {
+                        navigate("/friends");
+                        setShowFriendsDropdown(false);
+                      }}
+                      className="w-full text-center font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                    >
+                      צפה בכל הבקשות
                       <ArrowLeft size={14} />
                     </button>
                   </div>

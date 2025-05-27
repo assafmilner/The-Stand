@@ -55,9 +55,7 @@ class CacheManager {
       }
     }
 
-    if (deletedCount > 0) {
-      console.log(`🧹 Cache cleanup: ${deletedCount} expired entries removed`);
-    }
+
   }
 
   getStats() {

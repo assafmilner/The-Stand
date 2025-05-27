@@ -11,7 +11,8 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
 import Tickets from "./pages/Tickets";
-import Messages from "./pages/Messages"; // ✨ New import
+import Messages from "./pages/Messages"; 
+import Friends from "pages/Friends";
 
 // Ticket Components
 import CreateTicketForm from "./components/tickets/CreateTicketForm";
@@ -55,7 +56,8 @@ function App() {
         <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/fixtures" element={<Fixtures />} />
         <Route path="/tickets" element={<Tickets />} />
-        <Route path="/messages" element={<Messages />} /> {/* ✨ New route */}
+        <Route path="/messages" element={<Messages />} /> 
+        <Route path="/friends" element={<Friends />} />
 
         <Route path="/create-ticket" element={<CreateTicketForm colors={colors} />} />
         <Route path="/tickets/:id" element={<TicketDetails colors={colors} />} />

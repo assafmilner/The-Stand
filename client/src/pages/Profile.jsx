@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Edit3, MessageCircle, UserPlus, Users, Calendar } from "lucide-react";
+import { Edit3, MessageCircle, Users, Calendar } from "lucide-react";
 import api from "utils/api";
 import ProfileLayout from "../components/profile/ProfileLayout";
 import { useUser } from "../context/UserContext";
@@ -9,6 +9,9 @@ import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfilePosts from "../components/profile/ProfilePosts";
 import ProfileInfo from "../components/profile/ProfileInfo";
 import ChatModal from "../components/chat/ChatModal";
+import FriendButton from "../components/friends/FriendButton";
+import FriendsList from "../components/friends/FriendsList";
+import { useFriends } from "../hooks/useFriends";
 import teamColors from "../utils/teamStyles";
 import "styles/index.css";
 
@@ -17,15 +20,44 @@ const Profile = () => {
   const { user: currentUser, setUser } = useUser();
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [friendsCount, setFriendsCount] = useState(0);
   const [activeTab, setActiveTab] = useState("posts");
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  // State for handling friends data
+  const [profileFriends, setProfileFriends] = useState([]);
+  const [profileFriendsCount, setProfileFriendsCount] = useState(0);
+  const [profileFriendsLoading, setProfileFriendsLoading] = useState(false);
+
+  // Current user's friends (only used for own profile)
+  const {
+    friends: currentUserFriends,
+    friendsCount: currentUserFriendsCount,
+    loading: currentUserFriendsLoading,
+    getFriends: getCurrentUserFriends,
+  } = useFriends();
 
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?._id;
   const displayUser = isOwnProfile ? currentUser : profileUser;
   const colors = teamColors[displayUser?.favoriteTeam || "הפועל תל אביב"];
+
+  // Function to fetch another user's friends
+  const fetchUserFriends = async (targetUserId) => {
+    setProfileFriendsLoading(true);
+    try {
+      const response = await api.get(`/api/friends/user/${targetUserId}`);
+      if (response.data.success) {
+        setProfileFriends(response.data.friends);
+        setProfileFriendsCount(response.data.pagination.totalFriends);
+      }
+    } catch (error) {
+      console.error("Error fetching user friends:", error);
+      setProfileFriends([]);
+      setProfileFriendsCount(0);
+    } finally {
+      setProfileFriendsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -34,10 +66,13 @@ const Profile = () => {
         if (!isOwnProfile) {
           const profileResponse = await api.get(`/api/users/profile/${userId}`);
           setProfileUser(profileResponse.data);
-        }
 
-        // Simulate friends count
-        setFriendsCount(Math.floor(Math.random() * 500) + 50);
+          // Fetch that user's friends
+          await fetchUserFriends(userId);
+        } else {
+          // For own profile, get current user's friends
+          getCurrentUserFriends();
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -48,7 +83,7 @@ const Profile = () => {
     if ((isOwnProfile && currentUser) || (!isOwnProfile && userId)) {
       fetchUserData();
     }
-  }, [currentUser, userId, isOwnProfile]);
+  }, [currentUser, userId, isOwnProfile, getCurrentUserFriends]);
 
   const handleCoverUpdate = (newCoverImage) => {
     if (isOwnProfile) {
@@ -70,6 +105,36 @@ const Profile = () => {
       month: "long",
     });
   };
+
+  // Handle friend status changes
+  const handleFriendStatusChange = (newStatus) => {
+    if (isOwnProfile) {
+      // Refresh current user's friends
+      getCurrentUserFriends();
+    } else {
+      // Refresh the profile user's friends
+      fetchUserFriends(userId);
+    }
+  };
+
+  // Get the appropriate friends data based on profile type
+  const getFriendsData = () => {
+    if (isOwnProfile) {
+      return {
+        friends: currentUserFriends,
+        friendsCount: currentUserFriendsCount,
+        friendsLoading: currentUserFriendsLoading,
+      };
+    } else {
+      return {
+        friends: profileFriends,
+        friendsCount: profileFriendsCount,
+        friendsLoading: profileFriendsLoading,
+      };
+    }
+  };
+
+  const { friends, friendsCount, friendsLoading } = getFriendsData();
 
   if (loading) {
     return (
@@ -169,11 +234,15 @@ const Profile = () => {
                       ערוך פרופיל
                     </button>
                   ) : (
-                    <>
-                      <button className="profile-btn primary">
-                        <UserPlus size={18} />
-                        הוסף לחברים
-                      </button>
+                    <div className="flex flex-row gap-3">
+                      {/* Friend Button */}
+                      <FriendButton
+                        targetUser={displayUser}
+                        colors={colors}
+                        onStatusChange={handleFriendStatusChange}
+                      />
+
+                      {/* Message Button */}
                       <button
                         className="profile-btn secondary"
                         onClick={handleSendMessage}
@@ -181,7 +250,7 @@ const Profile = () => {
                         <MessageCircle size={18} />
                         שלח הודעה
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -192,7 +261,7 @@ const Profile = () => {
         {/* Main Content Area - Wider container for side-by-side layout */}
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Side - Posts with Tabs */}
+            {/* Left Side - Profile Info */}
             <div className="lg:col-span-1">
               <ProfileInfo
                 user={displayUser}
@@ -203,7 +272,7 @@ const Profile = () => {
               />
             </div>
 
-            {/* Right Side - Profile Info */}
+            {/* Right Side - Tabs and Content */}
             <div className="lg:col-span-2">
               <ProfileTabs
                 activeTab={activeTab}
@@ -219,19 +288,35 @@ const Profile = () => {
                     colors={colors}
                   />
                 )}
-                {activeTab === "about" && (
-                  <ProfileInfo
-                    user={displayUser}
-                    isOwnProfile={isOwnProfile}
-                    colors={colors}
-                    friendsCount={friendsCount}
-                    showAsAbout={true}
-                  />
-                )}
+
                 {activeTab === "friends" && (
-                  <div className="profile-info-card">
-                    <h2>חברים ({friendsCount})</h2>
-                    <p>רשימת חברים תוצג כאן</p>
+                  <div>
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                      <Users size={24} />
+                      {isOwnProfile
+                        ? `החברים שלי (${friendsCount})`
+                        : `חברים של ${displayUser.name} (${friendsCount})`}
+                    </h2>
+
+                    <FriendsList
+                      friends={friends}
+                      loading={friendsLoading}
+                      colors={colors}
+                      showActions={true}
+                      showRemove={isOwnProfile} // Only show remove if viewing own profile
+                      showMessage={true}
+                      onFriendRemoved={handleFriendStatusChange}
+                      emptyMessage={
+                        isOwnProfile
+                          ? "אין לך חברים עדיין"
+                          : `אין חברים ל${displayUser.name}`
+                      }
+                      emptySubMessage={
+                        isOwnProfile
+                          ? "התחל לחבר עם אוהדים אחרים של הקבוצה"
+                          : "המשתמש עדיין לא הוסיף חברים"
+                      }
+                    />
                   </div>
                 )}
               </div>
@@ -240,12 +325,11 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Chat Modal  */}
+      {/* Chat Modal */}
       <ChatModal
         isOpen={isChatOpen}
         onClose={handleCloseChatModal}
         otherUser={displayUser}
-      
       />
     </ProfileLayout>
   );

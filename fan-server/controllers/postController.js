@@ -1,42 +1,83 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
+const Friend = require("../models/Friend");
 
-const getAllPosts = async (req, res) => {
-  const { communityId, authorId, page = 1, limit = 20 } = req.query;
-  const filter = {};
-  if (communityId) filter.communityId = communityId;
-  if (authorId) filter.authorId = authorId;
-
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-
+const getPosts = async (req, res) => {
   try {
-    const posts = await Post.find(filter)
-      .populate("authorId", "name email profilePicture")
-      .populate("likes", "name email profilePicture")
+    const { 
+      page = 1, 
+      limit = 20, 
+      authorId, 
+      communityId,
+      friendsOnly = false
+    } = req.query;
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    let query = {};
+
+    // Handle friends only filter
+    if (friendsOnly === 'true' && req.user) {
+      const userId = req.user.id;
+      
+      // Get user's friends
+      const friendships = await Friend.find({
+        $or: [
+          { senderId: userId, status: 'accepted' },
+          { receiverId: userId, status: 'accepted' }
+        ]
+      });
+
+      // Extract friend IDs
+      const friendIds = friendships.map(friendship => {
+        return friendship.senderId.toString() === userId 
+          ? friendship.receiverId 
+          : friendship.senderId;
+      });
+
+      // Add the current user to see their own posts too
+      friendIds.push(userId);
+
+      query.authorId = { $in: friendIds };
+    }
+
+    // Handle other existing filters
+    if (authorId) {
+      query.authorId = authorId;
+    }
+
+    if (communityId) {
+      query.communityId = communityId;
+    }
+
+    const posts = await Post.find(query)
+      .populate("authorId", "name profilePicture favoriteTeam")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
-    const totalPosts = await Post.countDocuments(filter);
-
+    const totalPosts = await Post.countDocuments(query);
     const hasMore = skip + posts.length < totalPosts;
 
-    res.status(200).json({
+    res.json({
+      success: true,
       posts,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(totalPosts / limit),
         hasMore,
-        totalPosts,
-      },
+        totalPosts
+      }
     });
+
   } catch (error) {
-    res.status(500).json({ message: "Error fetching posts", error });
+    console.error("Error getting posts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get posts"
+    });
   }
 };
 
-
-// שאר הפונקציות נשארות זהות
 const createPost = async (req, res) => {
   try {
     const { authorId, communityId, content } = req.body;
@@ -146,11 +187,133 @@ const toggleLike = async (req, res) => {
   }
 };
 
+// Get posts from friends + user's own posts
+const getFriendsPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get user's friends
+    const friendships = await Friend.find({
+      $or: [
+        { senderId: userId, status: 'accepted' },
+        { receiverId: userId, status: 'accepted' }
+      ]
+    });
+
+    // Extract friend IDs
+    const friendIds = friendships.map(friendship => {
+      return friendship.senderId.toString() === userId 
+        ? friendship.receiverId 
+        : friendship.senderId;
+    });
+
+    // Add the current user to see their own posts too
+    friendIds.push(userId);
+
+    // Get posts from friends + user's own posts
+    const posts = await Post.find({
+      authorId: { $in: friendIds }
+    })
+    .populate("authorId", "name profilePicture favoriteTeam")  // Removed comments populate
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalPosts = await Post.countDocuments({
+      authorId: { $in: friendIds }
+    });
+
+    const hasMore = skip + posts.length < totalPosts;
+
+    res.json({
+      success: true,
+      posts,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalPosts / limit),
+        hasMore,
+        totalPosts
+      }
+    });
+
+  } catch (error) {
+    console.error("Error getting friends posts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get friends posts"
+    });
+  }
+};
+
+// Get posts from users with the same favorite team
+const getTeamPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get current user's favorite team
+    const currentUser = await User.findById(userId);
+    if (!currentUser || !currentUser.favoriteTeam) {
+      return res.status(400).json({
+        success: false,
+        error: "User favorite team not found"
+      });
+    }
+
+    // Get all users with the same favorite team
+    const teamUsers = await User.find({
+      favoriteTeam: currentUser.favoriteTeam
+    }).select('_id');
+
+    const teamUserIds = teamUsers.map(user => user._id);
+
+    // Get posts from users with the same favorite team
+    const posts = await Post.find({
+      authorId: { $in: teamUserIds }
+    })
+    .populate("authorId", "name profilePicture favoriteTeam")  // Removed comments populate
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalPosts = await Post.countDocuments({
+      authorId: { $in: teamUserIds }
+    });
+
+    const hasMore = skip + posts.length < totalPosts;
+
+    res.json({
+      success: true,
+      posts,
+      team: currentUser.favoriteTeam,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalPosts / limit),
+        hasMore,
+        totalPosts
+      }
+    });
+
+  } catch (error) {
+    console.error("Error getting team posts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get team posts"
+    });
+  }
+};
+
 module.exports = {
-  getAllPosts,
+  getPosts,
   createPost,
   updatePost,
   deletePost,
-  toggleLike
- 
+  toggleLike,
+  getFriendsPosts,
+  getTeamPosts, 
 };

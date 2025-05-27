@@ -6,6 +6,7 @@ require("dotenv").config();
 const User = require("./models/User");
 const Post = require("./models/Post");
 const Comment = require("./models/Comment");
+const Friend = require("./models/Friend"); // Add this import at the top
 
 // Profile pictures array (using placeholder services)
 const profilePictures = [
@@ -291,6 +292,62 @@ async function createSampleComments(users, posts) {
   console.log(`Sample comments created! Total: ${comments.length} comments`);
   return comments;
 }
+async function createSampleFriendships(users) {
+  console.log("Creating sample friendships...");
+  
+  const friendships = [];
+  
+  // Group users by their favorite team
+  const teamGroups = {};
+  users.forEach(user => {
+    if (!teamGroups[user.favoriteTeam]) {
+      teamGroups[user.favoriteTeam] = [];
+    }
+    teamGroups[user.favoriteTeam].push(user);
+  });
+  
+  // Create friendships within each team
+  for (const team in teamGroups) {
+    const teamUsers = teamGroups[team];
+    
+    // Create some accepted friendships
+    for (let i = 0; i < teamUsers.length - 1; i++) {
+      for (let j = i + 1; j < teamUsers.length; j++) {
+        // 60% chance of being friends
+        if (Math.random() < 0.6) {
+          const friendship = new Friend({
+            senderId: teamUsers[i]._id,
+            receiverId: teamUsers[j]._id,
+            status: 'accepted'
+          });
+          friendships.push(friendship);
+        }
+        // 20% chance of pending request
+        else if (Math.random() < 0.2) {
+          const friendship = new Friend({
+            senderId: teamUsers[i]._id,
+            receiverId: teamUsers[j]._id,
+            status: 'pending'
+          });
+          friendships.push(friendship);
+        }
+      }
+    }
+  }
+  
+  // Shuffle friendships to make them more realistic
+  const shuffledFriendships = friendships.sort(() => Math.random() - 0.5);
+  
+  // Take only a portion to avoid too many friendships
+  const limitedFriendships = shuffledFriendships.slice(0, Math.floor(friendships.length * 0.4));
+  
+  if (limitedFriendships.length > 0) {
+    await Friend.insertMany(limitedFriendships);
+  }
+  
+  console.log(`Sample friendships created! Total: ${limitedFriendships.length} friendships`);
+  return limitedFriendships;
+}
 
 // Add random likes to comments
 async function addLikesToComments(users, comments) {
@@ -319,6 +376,7 @@ async function clearDatabase() {
   await User.deleteMany({});
   await Post.deleteMany({});
   await Comment.deleteMany({});
+  await Friend.deleteMany({});
   console.log("Database cleared!");
 }
 
@@ -350,11 +408,15 @@ async function seedDatabase() {
     // Step 5: Add likes to comments
     await addLikesToComments(users, comments);
     
+    // Step 6: Create friendships (NEW)
+    const friendships = await createSampleFriendships(users);
+
     console.log("\n✅ Database seeded successfully!");
     console.log(`📊 Summary:`);
     console.log(`   👥 Users: ${users.length}`);
     console.log(`   📝 Posts: ${posts.length}`);
     console.log(`   💬 Comments: ${comments.length}`);
+    console.log(`   🤝 Friendships: ${friendships.length}`);
     console.log(`   ❤️ Likes on posts and comments added randomly`);
     
   } catch (error) {

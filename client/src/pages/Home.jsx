@@ -1,4 +1,4 @@
-// client/src/pages/Home.jsx (Updated with Tickets tab)
+// client/src/pages/Home.jsx (Updated with feedType)
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import Layout from "../components/layout/Layout";
@@ -70,7 +70,7 @@ const Home = () => {
       <div className="transition-all duration-500 ease-in-out">
         {selectedTab === "feed" && (
           <div key="feed" className="animate-fade-in">
-            <Feed user={user} colors={colors} />
+            <Feed user={user} colors={colors} feedType="friends" />
           </div>
         )}
         {selectedTab === "table" && (
@@ -79,7 +79,6 @@ const Home = () => {
           </div>
         )}
         {selectedTab === "groups" && <Community colors={colors} />}
-       
       </div>
     </Layout>
   );

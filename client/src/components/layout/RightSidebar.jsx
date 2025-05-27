@@ -6,6 +6,7 @@ import {
   LogOut,
   Ticket,
   MessageCircle,
+  Users
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -43,6 +44,12 @@ const RightSidebar = ({ colors, onLogout }) => {
             onClick={() => navigate("/messages")}
           >
             <MessageCircle size={18} /> הודעות
+          </li>
+           <li
+            className="nav-item flex items-center gap-2"
+            onClick={() => navigate("/friends")}
+          >
+            <Users size={18} /> חברים
           </li>
           <li className="nav-item flex items-center gap-2">
             <Bell size={18} /> התראות

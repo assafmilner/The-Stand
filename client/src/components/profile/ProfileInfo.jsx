@@ -6,10 +6,13 @@ const ProfileInfo = ({
   user,
   isOwnProfile,
   colors,
-  friendsCount,
+  friendsCount = 0, // Now we trust the prop from Profile component
   compact = false,
   showAsAbout = false,
 }) => {
+  // Use the friends count passed as prop
+  const displayFriendsCount = friendsCount;
+
   const getTeamData = () => {
     const teamEnglishName = Object.keys(teamNameMap).find(
       (key) => teamNameMap[key].name === user?.favoriteTeam
@@ -113,10 +116,14 @@ const ProfileInfo = ({
               <h2>פרטים נוספים</h2>
 
               <div className="space-y-3">
-                {/* Friends count - visible to everyone */}
+                {/* Friends count - visible to everyone - NOW USING REAL COUNT */}
                 <div className="profile-info-item">
                   <Users size={18} className="profile-info-icon" />
-                  <span>{friendsCount} חברים</span>
+                  <span>
+                    {displayFriendsCount > 0
+                      ? `${displayFriendsCount} חברים`
+                      : "אין חברים עדיין"}
+                  </span>
                 </div>
 
                 {/* Gender - visible to everyone if provided */}
@@ -160,9 +167,14 @@ const ProfileInfo = ({
             מידע כללי
           </h2>
           <div className="space-y-3">
+            {/* Friends count - NOW USING REAL COUNT */}
             <div className="profile-info-item">
               <Users size={18} className="profile-info-icon" />
-              <span>{friendsCount} חברים</span>
+              <span>
+                {displayFriendsCount > 0
+                  ? `${displayFriendsCount} חברים`
+                  : "אין חברים עדיין"}
+              </span>
             </div>
             <div className="profile-info-item">
               <Calendar size={18} className="profile-info-icon" />
