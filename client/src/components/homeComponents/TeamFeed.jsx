@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
-import { Heart } from "lucide-react";
 import api from "../../utils/api";
 
 function TeamFeed({ colors, user }) {

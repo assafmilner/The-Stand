@@ -4,13 +4,6 @@ import { Award } from "lucide-react";
 import PostList from "../post/PostList";
 
 const ProfilePosts = ({ user, isOwnProfile, colors }) => {
-  console.log(
-    "🔥 PROFILE POSTS: Rendering for user",
-    user?.name,
-    "isOwn:",
-    isOwnProfile
-  );
-
   return (
     <div className="lg:col-span-2">
       <div className="profile-posts">

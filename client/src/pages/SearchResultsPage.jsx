@@ -68,7 +68,7 @@ const SearchResultsPage = () => {
   };
 
   const results = fullResults?.results || {};
-  const pagination = fullResults?.pagination || {};
+
 
   // סינון התוצאות לפי הטאב הנבחר
   const getFilteredResults = () => {

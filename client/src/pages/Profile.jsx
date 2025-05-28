@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Edit3, MessageCircle, Users, Calendar } from "lucide-react";
-import api from "utils/api";
+import api from "../utils/api";
 import ProfileLayout from "../components/profile/ProfileLayout";
 import { useUser } from "../context/UserContext";
 import CoverImageUploader from "../components/profile/CoverImageUploader";
@@ -13,7 +13,7 @@ import FriendButton from "../components/friends/FriendButton";
 import FriendsList from "../components/friends/FriendsList";
 import { useFriends } from "../hooks/useFriends";
 import teamColors from "../utils/teamStyles";
-import "styles/index.css";
+import "../styles/index.css";
 
 const Profile = () => {
   const { userId } = useParams();

@@ -12,7 +12,7 @@ import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
 import Tickets from "./pages/Tickets";
 import Messages from "./pages/Messages"; 
-import Friends from "pages/Friends";
+import Friends from "./pages/Friends";
 import SearchResultsPage from "./pages/SearchResultsPage";
 
 // Ticket Components

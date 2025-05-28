@@ -7,7 +7,6 @@ import teamColors from "../utils/teamStyles";
 import {
   Users,
   UserPlus,
-  UserX,
   Check,
   X,
   MessageCircle,

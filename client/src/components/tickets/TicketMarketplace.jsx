@@ -3,12 +3,9 @@ import { Filter, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TicketCard from "./TicketCard";
 import api from "../../utils/api";
-import { useUser } from "../../context/UserContext";
-import teamNameMap from "../../utils/teams-hebrew";
 
 const TicketMarketplace = ({ colors }) => {
   const navigate = useNavigate();
-  const { user } = useUser();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

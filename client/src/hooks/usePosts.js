@@ -1,6 +1,6 @@
 // client/src/hooks/usePosts.js - Fixed version
 import { useState, useEffect, useCallback } from "react";
-import api from "utils/api";
+import api from "../utils/api";
 
 const DEFAULT_LIMIT = 20;
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
-import { RefreshCw, Server, BarChart3 } from "lucide-react";
+import { RefreshCw, Server } from "lucide-react";
 import { useLeague, useFixtures } from "../hooks/useLeague";
 import { FixturesList } from "../components/league";
 import teamNameMap from "../utils/teams-hebrew";

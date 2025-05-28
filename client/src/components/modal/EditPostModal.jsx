@@ -1,6 +1,6 @@
 // FILE: client/src/components/modal/EditPostModal.jsx
 import React, { useState, useEffect } from "react";
-import "styles/index.css";
+import "../../styles/index.css";
 
 const EditPostModal = ({ post, onSave, onCancel }) => {
   const [newContent, setNewContent] = useState(post.content || "");
@@ -65,14 +65,13 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
             ) : (
               <img src={previewUrl} alt="preview" style={{ width: "100%" }} />
             )}
-            <button onClick={handleRemoveMedia} className="modal-remove-media">
-              ✕
-            </button>
           </div>
         )}
-
+        <button onClick={handleRemoveMedia} className="modal-remove-media">
+          ✕
+        </button>
         <label className="upload-button">
-          📷🎥 העלה מדיה
+          📷 העלה מדיה
           <input
             type="file"
             hidden
