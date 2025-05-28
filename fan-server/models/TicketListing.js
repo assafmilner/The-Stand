@@ -63,10 +63,10 @@ const TicketListingSchema = new mongoose.Schema({
 }, 
 { timestamps: true }
 );
-
-// Index for better query performance
-TicketListingSchema.index({ date: 1, homeTeam: 1, awayTeam: 1 });
+TicketListingSchema.index({ notes: "text", homeTeam: "text", awayTeam: "text" });
+TicketListingSchema.index({ date: 1, isSoldOut: 1 });
 TicketListingSchema.index({ sellerId: 1 });
-TicketListingSchema.index({ isSoldOut: 1 });
+
+
 
 module.exports = mongoose.model("TicketListing", TicketListingSchema);

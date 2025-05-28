@@ -37,29 +37,24 @@ export default function usePosts({
         // ✅ Fixed endpoint selection logic
         if (friendsOnly) {
           endpoint = "/api/posts/friends"; // ✅ Correct endpoint
-          console.log("🔥 usePosts: Using FRIENDS endpoint:", endpoint);
+     
         } else if (teamOnly) {
           endpoint = "/api/posts/team"; // ✅ Correct endpoint  
-          console.log("🔥 usePosts: Using TEAM endpoint:", endpoint);
+   
         } else {
           // Generic endpoint for other cases
           endpoint = "/api/posts"; // ✅ Fixed: removed trailing slash
-          console.log("🔥 usePosts: Using GENERIC endpoint:", endpoint);
+      
           
           // Add filters for generic endpoint
           if (authorId) params.authorId = authorId;
           if (communityId) params.communityId = communityId;
         }
 
-        console.log("🔥 usePosts: Making request to:", endpoint, "with params:", params);
+  
 
         const { data } = await api.get(endpoint, { params });
-        
-        console.log("🔥 usePosts: Response received:", {
-          success: data.success,
-          postsCount: data.posts?.length,
-          feedType: data.feedType
-        });
+      
         
         if (data.success) {
           const postsArray = Array.isArray(data.posts) ? data.posts : [];
@@ -72,13 +67,7 @@ export default function usePosts({
           setError("Failed to load posts");
         }
       } catch (err) {
-        console.error("🔥 usePosts ERROR:", err);
-        console.error("🔥 usePosts ERROR details:", {
-          friendsOnly,
-          teamOnly,
-          status: err.response?.status,
-          url: err.config?.url
-        });
+       
         
         if (friendsOnly && err.response?.status === 401) {
           setError("נדרשת התחברות לצפייה בפוסטים מחברים");
@@ -143,11 +132,11 @@ export default function usePosts({
 
 // ✅ Export specific hooks that explicitly use the correct endpoints
 export const useFriendsPosts = () => {
-  console.log("🔥 useFriendsPosts: Hook called");
+
   return usePosts({ friendsOnly: true });
 };
 
 export const useTeamPosts = () => {
-  console.log("🔥 useTeamPosts: Hook called");
+
   return usePosts({ teamOnly: true });
 };

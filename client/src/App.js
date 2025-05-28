@@ -13,6 +13,7 @@ import Fixtures from "./pages/Fixtures";
 import Tickets from "./pages/Tickets";
 import Messages from "./pages/Messages"; 
 import Friends from "pages/Friends";
+import SearchResultsPage from "./pages/SearchResultsPage";
 
 // Ticket Components
 import CreateTicketForm from "./components/tickets/CreateTicketForm";
@@ -58,6 +59,7 @@ function App() {
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/messages" element={<Messages />} /> 
         <Route path="/friends" element={<Friends />} />
+        <Route path="/full-search" element={<SearchResultsPage />} />
 
         <Route path="/create-ticket" element={<CreateTicketForm colors={colors} />} />
         <Route path="/tickets/:id" element={<TicketDetails colors={colors} />} />

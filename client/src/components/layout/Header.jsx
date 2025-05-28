@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import {
   MessageCircle,
-  Bell,
   Settings,
   X,
   ArrowLeft,
@@ -14,7 +13,8 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/index.css";
 import { useChat } from "../../context/ChatContext";
 import { useSharedChatCache } from "../../hooks/useSharedChatCache";
-import { useFriends } from "../../hooks/useFriends"; // New import
+import { useFriends } from "../../hooks/useFriends";
+import SearchBar from "../search/SearchBar";
 
 const ChatModal = lazy(() => import("../chat/ChatModal"));
 
@@ -426,14 +426,10 @@ const Header = ({ user }) => {
                 </div>
               )}
             </div>
-
-            <button className="icon-button">
-              <Bell size={20} />
-            </button>
           </div>
 
           <div className="navbar-search">
-            <input type="text" placeholder="חפש אוהדים, קבוצות או פוסטים..." />
+            <SearchBar />
           </div>
 
           <div className="navbar-logo">

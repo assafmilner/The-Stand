@@ -1,12 +1,13 @@
-// client/src/components/post/PostList.jsx - Flexible version
+// client/src/components/post/PostList.jsx - Flexible version with immediate post display fix
+
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import usePosts from "../../hooks/usePosts";
-import { useUser } from "context/UserContext";
+import { useUser } from "../../context/UserContext";
 import Post from "./Post";
 import PostViewerHandler from "../modal/PostViewerHandler";
 import CreatePost from "./CreatePost";
-import api from "utils/api";
-import teamColors from "utils/teamStyles";
+import api from "../../utils/api";
+import teamColors from "../../utils/teamStyles";
 
 const PostList = ({
   // Props for display-only mode (FriendsFeed/TeamFeed)
@@ -92,8 +93,32 @@ const PostList = ({
     };
   }, [hasMore, loadMore, shouldFetch]);
 
+  // Enhanced handlePostCreated with better data structure
   const handlePostCreated = (newPost) => {
-    setLocalPosts((prev) => [newPost, ...prev]);
+    // Ensure the post has all required fields
+    const enrichedPost = {
+      ...newPost,
+      // Make sure we have author info
+      authorId: newPost.authorId || {
+        _id: currentUser._id,
+        name: currentUser.name,
+        email: currentUser.email,
+        profilePicture: currentUser.profilePicture,
+        favoriteTeam: currentUser.favoriteTeam,
+      },
+      // Ensure we have default values
+      likes: newPost.likes || [],
+      createdAt: newPost.createdAt || new Date().toISOString(),
+      updatedAt: newPost.updatedAt || new Date().toISOString(),
+      media: newPost.media || [],
+      communityId: newPost.communityId || currentUser.favoriteTeam,
+    };
+
+    setLocalPosts((prev) => {
+      const newLocalPosts = [enrichedPost, ...prev];
+
+      return newLocalPosts;
+    });
   };
 
   const handleEditPost = async (postId, { content, media, imageFile }) => {
@@ -116,7 +141,7 @@ const PostList = ({
 
       const enrichedPost = {
         ...updatedPost,
-        authorId: {
+        authorId: updatedPost.authorId || {
           _id: currentUser._id,
           name: currentUser.name,
           email: currentUser.email,
@@ -146,7 +171,7 @@ const PostList = ({
     }
   };
 
-  // Merge server posts with local posts (for new/edited posts)
+  // Improved merge logic with better debugging
   const mergedPosts = posts.map((serverPost) => {
     const localOverride = localPosts.find((p) => p._id === serverPost._id);
     return localOverride || serverPost;
@@ -175,19 +200,25 @@ const PostList = ({
             gap: "1rem",
           }}
         >
-          <CreatePost colors={colors} onPostCreated={handlePostCreated} />
+          <CreatePost
+            colors={colors}
+            onPostCreated={handlePostCreated}
+            currentUser={currentUser}
+          />
         </div>
       )}
 
-      {finalPosts.map((post) => (
-        <Post
-          key={post._id}
-          post={post}
-          currentUser={currentUser}
-          colors={colors}
-          onDelete={handleDeletePost}
-        />
-      ))}
+      {finalPosts.map((post, index) => {
+        return (
+          <Post
+            key={`${post._id}-${post.updatedAt || post.createdAt}`}
+            post={post}
+            currentUser={currentUser}
+            colors={colors}
+            onDelete={handleDeletePost}
+          />
+        );
+      })}
 
       {loading && <p style={{ textAlign: "center" }}>טוען פוסטים...</p>}
       {!loading && finalPosts.length === 0 && (

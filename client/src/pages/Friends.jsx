@@ -105,9 +105,9 @@ const Friends = () => {
 
   return (
     <Layout>
-      <div className="flex border rounded-xl h-[80vh] bg-white shadow-md">
+      <div className="flex h-[80vh] bg-white shadow-md rounded-xl overflow-hidden">
         {/* Right Sidebar - Tabs and Lists */}
-        <div className=" flex flex-col border-l  bg-gray-50">
+        <div className="w-[360px] border-l bg-gray-50 flex flex-col">
           {/* Tab Headers */}
           <div className="border-b bg-white px-2 pt-2">
             <div className="flex gap-2">
@@ -308,7 +308,7 @@ const Friends = () => {
         </div>
 
         {/* Left Content Area */}
-        <div className="flex flex-col">
+        <div className="flex-1 flex flex-col border-r bg-white">
           {selectedFriend ? (
             <>
               {/* Friend Details Header */}
@@ -320,7 +320,7 @@ const Friends = () => {
                   alt={selectedFriend.name}
                   className="w-16 h-16 rounded-full object-cover"
                 />
-                <div >
+                <div>
                   <h2 className="text-xl font-bold">{selectedFriend.name}</h2>
                   <p className="text-gray-600">
                     אוהד {selectedFriend.favoriteTeam}
@@ -386,7 +386,7 @@ const Friends = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[400px]">
               <div className="text-center">
                 <Users size={64} className="mx-auto mb-4 text-gray-300" />
                 <p className="text-lg font-medium">בחר חבר מהרשימה</p>

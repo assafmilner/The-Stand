@@ -135,7 +135,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   if (!isOpen || !otherUser) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 top-[72px] bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
         isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
       } flex flex-col overflow-hidden`}>

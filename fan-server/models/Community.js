@@ -5,10 +5,7 @@ import Feed from "./Feed";
 function Community({ colors }) {
   const { user } = useUser();
 
-  console.log("🔥 CLIENT DEBUG: Community component rendered", {
-    user: user?.name,
-    favoriteTeam: user?.favoriteTeam
-  });
+ 
 
   if (!user?.favoriteTeam) {
     return (

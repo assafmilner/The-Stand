@@ -6,14 +6,12 @@ import { useNavigate } from "react-router-dom";
 import ProfilePictureForm from "./ProfilePictureForm";
 import PersonalInfoForm from "./PersonalInfoForm";
 import ChangePasswordForm from "./ChangePasswordForm";
-import NotificationPreferences from "./NotificationPreferences";
 import DeleteAccountForm from "./DeleteAccountForm";
 
 // Tab configuration
 const TABS = [
   { id: 'personal', label: 'פרטים אישיים', component: PersonalInfoForm },
   { id: 'password', label: 'שינוי סיסמה', component: ChangePasswordForm },
-  { id: 'notifications', label: 'התראות', component: NotificationPreferences },
   { id: 'delete', label: 'מחיקת חשבון', component: DeleteAccountForm },
 ];
 

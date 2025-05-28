@@ -12,6 +12,7 @@ const fixturesRoutes = require("./routes/fixtures");
 const ticketRoutes = require("./routes/ticketRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const friendRoutes = require("./routes/friendRoutes"); // New import
+const searchRoutes = require('./routes/search');
 
 dotenv.config();
 mongoose
@@ -49,6 +50,7 @@ app.use("/api/fixtures", fixturesRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/friends", friendRoutes); // New route
+app.use('/api/search', searchRoutes);
 
 // Root check
 app.get("/", (req, res) => {

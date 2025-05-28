@@ -115,4 +115,9 @@ emailVerificationTokenExpires: Date,
 }, { timestamps: true }
 );
 
+UserSchema.index({ name: "text" });
+UserSchema.index({ favoriteTeam: 1, name: 1 });
+UserSchema.index({ favoriteTeam: 1, gender: 1, location: 1 });
+
+
 module.exports = mongoose.model("User", UserSchema);

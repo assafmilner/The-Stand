@@ -1,7 +1,6 @@
 import {
   User,
   Calendar,
-  Bell,
   Home,
   LogOut,
   Ticket,
@@ -50,9 +49,6 @@ const RightSidebar = ({ colors, onLogout }) => {
             onClick={() => navigate("/friends")}
           >
             <Users size={18} /> חברים
-          </li>
-          <li className="nav-item flex items-center gap-2">
-            <Bell size={18} /> התראות
           </li>
           <li
             className="nav-item flex items-center gap-2"

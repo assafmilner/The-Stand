@@ -180,7 +180,7 @@ const FriendsList = ({
                             actionMenuOpen === friend._id ? null : friend._id
                           )
                         }
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full bg-transparent transition-colors"
                       >
                         <MoreVertical size={16} />
                       </button>
@@ -190,7 +190,7 @@ const FriendsList = ({
                           <div className="py-1">
                             <button
                               onClick={() => handleProfileClick(friend)}
-                              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-transparent transition-colors"
                             >
                               <User size={16} />
                               צפה בפרופיל
@@ -199,7 +199,7 @@ const FriendsList = ({
                             {showMessage && (
                               <button
                                 onClick={() => handleMessageClick(friend)}
-                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-transparent transition-colors"
                               >
                                 <MessageCircle size={16} />
                                 שלח הודעה
