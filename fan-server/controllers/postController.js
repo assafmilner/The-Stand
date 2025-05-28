@@ -11,15 +11,8 @@ const getFriendsPosts = async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    console.log("🔥 SERVER DEBUG: getFriendsPosts called");
-    console.log("🔥 SERVER DEBUG: User ID:", userId);
+   
 
-    // Get current user info for debugging
-    const currentUser = await User.findById(userId);
-    console.log("🔥 SERVER DEBUG: Current user:", {
-      name: currentUser?.name,
-      favoriteTeam: currentUser?.favoriteTeam
-    });
 
     // Get user's friends
     const friendships = await Friend.find({
@@ -29,13 +22,6 @@ const getFriendsPosts = async (req, res) => {
       ]
     }).populate('senderId', 'name favoriteTeam').populate('receiverId', 'name favoriteTeam');
 
-    console.log("🔥 SERVER DEBUG: Raw friendships found:", friendships.length);
-    console.log("🔥 SERVER DEBUG: Friendships details:", friendships.map(f => ({
-      id: f._id,
-      sender: f.senderId?.name,
-      receiver: f.receiverId?.name,
-      status: f.status
-    })));
 
     // Extract friend IDs
     const friendIds = friendships.map(friendship => {
@@ -47,20 +33,15 @@ const getFriendsPosts = async (req, res) => {
         ? friendship.receiverId.name
         : friendship.senderId.name;
       
-      console.log("🔥 SERVER DEBUG: Friend found:", friendName, "ID:", friendId);
+     
       return friendId;
     });
 
     // Add the current user to see their own posts too
     friendIds.push(userId);
 
-    console.log("🔥 SERVER DEBUG: Final friend IDs array:", friendIds);
-    console.log("🔥 SERVER DEBUG: Total IDs to search for (friends + self):", friendIds.length);
 
-    // If no friends, return empty or user's own posts only
-    if (friendIds.length === 1) { // Only user's own ID
-      console.log("🔥 SERVER DEBUG: No friends found, showing only user's posts");
-    }
+
 
     // Get posts from friends + user's own posts
     const posts = await Post.find({
@@ -71,12 +52,6 @@ const getFriendsPosts = async (req, res) => {
     .skip(skip)
     .limit(parseInt(limit));
 
-    console.log("🔥 SERVER DEBUG: Posts found:", posts.length);
-    console.log("🔥 SERVER DEBUG: Post authors:", posts.map(p => ({
-      author: p.authorId.name,
-      team: p.authorId.favoriteTeam,
-      content: p.content.substring(0, 50) + "..."
-    })));
 
     // Get total count for pagination
     const totalPosts = await Post.countDocuments({
@@ -85,14 +60,7 @@ const getFriendsPosts = async (req, res) => {
 
     const hasMore = skip + posts.length < totalPosts;
 
-    console.log("🔥 SERVER DEBUG: getFriendsPosts FINAL RESULT:", {
-      postsCount: posts.length,
-      totalPosts,
-      hasMore,
-      page: parseInt(page),
-      friendsCount: friendIds.length - 1, // Subtract 1 for self
-      endpoint: 'FRIENDS'
-    });
+    
 
     res.json({
       success: true,
@@ -128,13 +96,12 @@ const getTeamPosts = async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    console.log("🔥 SERVER DEBUG: getTeamPosts called");
-    console.log("🔥 SERVER DEBUG: User ID:", userId);
+   
 
     // Get current user's favorite team
     const currentUser = await User.findById(userId);
     if (!currentUser || !currentUser.favoriteTeam) {
-      console.log("🔥 SERVER ERROR: User favorite team not found");
+     
       return res.status(400).json({
         success: false,
         error: "User favorite team not found",
@@ -142,7 +109,7 @@ const getTeamPosts = async (req, res) => {
       });
     }
 
-    console.log("🔥 SERVER DEBUG: User's favorite team:", currentUser.favoriteTeam);
+  
 
     // Get all users with the same favorite team
     const teamUsers = await User.find({
@@ -151,8 +118,7 @@ const getTeamPosts = async (req, res) => {
 
     const teamUserIds = teamUsers.map(user => user._id);
 
-    console.log("🔥 SERVER DEBUG: Team users found:", teamUsers.length);
-    console.log("🔥 SERVER DEBUG: Team users:", teamUsers.map(u => u.name));
+   
 
     // Get posts from users with the same favorite team
     const posts = await Post.find({
@@ -163,12 +129,7 @@ const getTeamPosts = async (req, res) => {
     .skip(skip)
     .limit(parseInt(limit));
 
-    console.log("🔥 SERVER DEBUG: Team posts found:", posts.length);
-    console.log("🔥 SERVER DEBUG: Team post authors:", posts.map(p => ({
-      author: p.authorId.name,
-      team: p.authorId.favoriteTeam,
-      content: p.content.substring(0, 50) + "..."
-    })));
+ 
 
     // Get total count for pagination
     const totalPosts = await Post.countDocuments({
@@ -177,15 +138,7 @@ const getTeamPosts = async (req, res) => {
 
     const hasMore = skip + posts.length < totalPosts;
 
-    console.log("🔥 SERVER DEBUG: getTeamPosts FINAL RESULT:", {
-      postsCount: posts.length,
-      totalPosts,
-      hasMore,
-      team: currentUser.favoriteTeam,
-      teamUsersTotal: teamUsers.length,
-      endpoint: 'TEAM'
-    });
-
+   
     res.json({
       success: true,
       posts,
@@ -227,13 +180,6 @@ const getPosts = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     let query = {};
 
-    console.log("🔥 SERVER DEBUG: getPosts called with params:", {
-      page, limit, authorId, communityId, friendsOnly,
-      hasUser: !!req.user
-    });
-
-    // ⚠️ THIS SHOULD NOT BE USED FOR FEED FUNCTIONALITY
-    console.log("⚠️  SERVER WARNING: Generic getPosts called - this should not be used for feed/community");
 
     // Handle friends only filter
     if (friendsOnly === 'true' && req.user) {
@@ -278,12 +224,6 @@ const getPosts = async (req, res) => {
     const totalPosts = await Post.countDocuments(query);
     const hasMore = skip + posts.length < totalPosts;
 
-    console.log("🔥 SERVER DEBUG: getPosts returning:", {
-      postsCount: posts.length,
-      totalPosts,
-      hasMore,
-      endpoint: 'GENERIC'
-    });
 
     res.json({
       success: true,

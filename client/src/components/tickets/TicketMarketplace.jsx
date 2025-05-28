@@ -6,7 +6,6 @@ import api from "../../utils/api";
 import { useUser } from "../../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
 
-
 const TicketMarketplace = ({ colors }) => {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -34,18 +33,6 @@ const TicketMarketplace = ({ colors }) => {
 
     try {
       const queryParams = new URLSearchParams();
-
-      const favoriteTeamEnglish = Object.keys(teamNameMap).find(
-        (key) => teamNameMap[key].name === user?.favoriteTeam
-      );
-
-      if (filters.isHomeGame && !filters.isAwayGame) {
-        queryParams.append("homeTeam", favoriteTeamEnglish);
-      } else if (!filters.isHomeGame && filters.isAwayGame) {
-        queryParams.append("awayTeam", favoriteTeamEnglish);
-      } else {
-        queryParams.append("teamName", favoriteTeamEnglish);
-      }
 
       Object.entries(filters).forEach(([key, value]) => {
         if (

@@ -62,14 +62,36 @@ class FixturesService {
     }
   }
 
-  async fetchRound(seasonId, round, season) {
+  // async fetchRound(seasonId, round, season) {
+  //   const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
+  //   const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
+  //   const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
+  //   const response = await fetch(url);
+  //   if (!response.ok) throw new Error(`Failed to fetch round ${round}: ${response.statusText}`);
+  //   return response.json();
+  // }
+  // בקובץ fixturesService.js - הוסף בתחילת fetchRound:
+async fetchRound(seasonId, round, season) {
+  // Try direct API call first if proxy fails
+  const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
+  
+  try {
     const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
-    const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
     const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Failed to fetch round ${round}: ${response.statusText}`);
     return response.json();
+  } catch (proxyError) {
+    console.log(`   Proxy failed for round ${round}, trying direct API...`);
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error(`Direct API failed for round ${round}: ${response.statusText}`);
+      return response.json();
+    } catch (directError) {
+      throw proxyError; // Return original proxy error
+    }
   }
+}
 
   async fetchMultipleRounds(seasonId, season, rounds) {
     const promises = rounds.map(async (round) => {

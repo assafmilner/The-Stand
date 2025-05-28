@@ -12,7 +12,7 @@ const {
 } = require("../controllers/ticketController");
 
 // Public routes
-router.get("/", getAllTickets); // Get all available tickets with filters
+router.get("/", authMiddleware, getAllTickets);
 
 // Protected routes (require authentication)
 router.post("/", authMiddleware, createTicket); // Create new ticket

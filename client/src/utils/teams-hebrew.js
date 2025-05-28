@@ -30,7 +30,7 @@ const teamNameMap = {
     communityId: "6",
   },
   "Hapoel Kiryat Shmona": {
-    name: "הפועל קריית שמונה",
+    name: "עירוני קריית שמונה",
     badge: "https://r2.thesportsdb.com/images/media/team/badge/401ntu1579020023.png",
     communityId: "7",
   },

@@ -63,7 +63,7 @@ const SignupForm = () => {
         <div className="form-container">
           <div className="form-content">
             <div className="form-header">
-              <h2 className="decorative-title">הרשמת בהצלחה!</h2>
+              <h2 className="decorative-title">נרשמת בהצלחה!</h2>
               <p className="decorative-text">
                 שלחנו אליך מייל לאימות. לאחריו תוכל להתחבר.
               </p>
