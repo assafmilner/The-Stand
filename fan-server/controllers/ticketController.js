@@ -4,8 +4,7 @@ const User = require("../models/User");
 
 // Get all available tickets with filters
 const getAllTickets = async (req, res) => {
-console.log("req.user:", req.user);
-console.log("req.user.favoriteTeam:", req.user?.favoriteTeam);
+
   try {
     const {
       homeTeam,
@@ -29,7 +28,7 @@ if (req.user && req.user.id) {
     const sameTeamUsers = await User.find({ favoriteTeam: currentUser.favoriteTeam }).select('_id');
     const sameTeamUserIds = sameTeamUsers.map(user => user._id);
     filter.sellerId = { $in: sameTeamUserIds };
-    console.log("Filtering by team:", currentUser.favoriteTeam, "found users:", sameTeamUsers.length);
+    
   }
 }
     // Handle team filtering - if teamName is provided, show games where the team is either home or away

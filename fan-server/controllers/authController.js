@@ -149,16 +149,16 @@ async function logout(req, res) {
 async function verifyEmail(req, res) {
     try {
       const { token } = req.params;
-      console.log("Token received:", token);
+
       
       // First, check if this token exists at all
       const userWithToken = await User.findOne({ emailVerificationToken: token });
-      console.log("User found with this token:", userWithToken ? "Yes" : "No");
+ 
       
       if (!userWithToken) {
         // Try to find if user was already verified
         const allUsers = await User.find({});
-        console.log("Total users in database:", allUsers.length);
+
         
         // Check if a user with this email exists and is verified
         const userEmail = token.split('-')[0]; // Just a guess - modify if your tokens aren't formatted this way
@@ -167,7 +167,7 @@ async function verifyEmail(req, res) {
           isEmailVerified: true 
         });
         
-        console.log("Found already verified user:", possiblyVerifiedUser ? "Yes" : "No");
+ 
         
         if (possiblyVerifiedUser) {
           return res.status(400).json({ error: "Email already verified" });
@@ -179,13 +179,13 @@ async function verifyEmail(req, res) {
       // Check if token is expired
       if (userWithToken.emailVerificationTokenExpires && 
           userWithToken.emailVerificationTokenExpires < new Date()) {
-        console.log("Token expired on:", userWithToken.emailVerificationTokenExpires);
+
         return res.status(400).json({ error: "Verification token expired" });
       }
       
       // Check if already verified
       if (userWithToken.isEmailVerified) {
-        console.log("User already verified");
+    
         return res.status(400).json({ error: "Email already verified" });
       }
       
@@ -195,7 +195,7 @@ async function verifyEmail(req, res) {
       userWithToken.emailVerificationTokenExpires = undefined;
       await userWithToken.save();
       
-      console.log("User verified successfully");
+   
       return res.status(200).json({ message: "Email verified successfully! You can now log in." });
     } catch (err) {
       console.error("Verification error:", err);

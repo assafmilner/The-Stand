@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
     lastSeen: new Date()
   });
 
-  console.log(`✅ User connected: ${socket.user.name} (${userId})`);
+
 
   socket.on("send_message", async (data) => {
     try {
@@ -101,7 +101,7 @@ io.on("connection", (socket) => {
       // Confirm to sender
       socket.emit("message_sent", messageObj);
 
-      console.log(`📨 Message sent: ${socket.user.name} -> ${receiver.name}`);
+   
     } catch (err) {
       console.error("❌ send_message error:", err);
       socket.emit("message_error", { error: "Failed to send message" });
@@ -110,7 +110,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason) => {
     onlineUsers.delete(userId);
-    console.log(`❌ User disconnected: ${socket.user.name} (${reason})`);
+ 
   });
 
   // Handle connection errors
@@ -130,7 +130,7 @@ setInterval(() => {
     }
   }
   
-  console.log(`🧹 Online users cleaned. Current: ${onlineUsers.size} users`);
+ 
 }, 5 * 60 * 1000);
 
 // Graceful shutdown
@@ -144,5 +144,5 @@ process.on('SIGTERM', () => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📡 Socket.io ready for connections`);
+ 
 });

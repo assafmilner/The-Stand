@@ -1,18 +1,19 @@
 // client/src/components/search/SearchBar.jsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import SearchDropdown from './SearchDropdown';
-import { useSearch } from '../../hooks/useSearch';
+import React, { useState, useRef, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import SearchDropdown from "./SearchDropdown";
+import { useSearch } from "../../hooks/useSearch";
 
 const SearchBar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const searchRef = useRef(null);
   const inputRef = useRef(null);
 
-  const { quickResults, loading, performQuickSearch, clearResults } = useSearch();
+  const { quickResults, loading, performQuickSearch, clearResults } =
+    useSearch();
 
   // Debounced search effect
   useEffect(() => {
@@ -34,8 +35,9 @@ const SearchBar = () => {
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -44,7 +46,7 @@ const SearchBar = () => {
   };
 
   const handleClear = () => {
-    setQuery('');
+    setQuery("");
     setIsOpen(false);
     clearResults();
     inputRef.current?.focus();
@@ -69,10 +71,6 @@ const SearchBar = () => {
     <div className="relative w-full" ref={searchRef}>
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative">
-          <Search 
-            size={18} 
-            className="absolute  top-1/2 transform -translate-y-1/2 text-gray-400" 
-          />
           <input
             ref={inputRef}
             type="text"
@@ -81,6 +79,10 @@ const SearchBar = () => {
             placeholder="חפש אוהדים, פוסטים או כרטיסים..."
             className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-right"
             autoComplete="off"
+          />
+          <Search
+            size={18}
+            className="absolute  top-1/2 transform -translate-y-1/2 text-gray-400"
           />
           {query && (
             <button
