@@ -8,16 +8,23 @@ const Friend = require("../models/Friend");
 const searchUsers = async (query, currentUser, limit = null, filters = {}) => {
   try {
     let searchQuery = {
-      favoriteTeam: currentUser.favoriteTeam,
-      name: { $regex: query, $options: 'i' }
+      favoriteTeam: currentUser.favoriteTeam
     };
+
+    // חיפוש כללי או ספציפי בשם
+    if (query || filters.userName) {
+      const searchName = filters.userName || query;
+      searchQuery.name = { $regex: searchName, $options: 'i' };
+    } else if (query) {
+      searchQuery.name = { $regex: query, $options: 'i' };
+    }
 
     // הוספת פילטרים נוספים
     if (filters.gender) {
       searchQuery.gender = filters.gender;
     }
     if (filters.location) {
-      searchQuery.location = filters.location;
+      searchQuery.location = { $regex: filters.location, $options: 'i' };
     }
 
     let dbQuery = User.find(searchQuery)
@@ -71,26 +78,57 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
       favoriteTeam: currentUser.favoriteTeam 
     }).select('_id');
 
-    const usersByName = await User.find({ 
-      name: { $regex: query, $options: 'i' },
-      favoriteTeam: currentUser.favoriteTeam 
-    }).select('_id');
+    // בניית OR conditions לחיפוש
+    let orConditions = [];
+
+    // חיפוש בתוכן - כללי או ספציפי
+    const contentSearchText = filters.contentText || query;
+    if (contentSearchText) {
+      orConditions.push({ content: { $regex: contentSearchText, $options: 'i' } });
+    }
+
+    // חיפוש לפי שם מחבר
+    if (filters.authorName) {
+      const usersByName = await User.find({ 
+        name: { $regex: filters.authorName, $options: 'i' },
+        favoriteTeam: currentUser.favoriteTeam 
+      }).select('_id');
+      
+      if (usersByName.length > 0) {
+        orConditions.push({ authorId: { $in: usersByName.map(u => u._id) } });
+      }
+    } else if (query && !filters.contentText) {
+      // אם זה חיפוש כללי בלי פילטר ספציפי, חפש גם בשמות
+      const usersByName = await User.find({ 
+        name: { $regex: query, $options: 'i' },
+        favoriteTeam: currentUser.favoriteTeam 
+      }).select('_id');
+      
+      if (usersByName.length > 0) {
+        orConditions.push({ authorId: { $in: usersByName.map(u => u._id) } });
+      }
+    }
 
     let searchQuery = {
       // רק פוסטים של אוהדים מאותה קבוצה
-      authorId: { $in: usersFromSameTeam.map(u => u._id) },
-      $or: [
-        { content: { $regex: query, $options: 'i' } },
-        { authorId: { $in: usersByName.map(u => u._id) } }
-      ]
+      authorId: { $in: usersFromSameTeam.map(u => u._id) }
     };
 
-    // הוספת פילטרי תאריך
-    if (filters.dateFrom) {
-      searchQuery.createdAt = { ...searchQuery.createdAt, $gte: new Date(filters.dateFrom) };
+    // הוספת OR conditions אם יש
+    if (orConditions.length > 0) {
+      searchQuery.$or = orConditions;
     }
-    if (filters.dateTo) {
-      searchQuery.createdAt = { ...searchQuery.createdAt, $lte: new Date(filters.dateTo) };
+
+    // הוספת פילטרי תאריך
+    if (filters.postDateFrom || filters.dateFrom) {
+      const dateFrom = filters.postDateFrom || filters.dateFrom;
+      searchQuery.createdAt = { ...searchQuery.createdAt, $gte: new Date(dateFrom) };
+    }
+    if (filters.postDateTo || filters.dateTo) {
+      const dateTo = filters.postDateTo || filters.dateTo;
+      const endDate = new Date(dateTo);
+      endDate.setHours(23, 59, 59, 999);
+      searchQuery.createdAt = { ...searchQuery.createdAt, $lte: endDate };
     }
 
     let dbQuery = Post.find(searchQuery)
@@ -109,7 +147,7 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
 };
 
 // חיפוש כרטיסים (בהערות + קבוצות + שם המוכר) - רק של מוכרים מאותה קבוצה!
-const searchTickets = async (query, currentUser, limit = null) => {
+const searchTickets = async (query, currentUser, limit = null, filters = {}) => {
   try {
     // חיפוש מוכרים מאותה קבוצה לפי שם
     const sellersFromSameTeam = await User.find({ 
@@ -186,18 +224,46 @@ const searchTickets = async (query, currentUser, limit = null) => {
       return queries;
     };
 
-    const teamSearchQueries = createTeamSearchQueries(query);
+    const teamSearchQueries = query ? createTeamSearchQueries(query) : [];
 
-    const searchQuery = {
+    let searchQuery = {
       isSoldOut: false, // רק כרטיסים זמינים
       // רק כרטיסים של מוכרים מאותה קבוצה
-      sellerId: { $in: sellersFromSameTeam.map(s => s._id) },
-      $or: [
+      sellerId: { $in: sellersFromSameTeam.map(s => s._id) }
+    };
+
+    // בניית OR conditions
+    let orConditions = [];
+    
+    if (query) {
+      orConditions.push(
         { notes: { $regex: query, $options: 'i' } },
         { sellerId: { $in: sellersByName.map(s => s._id) } },
-        ...teamSearchQueries // הוספת כל חיפושי הקבוצות
-      ]
-    };
+        ...teamSearchQueries
+      );
+    }
+
+    if (orConditions.length > 0) {
+      searchQuery.$or = orConditions;
+    }
+
+    // פילטרי מחיר
+    if (filters.priceMin) {
+      searchQuery.price = { ...searchQuery.price, $gte: parseFloat(filters.priceMin) };
+    }
+    if (filters.priceMax) {
+      searchQuery.price = { ...searchQuery.price, $lte: parseFloat(filters.priceMax) };
+    }
+
+    // פילטרי תאריך לכרטיסים
+    if (filters.ticketDateFrom) {
+      searchQuery.date = { ...searchQuery.date, $gte: new Date(filters.ticketDateFrom) };
+    }
+    if (filters.ticketDateTo) {
+      const endDate = new Date(filters.ticketDateTo);
+      endDate.setHours(23, 59, 59, 999);
+      searchQuery.date = { ...searchQuery.date, $lte: endDate };
+    }
 
     let dbQuery = TicketListing.find(searchQuery)
       .populate('sellerId', 'name profilePicture')
@@ -250,10 +316,31 @@ const quickSearch = async (req, res) => {
   }
 };
 
-// חיפוש מלא עם pagination
+// חיפוש מלא עם פילטרים מתקדמים
 const fullSearch = async (req, res) => {
   try {
-    const { q, type = 'all', ...filters } = req.query;
+    const { 
+      q, 
+      type = 'all',
+      // פילטרים לפוסטים
+      contentText,
+      authorName,
+      postDateFrom,
+      postDateTo,
+      // פילטרים למשתמשים  
+      userName,
+      gender,
+      location,
+      // פילטרים לכרטיסים
+      priceMin,
+      priceMax,
+      ticketDateFrom,
+      ticketDateTo,
+      // פילטרים ישנים (לתמיכה לאחור)
+      dateFrom,
+      dateTo
+    } = req.query;
+    
     const currentUser = await User.findById(req.user.id);
     
     if (!q || q.length < 2) {
@@ -262,6 +349,24 @@ const fullSearch = async (req, res) => {
         results: { users: [], posts: [], tickets: [] }
       });
     }
+
+    // ארגון הפילטרים
+    const filters = {
+      // פוסטים
+      contentText,
+      authorName,
+      postDateFrom: postDateFrom || dateFrom,
+      postDateTo: postDateTo || dateTo,
+      // משתמשים
+      userName,
+      gender,
+      location,
+      // כרטיסים
+      priceMin,
+      priceMax,
+      ticketDateFrom,
+      ticketDateTo
+    };
 
     let results = {};
 
@@ -277,7 +382,7 @@ const fullSearch = async (req, res) => {
     }
 
     if (type === 'all' || type === 'tickets') {
-      const allTickets = await searchTickets(q, currentUser, null);
+      const allTickets = await searchTickets(q, currentUser, null, filters);
       results.tickets = allTickets;
     }
 
@@ -285,7 +390,13 @@ const fullSearch = async (req, res) => {
       success: true,
       results,
       query: q,
-      filters
+      filters,
+      stats: {
+        totalUsers: results.users?.length || 0,
+        totalPosts: results.posts?.length || 0,
+        totalTickets: results.tickets?.length || 0,
+        totalResults: (results.users?.length || 0) + (results.posts?.length || 0) + (results.tickets?.length || 0)
+      }
     });
 
   } catch (error) {

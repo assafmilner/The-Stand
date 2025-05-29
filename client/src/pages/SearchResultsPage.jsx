@@ -1,7 +1,14 @@
 // client/src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, User, MessageSquare, Ticket } from "lucide-react";
+import {
+  Search,
+  User,
+  MessageSquare,
+  Ticket,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import Layout from "../components/layout/Layout";
 import { useSearch } from "../hooks/useSearch";
 import teamNameMap from "../utils/teams-hebrew";
@@ -11,23 +18,72 @@ const SearchResultsPage = () => {
   const navigate = useNavigate();
   const query = searchParams.get("q") || "";
   const [selectedTab, setSelectedTab] = useState("all");
-  const [filters, setFilters] = useState({});
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+
+  // הוספת state לפילטרים
+  const [filters, setFilters] = useState({
+    // פילטרים לפוסטים
+    contentText: "",
+    authorName: "",
+    postDateFrom: "",
+    postDateTo: "",
+
+    // פילטרים למשתמשים
+    userName: "",
+    gender: "",
+    location: "",
+
+    // פילטרים לכרטיסים
+    priceMin: "",
+    priceMax: "",
+    ticketDateFrom: "",
+    ticketDateTo: "",
+  });
 
   const { fullResults, loading, performFullSearch } = useSearch();
 
   useEffect(() => {
     if (query) {
-      // טוען פעם אחת עם type='all' ואז מסנן בצד הלקוח
-      performFullSearch(query, { ...filters, type: "all" });
+      // מעביר את הפילטרים ל-API
+      performFullSearch(query, filters);
     }
-  }, [query, filters, performFullSearch]); // הסרנו currentPage
+  }, [query, filters, performFullSearch]);
+
+  // עדכון פילטר
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  // ניקוי פילטרים
+  const clearFilters = () => {
+    setFilters({
+      contentText: "",
+      authorName: "",
+      postDateFrom: "",
+      postDateTo: "",
+      userName: "",
+      gender: "",
+      location: "",
+      priceMin: "",
+      priceMax: "",
+      ticketDateFrom: "",
+      ticketDateTo: "",
+    });
+  };
+
+  // בדיקה האם יש פילטרים פעילים
+  const hasActiveFilters = () => {
+    return Object.values(filters).some((value) => value !== "");
+  };
 
   const handleUserClick = (user) => {
     navigate(`/profile/${user._id}`);
   };
 
   const handlePostClick = (post) => {
-    // אם יש לך post viewer modal, פתח אותו
     console.log("Post clicked:", post);
   };
 
@@ -62,15 +118,12 @@ const SearchResultsPage = () => {
     return `₪${price.toFixed(0)}`;
   };
 
-  // פונקציה לתרגום שם קבוצה
   const getTeamName = (englishName) => {
     return teamNameMap[englishName]?.name || englishName;
   };
 
   const results = fullResults?.results || {};
 
-
-  // סינון התוצאות לפי הטאב הנבחר
   const getFilteredResults = () => {
     if (selectedTab === "all") {
       return results;
@@ -116,7 +169,7 @@ const SearchResultsPage = () => {
 
   return (
     <Layout>
-      <div className="space-6-y">
+      <div className="space-y-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -133,7 +186,242 @@ const SearchResultsPage = () => {
           )}
         </div>
 
-        {/* Tabs */}
+        {/* כפתור חיפוש מתקדם */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-colors ${
+              showAdvancedSearch
+                ? "bg-blue-50 border-blue-200 text-blue-700"
+                : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <SlidersHorizontal size={18} />
+            חיפוש מתקדם
+            {hasActiveFilters() && (
+              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                פעיל
+              </span>
+            )}
+          </button>
+
+          {hasActiveFilters() && (
+            <button
+              onClick={clearFilters}
+              className="text-sm underline"
+            >
+              נקה פילטרים
+            </button>
+          )}
+        </div>
+
+        {/* פאנל חיפוש מתקדם */}
+        {showAdvancedSearch && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                חיפוש מתקדם
+              </h3>
+              <button
+                onClick={() => setShowAdvancedSearch(false)}
+                className="hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* פילטרים לפוסטים */}
+              <div className="border-b pb-4">
+                <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                  <MessageSquare size={16} className="text-green-600" />
+                  פילטרים לפוסטים
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      חיפוש בתוכן
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="מילות מפתח..."
+                      value={filters.contentText}
+                      onChange={(e) =>
+                        handleFilterChange("contentText", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg text-right"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      שם המחבר
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="שם משתמש..."
+                      value={filters.authorName}
+                      onChange={(e) =>
+                        handleFilterChange("authorName", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg text-right"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      מתאריך
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.postDateFrom}
+                      onChange={(e) =>
+                        handleFilterChange("postDateFrom", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      עד תאריך
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.postDateTo}
+                      onChange={(e) =>
+                        handleFilterChange("postDateTo", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* פילטרים למשתמשים */}
+              <div className="border-b pb-4">
+                <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                  <User size={16} className="text-blue-600" />
+                  פילטרים למשתמשים
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      שם
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="שם המשתמש..."
+                      value={filters.userName}
+                      onChange={(e) =>
+                        handleFilterChange("userName", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg text-right"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      מגדר
+                    </label>
+                    <select
+                      value={filters.gender}
+                      onChange={(e) =>
+                        handleFilterChange("gender", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="">הכל</option>
+                      <option value="male">גבר</option>
+                      <option value="female">אישה</option>
+                      <option value="other">אחר</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      איזור
+                    </label>
+                    <select
+                      value={filters.location}
+                      onChange={(e) =>
+                        handleFilterChange("location", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="">הכל</option>
+                      <option value="צפון">צפון</option>
+                      <option value="מרכז">מרכז</option>
+                      <option value="דרום">דרום</option>
+                      <option value="ירושלים">ירושלים</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* פילטרים לכרטיסים */}
+              <div>
+                <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                  <Ticket size={16} className="text-purple-600" />
+                  פילטרים לכרטיסים
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      מחיר מינימלי (₪)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="מ..."
+                      value={filters.priceMin}
+                      onChange={(e) =>
+                        handleFilterChange("priceMin", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      מחיר מקסימלי (₪)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="עד..."
+                      value={filters.priceMax}
+                      onChange={(e) =>
+                        handleFilterChange("priceMax", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      מתאריך
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.ticketDateFrom}
+                      onChange={(e) =>
+                        handleFilterChange("ticketDateFrom", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      עד תאריך
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.ticketDateTo}
+                      onChange={(e) =>
+                        handleFilterChange("ticketDateTo", e.target.value)
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* הטאבים והתוצאות הקיימות שלך נשארות זהות */}
         <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg">
           {tabItems.map((tab) => (
             <button
@@ -158,7 +446,7 @@ const SearchResultsPage = () => {
           </div>
         )}
 
-        {/* Results */}
+        {/* התוצאות הקיימות שלך נשארות בדיוק כמו שהיו */}
         {!loading && fullResults && (
           <div className="space-y-6">
             {/* Users Results */}
@@ -303,9 +591,6 @@ const SearchResultsPage = () => {
                   </p>
                 </div>
               )}
-
-            {/* Pagination - הוסר כי אנחנו מציגים את כל התוצאות */}
-            {/* אם יש יותר מ-50 תוצאות, אפשר להוסיף pagination בעתיד */}
           </div>
         )}
       </div>

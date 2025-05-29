@@ -13,11 +13,8 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const {
-    loadChatHistory,
-    addMessageToCache,
-    invalidateRecentChats
-  } = useSharedChatCache();
+  const { loadChatHistory, addMessageToCache, invalidateRecentChats } =
+    useSharedChatCache();
 
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
@@ -34,13 +31,11 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     const loadMessages = async () => {
       setLoading(true);
       try {
-        const result = await loadChatHistory(otherUser._id);
+        // 🔥 כריח טעינה מהשרת (לא מקאש) כדי לקבל הודעות חדשות
+        const result = await loadChatHistory(otherUser._id, true); // forceRefresh = true
         setMessages(result.data);
-        
-        if (result.fromCache) {
-          // If loaded from cache, mark as read immediately
-          onMarkAsRead?.(otherUser._id);
-        }
+
+        onMarkAsRead?.(otherUser._id);
       } catch (err) {
         console.error("Failed to load chat:", err);
         setMessages([]);
@@ -66,13 +61,13 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
         // Update cache and local state
         const updatedMessages = addMessageToCache(otherUser._id, msg);
         setMessages(updatedMessages);
-        
+
         // Mark as read since chat is open
         onMarkAsRead?.(otherUser._id);
-        
+
         // Invalidate recent chats to refresh the list
         invalidateRecentChats();
-        
+
         // Auto scroll
         setTimeout(() => scrollToBottom(), 100);
       }
@@ -80,13 +75,33 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
     const handleMessageSent = (msg) => {
       if (msg.receiverId._id === otherUser._id) {
-        // Update cache and local state
-        const updatedMessages = addMessageToCache(otherUser._id, msg);
-        setMessages(updatedMessages);
-        
+        console.log("Message sent confirmed:", msg.content);
+
+        // החלף הודעה אופטימיסטית בהודעה אמיתית
+        setMessages((prevMessages) => {
+          // מצא את ההודעה האופטימיסטית
+          const optimisticIndex = prevMessages.findIndex(
+            (m) =>
+              m.isOptimistic &&
+              m.content === msg.content &&
+              m.senderId._id === msg.senderId._id
+          );
+
+          if (optimisticIndex >= 0) {
+            // החלף את האופטימיסטית באמיתית
+            const newMessages = [...prevMessages];
+            newMessages[optimisticIndex] = msg;
+            return newMessages;
+          } else {
+            // fallback - השתמש ב-cache רגיל
+            const updatedMessages = addMessageToCache(otherUser._id, msg);
+            return updatedMessages;
+          }
+        });
+
         // Invalidate recent chats to refresh the list
         invalidateRecentChats();
-        
+
         // Auto scroll
         setTimeout(() => scrollToBottom(), 100);
       }
@@ -94,7 +109,13 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
     const handleMessageError = (err) => {
       console.error("Message send error:", err);
-      alert("שליחת ההודעה נכשלה");
+
+      // הסר הודעות אופטימיסטיות שנכשלו
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => !msg.isOptimistic)
+      );
+
+      alert("שליחת ההודעה נכשלה - נסה שוב");
     };
 
     socketService.onReceiveMessage(handleReceiveMessage);
@@ -104,13 +125,55 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     return () => {
       socketService.removeAllListeners();
     };
-  }, [isOpen, otherUser?._id, addMessageToCache, invalidateRecentChats, onMarkAsRead]);
+  }, [
+    isOpen,
+    otherUser?._id,
+    addMessageToCache,
+    invalidateRecentChats,
+    onMarkAsRead,
+  ]);
 
   const sendMessage = () => {
     if (!newMessage.trim() || !otherUser?._id) return;
-    
-    socketService.sendMessage(otherUser._id, newMessage.trim());
+
+    const messageContent = newMessage.trim();
+    const tempId = `temp-${Date.now()}`;
+
+    // ✨ Optimistic Update - הוסף הודעה מיד
+    const optimisticMessage = {
+      _id: tempId,
+      content: messageContent,
+      senderId: { _id: user._id, name: user.name },
+      receiverId: { _id: otherUser._id, name: otherUser.name },
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+
+    // הוסף מיד לצ'אט
+    setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
+
+    // נקה את השדה
     setNewMessage("");
+
+    // שלח לשרת
+    socketService.sendMessage(otherUser._id, messageContent);
+
+    // Auto scroll
+    setTimeout(() => scrollToBottom(), 100);
+
+    // Timeout - הסר אחרי 10 שניות אם לא הגיע אישור
+    setTimeout(() => {
+      setMessages((prevMessages) => {
+        const hasOptimistic = prevMessages.some(
+          (msg) => msg._id === tempId && msg.isOptimistic
+        );
+        if (hasOptimistic) {
+          console.log("Message timeout, removing optimistic message");
+          return prevMessages.filter((msg) => msg._id !== tempId);
+        }
+        return prevMessages;
+      });
+    }, 10000);
   };
 
   const handleKeyPress = (e) => {
@@ -136,10 +199,11 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
   return (
     <div className="fixed inset-0 top-[72px] bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
-        isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
-      } flex flex-col overflow-hidden`}>
-        
+      <div
+        className={`bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
+          isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
+        } flex flex-col overflow-hidden`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center gap-3">
@@ -155,7 +219,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
@@ -192,23 +256,50 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                   {messages.map((message, index) => {
                     const isOwn = message.senderId._id === user._id;
                     return (
-                      <div key={message._id || index} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                      <div
+                        key={message._id || index}
+                        className={`flex ${
+                          isOwn ? "justify-end" : "justify-start"
+                        }`}
+                      >
                         <div
                           className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm ${
-                            isOwn ? "text-white" : "bg-white text-gray-800 border"
-                          }`}
+                            isOwn
+                              ? "text-white"
+                              : "bg-white text-gray-800 border"
+                          } ${message.isOptimistic ? "opacity-70" : ""}`}
                           style={{
                             backgroundColor: isOwn ? colors.primary : undefined,
-                            borderRadius: isOwn ? "20px 20px 6px 20px" : "20px 20px 20px 6px"
+                            borderRadius: isOwn
+                              ? "20px 20px 6px 20px"
+                              : "20px 20px 20px 6px",
                           }}
                         >
                           <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? "text-white/70" : "text-gray-500"}`}>
-                            {new Date(message.createdAt).toLocaleTimeString("he-IL", {
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
-                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p
+                              className={`text-xs ${
+                                isOwn ? "text-white/70" : "text-gray-500"
+                              }`}
+                            >
+                              {new Date(message.createdAt).toLocaleTimeString(
+                                "he-IL",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </p>
+                            {/* אינדיקטור שליחה */}
+                            {message.isOptimistic && (
+                              <div className="flex items-center gap-1 mr-2">
+                                <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-white/70">
+                                  שולח...
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -236,7 +327,9 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                   disabled={!newMessage.trim()}
                   className="p-3 rounded-full text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
                   style={{
-                    backgroundColor: newMessage.trim() ? colors.primary : "#ccc"
+                    backgroundColor: newMessage.trim()
+                      ? colors.primary
+                      : "#ccc",
                   }}
                 >
                   <Send size={18} />

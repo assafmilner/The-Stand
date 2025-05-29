@@ -5,6 +5,7 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    
   }
 
   connect(token) {

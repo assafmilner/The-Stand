@@ -1,5 +1,12 @@
 // client/src/components/layout/Header.jsx
-import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  lazy,
+  Suspense,
+  useMemo,
+} from "react";
 import {
   MessageCircle,
   Settings,
@@ -21,15 +28,15 @@ const ChatModal = lazy(() => import("../chat/ChatModal"));
 const Header = ({ user }) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showFriendsDropdown, setShowFriendsDropdown] = useState(false); // New state
+  const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
-  const friendsDropdownRef = useRef(null); // New ref
+  const friendsDropdownRef = useRef(null);
+  const { unreadCount, notifications, markAsRead, setActiveChat } = useChat();
 
-  const { unreadCount, notifications, markAsRead } = useChat();
   const { loadRecentChats, getCacheStats } = useSharedChatCache();
 
   // Friends functionality
@@ -41,6 +48,62 @@ const Header = ({ user }) => {
     rejectFriendRequest,
     requestLoading,
   } = useFriends();
+
+  // יצירת רשימה מאוחדת של שיחות
+  const unifiedChats = useMemo(() => {
+    const chatsMap = new Map();
+
+    // הוסף שיחות אחרונות
+    recentChats.forEach((chat) => {
+      chatsMap.set(chat.user._id, {
+        user: chat.user,
+        lastMessage: chat.lastMessage,
+        lastMessageTime: chat.lastMessageTime,
+        isUnread: false,
+        type: "recent",
+      });
+    });
+
+    // הוסף/עדכן עם הודעות חדשות (לא נקראו)
+    notifications.forEach((notification) => {
+      const existingChat = chatsMap.get(notification.senderId);
+      if (existingChat) {
+        // עדכן צ'אט קיים
+        chatsMap.set(notification.senderId, {
+          ...existingChat,
+          lastMessage: notification.content,
+          lastMessageTime: notification.timestamp,
+          isUnread: true,
+          type: "unread",
+        });
+      } else {
+        // צור צ'אט חדש
+        chatsMap.set(notification.senderId, {
+          user: {
+            _id: notification.senderId,
+            name: notification.senderName,
+            profilePicture: notification.senderAvatar,
+          },
+          lastMessage: notification.content,
+          lastMessageTime: notification.timestamp,
+          isUnread: true,
+          type: "unread",
+        });
+      }
+    });
+
+    // המר למערך וסדר לפי זמן (לא נקראו ראשונים, אחר כך לפי זמן)
+    return Array.from(chatsMap.values()).sort((a, b) => {
+      // לא נקראו ראשונים
+      if (a.isUnread && !b.isUnread) return -1;
+      if (!a.isUnread && b.isUnread) return 1;
+
+      // בתוך אותה קטגוריה, סדר לפי זמן (חדשים ראשונים)
+      const timeA = new Date(a.lastMessageTime || 0);
+      const timeB = new Date(b.lastMessageTime || 0);
+      return timeB - timeA;
+    });
+  }, [recentChats, notifications]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -100,6 +163,7 @@ const Header = ({ user }) => {
     setSelectedChatUser(chatUser);
     setIsChatOpen(true);
     setShowDropdown(false);
+    setActiveChat(chatUser._id);
     markAsRead(chatUser._id);
   };
 
@@ -185,12 +249,17 @@ const Header = ({ user }) => {
                   <div className="p-4 border-b flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-900">הודעות</h3>
+                      {unreadCount > 0 && (
+                        <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                          {unreadCount} חדשות
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
                         <button
                           onClick={() => markAsRead()}
-                          className="text-xs text-blue-600 hover:text-blue-800"
+                          className="text-xs  hover:text-gray-600"
                         >
                           סמן הכל כנקרא
                         </button>
@@ -209,107 +278,92 @@ const Header = ({ user }) => {
                       </div>
                     )}
 
-                    {!loading && recentChats.length > 0 && (
-                      <div className="p-3 border-b">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          שיחות אחרונות
-                        </h4>
-                        {recentChats.slice(0, 5).map((chatUser) => (
-                          <div
-                            key={chatUser.user._id}
-                            onClick={() => handleOpenChat(chatUser.user)}
-                            className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors mb-1"
-                          >
-                            <img
-                              src={
-                                chatUser.user.profilePicture ||
-                                "/defaultProfilePic.png"
-                              }
-                              alt={chatUser.user.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 truncate text-sm">
-                                {chatUser.user.name}
-                              </p>
-                              {chatUser.lastMessage && (
-                                <p className="text-xs text-gray-500 truncate">
-                                  {chatUser.lastMessage.slice(0, 30)}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-end">
-                              {chatUser.lastMessageTime && (
-                                <span className="text-xs text-gray-400">
-                                  {formatLastMessageTime(
-                                    chatUser.lastMessageTime
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {notifications.length > 0 && (
+                    {!loading && unifiedChats.length > 0 && (
                       <div className="p-3">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          הודעות חדשות
-                        </h4>
-                        {notifications.slice(0, 3).map((notification) => (
+                        {unifiedChats.slice(0, 8).map((chat) => (
                           <div
-                            key={notification.id}
-                            className="p-2 hover:bg-gray-50 rounded-lg cursor-pointer mb-2"
-                            onClick={() => {
-                              const chatUser = {
-                                _id: notification.senderId,
-                                name: notification.senderName,
-                                profilePicture: notification.senderAvatar,
-                              };
-                              handleOpenChat(chatUser);
-                            }}
+                            key={chat.user._id}
+                            onClick={() => handleOpenChat(chat.user)}
+                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors mb-2 relative ${
+                              chat.isUnread
+                                ? "bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500"
+                                : "hover:bg-gray-50"
+                            }`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="relative">
                               <img
                                 src={
-                                  notification.senderAvatar ||
+                                  chat.user.profilePicture ||
                                   "/defaultProfilePic.png"
                                 }
-                                alt={notification.senderName}
-                                className="w-8 h-8 rounded-full object-cover"
+                                alt={chat.user.name}
+                                className="w-10 h-10 rounded-full object-cover"
                               />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                  <p className="font-medium text-gray-900 truncate text-sm">
-                                    {notification.senderName}
-                                  </p>
-                                  <span className="text-xs text-gray-500">
-                                    {formatTime(notification.timestamp)}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-gray-600 truncate">
-                                  {notification.content.slice(0, 40)}...
-                                </p>
-                              </div>
+                              {chat.isUnread && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+                              )}
                             </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <p
+                                  className={`truncate text-sm ${
+                                    chat.isUnread
+                                      ? "font-bold text-gray-900"
+                                      : "font-medium text-gray-900"
+                                  }`}
+                                >
+                                  {chat.user.name}
+                                </p>
+                                {chat.lastMessageTime && (
+                                  <span
+                                    className={`text-xs ${
+                                      chat.isUnread
+                                        ? "text-blue-600 font-medium"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {formatLastMessageTime(
+                                      chat.lastMessageTime
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+
+                              {chat.lastMessage && (
+                                <p
+                                  className={`text-xs truncate ${
+                                    chat.isUnread
+                                      ? "text-gray-700 font-medium"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  {chat.lastMessage.slice(0, 40)}
+                                  {chat.lastMessage.length > 40 ? "..." : ""}
+                                </p>
+                              )}
+                            </div>
+
+                            {chat.isUnread && (
+                              <div className="absolute top-2 left-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {!loading &&
-                      recentChats.length === 0 &&
-                      notifications.length === 0 && (
-                        <div className="p-6 text-center text-gray-500">
-                          <MessageCircle
-                            size={32}
-                            className="mx-auto mb-2 text-gray-300"
-                          />
-                          <p className="font-medium">אין הודעות</p>
-                          <p className="text-sm">התחל שיחה עם אוהדים</p>
-                        </div>
-                      )}
+                    {!loading && unifiedChats.length === 0 && (
+                      <div className="p-6 text-center text-gray-500">
+                        <MessageCircle
+                          size={32}
+                          className="mx-auto mb-2 text-gray-300"
+                        />
+                        <p className="font-medium">אין הודעות</p>
+                        <p className="text-sm">התחל שיחה עם אוהדים</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-3 border-t">
@@ -458,7 +512,10 @@ const Header = ({ user }) => {
         <Suspense fallback={<div>טוען צ'אט...</div>}>
           <ChatModal
             isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
+            onClose={() => {
+              setIsChatOpen(false);
+              setActiveChat(null);
+            }}
             otherUser={selectedChatUser}
             onMarkAsRead={markAsRead}
           />

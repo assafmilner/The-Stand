@@ -5,6 +5,7 @@ import TicketCard from "./TicketCard";
 import { useUser } from "../../context/UserContext";
 import api from "../../utils/api";
 import teamColors from "../../utils/teamStyles";
+import DeleteConfirmationModal from "../modal/DeleteConfirmationModal";
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -16,6 +17,10 @@ const MyTickets = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // State למודל המחיקה
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState(null);
 
   useEffect(() => {
     fetchMyTickets();
@@ -39,15 +44,25 @@ const MyTickets = () => {
     }
   };
 
-  const handleDeleteTicket = async (ticketId) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק את הכרטיס?")) return;
+  const handleDeleteClick = (ticket) => {
+    setTicketToDelete(ticket);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!ticketToDelete) return;
+
     try {
-      await api.delete(`/api/tickets/${ticketId}`);
-      setTickets((prev) => prev.filter((ticket) => ticket._id !== ticketId));
+      await api.delete(`/api/tickets/${ticketToDelete._id}`);
+      setTickets((prev) =>
+        prev.filter((ticket) => ticket._id !== ticketToDelete._id)
+      );
       setSuccessMessage("הכרטיס נמחק בהצלחה");
     } catch (err) {
       console.error("Error deleting ticket:", err);
-      alert("שגיאה במחיקת הכרטיס");
+      setError("שגיאה במחיקת הכרטיס");
+    } finally {
+      setTicketToDelete(null);
     }
   };
 
@@ -70,7 +85,7 @@ const MyTickets = () => {
       );
     } catch (err) {
       console.error("Error updating ticket status:", err);
-      alert("שגיאה בעדכון סטטוס הכרטיס");
+      setError("שגיאה בעדכון סטטוס הכרטיס");
     }
   };
 
@@ -81,8 +96,10 @@ const MyTickets = () => {
           e.stopPropagation();
           handleToggleSoldOut(ticket._id, ticket.isSoldOut);
         }}
-        className={`text-white px-3 py-1 rounded-md text-sm hover:opacity-90 transition ${
-          sold ? "bg-yellow-600 hover:bg-yellow-700" : "bg-green-600 hover:bg-green-700"
+        className={`flex items-center gap-1 text-white px-3 py-1 rounded-md text-sm hover:opacity-90 transition ${
+          sold
+            ? "bg-yellow-600 hover:bg-yellow-700"
+            : "bg-green-600 hover:bg-green-700"
         }`}
       >
         {sold ? <Undo2 size={14} /> : <CheckCircle size={14} />}
@@ -93,7 +110,7 @@ const MyTickets = () => {
           e.stopPropagation();
           navigate(`/tickets/${ticket._id}`);
         }}
-        className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition"
+        className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition"
       >
         <Edit size={14} />
         צפה בפרטים
@@ -101,9 +118,9 @@ const MyTickets = () => {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          handleDeleteTicket(ticket._id);
+          handleDeleteClick(ticket);
         }}
-        className="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 transition"
+        className="flex items-center gap-1 bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700 transition"
       >
         <Trash2 size={14} />
         מחק
@@ -115,103 +132,159 @@ const MyTickets = () => {
   const soldTickets = tickets.filter((ticket) => ticket.isSoldOut);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold" style={{ color: colors.primary }}>
-          הכרטיסים שלי
-        </h1>
-        <button
-          onClick={() => navigate("/create-ticket")}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: colors.primary }}
-        >
-          <Plus size={18} />
-          הוסף כרטיס
-        </button>
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold" style={{ color: colors.primary }}>
+            הכרטיסים שלי
+          </h1>
+          <button
+            onClick={() => navigate("/create-ticket")}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity text-white"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <Plus size={18} />
+            הוסף כרטיס
+          </button>
+        </div>
+
+        {/* הודעת הצלחה */}
+        {successMessage && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+            {successMessage}
+            <button
+              onClick={() => setSuccessMessage("")}
+              className="float-right font-bold text-green-700 hover:text-green-900"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* הודעת שגיאה */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+            <button
+              onClick={() => setError("")}
+              className="float-right font-bold text-red-700 hover:text-red-900"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">טוען כרטיסים...</p>
+          </div>
+        )}
+
+        {/* סטטיסטיקות */}
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div
+                className="text-2xl font-bold"
+                style={{ color: colors.primary }}
+              >
+                {tickets.length}
+              </div>
+              <div className="text-sm text-gray-600">סה"כ כרטיסים</div>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="text-2xl font-bold text-green-600">
+                {activeTickets.length}
+              </div>
+              <div className="text-sm text-gray-600">זמינים למכירה</div>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="text-2xl font-bold text-gray-500">
+                {soldTickets.length}
+              </div>
+              <div className="text-sm text-gray-600">נמכרו</div>
+            </div>
+          </div>
+        )}
+
+        {/* תוכן הכרטיסים */}
+        {!loading && !error && (
+          <>
+            {tickets.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🎫</div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                  עדיין לא פרסמת כרטיסים
+                </h2>
+                <p className="text-gray-500 mb-6">
+                  התחל למכור כרטיסים למשחקים ותרוויח כסף!
+                </p>
+                <button
+                  onClick={() => navigate("/create-ticket")}
+                  className="px-6 py-3 rounded-lg text-white font-medium"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  פרסם כרטיס ראשון
+                </button>
+              </div>
+            )}
+
+            {activeTickets.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">
+                  כרטיסים זמינים למכירה ({activeTickets.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeTickets.map((ticket) => (
+                    <TicketCard
+                      key={ticket._id}
+                      ticket={ticket}
+                      showSellerInfo={false}
+                      extraActions={renderActions(ticket, false)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {soldTickets.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">
+                  כרטיסים שנמכרו ({soldTickets.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {soldTickets.map((ticket) => (
+                    <TicketCard
+                      key={ticket._id}
+                      ticket={ticket}
+                      showSellerInfo={false}
+                      extraActions={renderActions(ticket, true)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {!loading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-2xl font-bold" style={{ color: colors.primary }}>
-              {tickets.length}
-            </div>
-            <div className="text-sm text-gray-600">סה"כ כרטיסים</div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {activeTickets.length}
-            </div>
-            <div className="text-sm text-gray-600">זמינים למכירה</div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-2xl font-bold text-gray-500">
-              {soldTickets.length}
-            </div>
-            <div className="text-sm text-gray-600">נמכרו</div>
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && (
-        <>
-          {tickets.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🎫</div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                עדיין לא פרסמת כרטיסים
-              </h2>
-              <p className="text-gray-500 mb-6">
-                התחל למכור כרטיסים למשחקים ותרוויח כסף!
-              </p>
-              <button
-                onClick={() => navigate("/create-ticket")}
-                className="px-6 py-3 rounded-lg text-white font-medium"
-                style={{ backgroundColor: colors.primary }}
-              >
-                פרסם כרטיס ראשון
-              </button>
-            </div>
-          )}
-
-          {activeTickets.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4 text-gray-800">
-                כרטיסים זמינים למכירה ({activeTickets.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeTickets.map((ticket) => (
-                  <TicketCard
-                    key={ticket._id}
-                    ticket={ticket}
-                    showSellerInfo={false}
-                    extraActions={renderActions(ticket, false)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {soldTickets.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-gray-800">
-                כרטיסים שנמכרו ({soldTickets.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {soldTickets.map((ticket) => (
-                  <TicketCard
-                    key={ticket._id}
-                    ticket={ticket}
-                    showSellerInfo={false}
-                    extraActions={renderActions(ticket, true)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+      {/* Modal אישור מחיקה */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setTicketToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="מחק כרטיס"
+        message={`האם אתה בטוח שברצונך למחוק את הכרטיס? הכרטיס יוסר מהמכירה ולא ניתן יהיה לשחזר אותו.`}
+        confirmText="מחק כרטיס"
+        cancelText="ביטול"
+        type="danger"
+      />
+    </>
   );
 };
 

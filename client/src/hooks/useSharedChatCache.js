@@ -17,31 +17,33 @@ export const useSharedChatCache = () => {
     return cacheRef.current.chatHistories.get(userId);
   }, []);
 
-  // Load chat history with caching
-  const loadChatHistory = useCallback(async (userId) => {
-    // Check cache first
+ // Load chat history with caching
+const loadChatHistory = useCallback(async (userId, forceRefresh = false) => {
+  // אם forceRefresh = true, דלג על הקאש
+  if (!forceRefresh) {
     const cached = cacheRef.current.chatHistories.get(userId);
     if (cached) {
-
       return { data: cached, fromCache: true };
     }
+  }
 
-    // Load from API
-    try {
-
-      const res = await api.get(`/api/messages/history/${userId}`);
-      if (res.data.success) {
-        const messages = res.data.messages || [];
-        // Store in cache
-        cacheRef.current.chatHistories.set(userId, messages);
-        return { data: messages, fromCache: false };
-      }
-      return { data: [], fromCache: false };
-    } catch (err) {
-      console.error('Failed to load chat history:', err);
-      return { data: [], fromCache: false };
+  // Load from API
+  try {
+    console.log('Loading chat history from API for:', userId);
+    const res = await api.get(`/api/messages/history/${userId}`);
+    if (res.data.success) {
+      const messages = res.data.messages || [];
+      // Store in cache
+      cacheRef.current.chatHistories.set(userId, messages);
+      console.log('Loaded', messages.length, 'messages from API');
+      return { data: messages, fromCache: false };
     }
-  }, []);
+    return { data: [], fromCache: false };
+  } catch (err) {
+    console.error('Failed to load chat history:', err);
+    return { data: [], fromCache: false };
+  }
+}, []);
 
   // Add message to cache and return updated messages
   const addMessageToCache = useCallback((userId, message) => {
