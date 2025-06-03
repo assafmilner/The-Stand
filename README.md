@@ -110,4 +110,4 @@ client/
 
 ---
 
-© 2025 Assaf Milner. כל הזכויות שמורות.
+© 2025 Assaf Milner & Liat Marely. כל הזכויות שמורות.
