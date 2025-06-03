@@ -1,4 +1,4 @@
-// fan-server/services/fixturesService.js (Improved: use final regular round for cutoff)
+// fan-server/services/fixturesService.js (Fixed: Better rate limiting and error handling)
 let fetch;
 try {
   fetch = globalThis.fetch;
@@ -21,6 +21,9 @@ class FixturesService {
       fixtures: 2 * 60 * 60 * 1000,
       default: 60 * 60 * 1000,
     };
+    this.requestDelay = 250; // 250ms between requests
+    this.maxRetries = 3;
+    this.batchSize = 5; // Process 5 rounds at a time
   }
 
   isCacheValid(key, duration = this.CACHE_DURATION.default) {
@@ -62,54 +65,106 @@ class FixturesService {
     }
   }
 
-  // async fetchRound(seasonId, round, season) {
-  //   const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
-  //   const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
-  //   const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
-  //   const response = await fetch(url);
-  //   if (!response.ok) throw new Error(`Failed to fetch round ${round}: ${response.statusText}`);
-  //   return response.json();
-  // }
-  // בקובץ fixturesService.js - הוסף בתחילת fetchRound:
-async fetchRound(seasonId, round, season) {
-  // Try direct API call first if proxy fails
-  const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
-  
-  try {
-    const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
-    const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to fetch round ${round}: ${response.statusText}`);
-    return response.json();
-  } catch (proxyError) {
-    console.log(`   Proxy failed for round ${round}, trying direct API...`);
+  // הוספת delay בין קריאות
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async fetchRound(seasonId, round, season, retryCount = 0) {
+    const apiUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${round}&s=${season}`;
+    
     try {
-      const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error(`Direct API failed for round ${round}: ${response.statusText}`);
-      return response.json();
-    } catch (directError) {
-      throw proxyError; // Return original proxy error
+      // נסה דרך proxy תחילה
+      const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
+      const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
+      
+      const response = await fetch(url, {
+        timeout: 10000 // 10 second timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+      
+    } catch (proxyError) {
+     
+      
+      try {
+        // נסה קריאה ישירה
+        const response = await fetch(apiUrl, {
+          timeout: 10000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data;
+        
+      } catch (directError) {
+        // אם שתי הקריאות נכשלו ויש עוד ניסיונות
+        if (retryCount < this.maxRetries) {
+      
+          await this.delay(1000 * (retryCount + 1)); // Exponential backoff
+          return this.fetchRound(seasonId, round, season, retryCount + 1);
+        }
+        
+        throw new Error(`Failed to fetch round ${round} after ${this.maxRetries} retries: ${directError.message}`);
+      }
     }
   }
-}
 
-  async fetchMultipleRounds(seasonId, season, rounds) {
-    const promises = rounds.map(async (round) => {
-      try {
-        const data = await this.fetchRound(seasonId, round, season);
-        return { round, events: data.events || [] };
-      } catch (error) {
-        console.error(`❌ Error fetching round ${round}:`, error.message);
-        return { round, events: [] };
+  // משיכת מחזורים בבאצ'ים קטנים עם delay
+  async fetchMultipleRoundsWithRateLimit(seasonId, season, rounds) {
+    const results = [];
+
+
+    // חלק את המחזורים לבאצ'ים
+    for (let i = 0; i < rounds.length; i += this.batchSize) {
+      const batch = rounds.slice(i, i + this.batchSize);
+  
+      // עבד באצ' נוכחי
+      const batchPromises = batch.map(async (round, index) => {
+        // הוסף delay בין קריאות באותו באצ'
+        if (index > 0) {
+          await this.delay(this.requestDelay);
+        }
+        
+        try {
+          const data = await this.fetchRound(seasonId, round, season);
+
+          return { round, events: data.events || [], success: true };
+        } catch (error) {
+          console.error(`   ❌ Round ${round} failed:`, error.message);
+          return { round, events: [], success: false, error: error.message };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+
+      // delay בין באצ'ים
+      if (i + this.batchSize < rounds.length) {
+
+        await this.delay(this.requestDelay * 2);
       }
-    });
-    return Promise.all(promises);
+    }
+
+    const successfulRounds = results.filter(r => r.success).length;
+    const failedRounds = results.filter(r => !r.success).length;
+
+
+    return results;
   }
 
   getLeagueConfig(seasonId) {
     const configs = {
-      4644: { name: 'ligat-haal', finalRegularRound: 26 },
-      4966: { name: 'leumit', finalRegularRound: 30 }
+      4644: { name: 'ligat-haal', finalRegularRound: 26, totalRounds: 35 },
+      4966: { name: 'leumit', finalRegularRound: 30, totalRounds: 40 }
     };
     return configs[seasonId] || configs[4644];
   }
@@ -117,70 +172,91 @@ async fetchRound(seasonId, round, season) {
   async fetchAllFixtures(seasonId, season = '2024-2025', forceRefresh = false) {
     const cacheKey = `fixtures_${seasonId}_${season}`;
     if (!forceRefresh && this.isCacheValid(cacheKey, this.CACHE_DURATION.fixtures)) {
+
       return this.getCached(cacheKey);
     }
 
     const startTime = Date.now();
     const config = this.getLeagueConfig(seasonId);
 
-    // Step 1: Determine regular season end date from final round
-    const finalRoundData = await this.fetchRound(seasonId, config.finalRegularRound, season);
-    const finalDates = (finalRoundData?.events || []).map(e => new Date(e.dateEvent));
-    const regularSeasonEndDate = finalDates.length > 0 ? new Date(Math.max(...finalDates)) : null;
+    try {
+      // Step 1: Determine regular season end date from final round
 
-    // Step 2: Fetch all possible rounds
-    const allRounds = Array.from({ length: 40 }, (_, i) => i + 1);
-    const allResults = await this.fetchMultipleRounds(seasonId, season, allRounds);
+      const finalRoundData = await this.fetchRound(seasonId, config.finalRegularRound, season);
+      const finalDates = (finalRoundData?.events || []).map(e => new Date(e.dateEvent));
+      const regularSeasonEndDate = finalDates.length > 0 ? new Date(Math.max(...finalDates)) : null;
 
-    const allFixturesRaw = [];
-    allResults.forEach(({ round, events }) => {
-      events.forEach(event => {
-        allFixturesRaw.push({ round, event });
+
+      // Step 2: Smart round range - don't fetch empty rounds
+      const smartRounds = Array.from({ length: config.totalRounds }, (_, i) => i + 1);
+
+
+      // Step 3: Fetch all rounds with rate limiting
+      const allResults = await this.fetchMultipleRoundsWithRateLimit(seasonId, season, smartRounds);
+
+      // Step 4: Process fixtures
+      const allFixturesRaw = [];
+      allResults.forEach(({ round, events, success }) => {
+        if (success && events) {
+          events.forEach(event => {
+            allFixturesRaw.push({ round, event });
+          });
+        }
       });
-    });
 
-    const regularFixtures = [], playoffFixtures = [];
-    allFixturesRaw.forEach(({ round, event }) => {
-      const gameDate = new Date(event.dateEvent);
-      const isRegular = regularSeasonEndDate && gameDate <= regularSeasonEndDate;
-      const targetList = isRegular ? regularFixtures : playoffFixtures;
 
-      targetList.push({
-        id: event.idEvent,
-        homeTeam: event.strHomeTeam,
-        awayTeam: event.strAwayTeam,
-        date: event.dateEvent,
-        time: this.formatToIsraelTime(event.dateEvent, event.strTime),
-        venue: event.strVenue,
-        round: parseInt(event.intRound, 10),
-        homeScore: event.intHomeScore !== null ? parseInt(event.intHomeScore) : null,
-        awayScore: event.intAwayScore !== null ? parseInt(event.intAwayScore) : null,
-        season: isRegular ? 'regular' : 'playoff'
+
+      const regularFixtures = [], playoffFixtures = [];
+      allFixturesRaw.forEach(({ round, event }) => {
+        const gameDate = new Date(event.dateEvent);
+        const isRegular = regularSeasonEndDate && gameDate <= regularSeasonEndDate;
+        const targetList = isRegular ? regularFixtures : playoffFixtures;
+
+        targetList.push({
+          id: event.idEvent,
+          homeTeam: event.strHomeTeam,
+          awayTeam: event.strAwayTeam,
+          date: event.dateEvent,
+          time: this.formatToIsraelTime(event.dateEvent, event.strTime),
+          venue: event.strVenue,
+          round: parseInt(event.intRound, 10),
+          homeScore: event.intHomeScore !== null ? parseInt(event.intHomeScore) : null,
+          awayScore: event.intAwayScore !== null ? parseInt(event.intAwayScore) : null,
+          season: isRegular ? 'regular' : 'playoff'
+        });
       });
-    });
 
-    regularFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
-    playoffFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const allFixtures = [...regularFixtures, ...playoffFixtures];
+      regularFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
+      playoffFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const allFixtures = [...regularFixtures, ...playoffFixtures];
 
-    const result = {
-      regularFixtures,
-      playoffFixtures,
-      allFixtures,
-      regularSeasonEndDate: regularSeasonEndDate?.toISOString() || null,
-      metadata: {
-        totalFixtures: allFixtures.length,
-        regularSeasonFixtures: regularFixtures.length,
-        playoffFixtures: playoffFixtures.length,
-        regularSeasonEndDate: regularSeasonEndDate?.toISOString(),
-        lastUpdated: new Date().toISOString(),
-        fetchTimeMs: Date.now() - startTime,
-        fetchTimeSeconds: Math.round((Date.now() - startTime) / 1000)
-      }
-    };
+      const fetchTimeSeconds = Math.round((Date.now() - startTime) / 1000);
+      const result = {
+        regularFixtures,
+        playoffFixtures,
+        allFixtures,
+        regularSeasonEndDate: regularSeasonEndDate?.toISOString() || null,
+        metadata: {
+          totalFixtures: allFixtures.length,
+          regularSeasonFixtures: regularFixtures.length,
+          playoffFixtures: playoffFixtures.length,
+          regularSeasonEndDate: regularSeasonEndDate?.toISOString(),
+          lastUpdated: new Date().toISOString(),
+          fetchTimeMs: Date.now() - startTime,
+          fetchTimeSeconds,
+          successfulRounds: allResults.filter(r => r.success).length,
+          failedRounds: allResults.filter(r => !r.success).length,
+          totalRoundsAttempted: allResults.length
+        }
+      };
 
-    this.setCache(cacheKey, result);
-    return result;
+      this.setCache(cacheKey, result);
+      return result;
+
+    } catch (error) {
+      console.error(`💥 Fatal error in fetchAllFixtures:`, error);
+      throw error;
+    }
   }
 
   getCacheStats() {

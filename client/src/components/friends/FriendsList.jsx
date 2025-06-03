@@ -1,5 +1,5 @@
 // client/src/components/friends/FriendsList.jsx
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import {
   Users,
   MessageCircle,
@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFriends } from "../../hooks/useFriends";
+import { useChat } from "../../context/ChatContext";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal";
-import ChatModal from "../chat/ChatModal";
+
+const ChatModal = lazy(() => import("../chat/ChatModal"));
 
 const FriendsList = ({
   friends = [],
@@ -25,10 +27,10 @@ const FriendsList = ({
   onMessageClick,
   emptyMessage = "אין חברים להצגה",
   emptySubMessage = "חברים שתוסיף יופיעו כאן",
-  currentUser, // המשתמש הנוכחי למודאל הצ'אט
 }) => {
   const navigate = useNavigate();
   const { removeFriend, requestLoading } = useFriends();
+  const { markAsRead } = useChat();
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
   
   // State למודאלים
@@ -67,15 +69,24 @@ const FriendsList = ({
   // טיפול בלחיצה על הודעה
   const handleMessageClick = (friend) => {
     if (onMessageClick) {
-      // אם יש callback מותאם אישית
+      // אם יש callback מותאם אישית מהקומפוננטה האב
       onMessageClick(friend);
-    } else if (currentUser) {
-      // אם יש משתמש נוכחי - פתח מודאל צ'אט
-      setChatWithFriend(friend);
-      setIsChatModalOpen(true);
     } else {
-      // Default behavior - navigate to messages page with user selected
-      navigate("/messages", { state: { selectedUser: friend } });
+      // Default behavior - פתח ChatModal
+      if (!friend || !friend._id) {
+        alert("שגיאה: לא ניתן לפתוח צ'אט עם החבר");
+        return;
+      }
+
+      // הכנת פרטי החבר למודאל הצ'אט
+      const friendData = {
+        _id: friend._id,
+        name: friend.name,
+        profilePicture: friend.profilePicture,
+      };
+
+      setChatWithFriend(friendData);
+      setIsChatModalOpen(true);
     }
     setActionMenuOpen(null);
   };
@@ -314,14 +325,24 @@ const FriendsList = ({
         type="danger"
       />
 
-      {/* מודאל צ'אט - מופיע רק אם יש משתמש נוכחי */}
-      {currentUser && (
-        <ChatModal
-          isOpen={isChatModalOpen}
-          onClose={closeChatModal}
-          selectedUser={chatWithFriend}
-          currentUser={currentUser}
-        />
+      {/* מודאל צ'אט */}
+      {isChatModalOpen && chatWithFriend && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg">
+                <p>טוען צ'אט...</p>
+              </div>
+            </div>
+          }
+        >
+          <ChatModal
+            isOpen={isChatModalOpen}
+            onClose={closeChatModal}
+            otherUser={chatWithFriend}
+            onMarkAsRead={markAsRead}
+          />
+        </Suspense>
       )}
     </>
   );

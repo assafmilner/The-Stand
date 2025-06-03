@@ -11,9 +11,6 @@ const getFriendsPosts = async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-   
-
-
     // Get user's friends
     const friendships = await Friend.find({
       $or: [
@@ -21,7 +18,6 @@ const getFriendsPosts = async (req, res) => {
         { receiverId: userId, status: 'accepted' }
       ]
     }).populate('senderId', 'name favoriteTeam').populate('receiverId', 'name favoriteTeam');
-
 
     // Extract friend IDs
     const friendIds = friendships.map(friendship => {
@@ -33,25 +29,21 @@ const getFriendsPosts = async (req, res) => {
         ? friendship.receiverId.name
         : friendship.senderId.name;
       
-     
       return friendId;
     });
 
     // Add the current user to see their own posts too
     friendIds.push(userId);
 
-
-
-
     // Get posts from friends + user's own posts
     const posts = await Post.find({
       authorId: { $in: friendIds }
     })
     .populate("authorId", "name profilePicture favoriteTeam")
+    .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
-
 
     // Get total count for pagination
     const totalPosts = await Post.countDocuments({
@@ -59,8 +51,6 @@ const getFriendsPosts = async (req, res) => {
     });
 
     const hasMore = skip + posts.length < totalPosts;
-
-    
 
     res.json({
       success: true,
@@ -96,20 +86,15 @@ const getTeamPosts = async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-   
-
     // Get current user's favorite team
     const currentUser = await User.findById(userId);
     if (!currentUser || !currentUser.favoriteTeam) {
-     
       return res.status(400).json({
         success: false,
         error: "User favorite team not found",
         feedType: 'team'
       });
     }
-
-  
 
     // Get all users with the same favorite team
     const teamUsers = await User.find({
@@ -118,18 +103,15 @@ const getTeamPosts = async (req, res) => {
 
     const teamUserIds = teamUsers.map(user => user._id);
 
-   
-
     // Get posts from users with the same favorite team
     const posts = await Post.find({
       authorId: { $in: teamUserIds }
     })
     .populate("authorId", "name profilePicture favoriteTeam")
+    .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
-
- 
 
     // Get total count for pagination
     const totalPosts = await Post.countDocuments({
@@ -138,7 +120,6 @@ const getTeamPosts = async (req, res) => {
 
     const hasMore = skip + posts.length < totalPosts;
 
-   
     res.json({
       success: true,
       posts,
@@ -180,7 +161,6 @@ const getPosts = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     let query = {};
 
-
     // Handle friends only filter
     if (friendsOnly === 'true' && req.user) {
       const userId = req.user.id;
@@ -217,13 +197,13 @@ const getPosts = async (req, res) => {
 
     const posts = await Post.find(query)
       .populate("authorId", "name profilePicture favoriteTeam")
+      .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
     const totalPosts = await Post.countDocuments(query);
     const hasMore = skip + posts.length < totalPosts;
-
 
     res.json({
       success: true,
@@ -272,7 +252,13 @@ const createPost = async (req, res) => {
     });
 
     const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    
+    // ⭐ החזר את הפוסט עם populate מלא
+    const populatedPost = await Post.findById(savedPost._id)
+      .populate("authorId", "name profilePicture favoriteTeam")
+      .populate("likes", "name profilePicture favoriteTeam");
+    
+    res.status(201).json(populatedPost);
   } catch (error) {
     console.error("❌ Error creating post:", error);
     res.status(500).json({ message: "Error creating post", error: error.message });
@@ -293,7 +279,9 @@ const updatePost = async (req, res) => {
 
     const updatedPost = await Post.findByIdAndUpdate(id, updateData, {
       new: true,
-    });
+    })
+    .populate("authorId", "name profilePicture favoriteTeam")
+    .populate("likes", "name profilePicture favoriteTeam"); // ⭐ הוספתי גם כאן
 
     res.status(200).json(updatedPost);
   } catch (err) {
@@ -330,7 +318,7 @@ const toggleLike = async (req, res) => {
     const postId = req.params.id;
     const userId = req.user.id;
 
-    const post = await Post.findById(postId).populate("likes", "name profilePicture");
+    const post = await Post.findById(postId).populate("likes", "name profilePicture favoriteTeam");
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
@@ -350,7 +338,10 @@ const toggleLike = async (req, res) => {
 
     await post.save();
 
-    const updatedPost = await Post.findById(postId).populate("likes", "name profilePicture");
+    // ⭐ החזר את הפוסט המעודכן עם populate מלא
+    const updatedPost = await Post.findById(postId)
+      .populate("authorId", "name profilePicture favoriteTeam")
+      .populate("likes", "name profilePicture favoriteTeam");
 
     res.json(updatedPost);
   } catch (error) {

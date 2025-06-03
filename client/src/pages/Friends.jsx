@@ -1,7 +1,8 @@
 // client/src/pages/Friends.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
+import { useChat } from "../context/ChatContext";
 import { useFriends } from "../hooks/useFriends";
 import teamColors from "../utils/teamStyles";
 import {
@@ -14,10 +15,17 @@ import {
   Clock,
 } from "lucide-react";
 
+const ChatModal = lazy(() => import("../components/chat/ChatModal"));
+
 const Friends = () => {
   const { user } = useUser();
+  const { markAsRead } = useChat();
   const [activeTab, setActiveTab] = useState("friends");
   const [selectedFriend, setSelectedFriend] = useState(null);
+
+  // Chat modal state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedChatFriend, setSelectedChatFriend] = useState(null);
 
   const {
     friends,
@@ -74,6 +82,29 @@ const Friends = () => {
         setSelectedFriend(null);
       }
     }
+  };
+
+  // Chat functions
+  const handleOpenChat = (friend) => {
+    if (!friend || !friend._id) {
+      alert("שגיאה: לא ניתן לפתוח צ'אט עם החבר");
+      return;
+    }
+
+    // Prepare friend data for chat modal
+    const friendData = {
+      _id: friend._id,
+      name: friend.name,
+      profilePicture: friend.profilePicture,
+    };
+
+    setSelectedChatFriend(friendData);
+    setIsChatOpen(true);
+  };
+
+  const handleCloseChatModal = () => {
+    setIsChatOpen(false);
+    setSelectedChatFriend(null);
   };
 
   const tabConfig = [
@@ -331,7 +362,10 @@ const Friends = () => {
                   )}
                 </div>
                 <div className="flex gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <button
+                    onClick={() => handleOpenChat(selectedFriend)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     <MessageCircle size={18} />
                     <span>שלח הודעה</span>
                   </button>
@@ -395,6 +429,26 @@ const Friends = () => {
           )}
         </div>
       </div>
+
+      {/* Chat Modal */}
+      {isChatOpen && selectedChatFriend && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg">
+                <p>טוען צ'אט...</p>
+              </div>
+            </div>
+          }
+        >
+          <ChatModal
+            isOpen={isChatOpen}
+            onClose={handleCloseChatModal}
+            otherUser={selectedChatFriend}
+            onMarkAsRead={markAsRead}
+          />
+        </Suspense>
+      )}
     </Layout>
   );
 };

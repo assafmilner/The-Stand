@@ -61,17 +61,20 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!userId && !currentUser) return;
+
       try {
-        // Fetch profile user data if viewing another user's profile
-        if (!isOwnProfile) {
+        setLoading(true);
+
+        if (isOwnProfile) {
+          // For own profile - just get friends (profile data already in context)
+          getCurrentUserFriends();
+        } else {
+
           const profileResponse = await api.get(`/api/users/profile/${userId}`);
           setProfileUser(profileResponse.data);
-
-          // Fetch that user's friends
+         
           await fetchUserFriends(userId);
-        } else {
-          // For own profile, get current user's friends
-          getCurrentUserFriends();
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -80,9 +83,7 @@ const Profile = () => {
       }
     };
 
-    if ((isOwnProfile && currentUser) || (!isOwnProfile && userId)) {
-      fetchUserData();
-    }
+    fetchUserData();
   }, [currentUser, userId, isOwnProfile, getCurrentUserFriends]);
 
   const handleCoverUpdate = (newCoverImage) => {
@@ -109,10 +110,8 @@ const Profile = () => {
   // Handle friend status changes
   const handleFriendStatusChange = (newStatus) => {
     if (isOwnProfile) {
-      // Refresh current user's friends
       getCurrentUserFriends();
     } else {
-      // Refresh the profile user's friends
       fetchUserFriends(userId);
     }
   };
@@ -136,12 +135,30 @@ const Profile = () => {
 
   const { friends, friendsCount, friendsLoading } = getFriendsData();
 
+  
   if (loading) {
     return (
       <ProfileLayout>
-        <div className="profile-loading">
-          <div className="loading-spinner"></div>
-          <span>טוען פרופיל...</span>
+        <div className="profile-container bg-gray-50 " dir="rtl">
+          {/* Skeleton */}
+          <div className="relative h-64 md:h-80 bg-gray-200 animate-pulse rounded-b-4xl" />
+          
+          <div className="relative px-4 md:px-8 pb-6">
+            <div className="flex flex-col lg:flex-row lg:items-end -mt-16 md:-mt-20 gap-6">
+              <div className="flex items-end gap-4">
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-300 animate-pulse rounded-full border-4 border-white" />
+                <div className="pb-1">
+                  <div className="h-8 bg-gray-300 animate-pulse rounded w-48 mb-2" />
+                  <div className="h-6 bg-gray-200 animate-pulse rounded w-32" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center py-8">
+            <div className="loading-spinner mx-auto mb-4"></div>
+            <span>טוען פרופיל...</span>
+          </div>
         </div>
       </ProfileLayout>
     );
@@ -258,7 +275,7 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Main Content Area - Wider container for side-by-side layout */}
+        {/* Main Content Area */}
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Side - Profile Info */}
@@ -303,7 +320,7 @@ const Profile = () => {
                       loading={friendsLoading}
                       colors={colors}
                       showActions={true}
-                      showRemove={isOwnProfile} // Only show remove if viewing own profile
+                      showRemove={isOwnProfile}
                       showMessage={true}
                       onFriendRemoved={handleFriendStatusChange}
                       emptyMessage={
@@ -326,11 +343,13 @@ const Profile = () => {
       </div>
 
       {/* Chat Modal */}
-      <ChatModal
-        isOpen={isChatOpen}
-        onClose={handleCloseChatModal}
-        otherUser={displayUser}
-      />
+      {isChatOpen && (
+        <ChatModal
+          isOpen={isChatOpen}
+          onClose={handleCloseChatModal}
+          otherUser={displayUser}
+        />
+      )}
     </ProfileLayout>
   );
 };

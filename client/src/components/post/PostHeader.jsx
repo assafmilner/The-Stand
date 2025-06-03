@@ -50,9 +50,9 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
           onClick={goToProfile}
         >
           <img
-            src={author.profilePicture || "/default-avatar.png"}
+            className="profile-img"
+            src={author?.profilePicture || "/default.png"}
             alt="profile"
-            style={{ width: 40, height: 40, borderRadius: "50%" }}
           />
           <div>
             <strong>{author.name}</strong>
@@ -67,8 +67,8 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
 
         {isOwner && (onEdit || onDelete) && (
           <div style={{ position: "relative" }}>
-            <MoreHorizontal 
-              onClick={toggleMenu} 
+            <MoreHorizontal
+              onClick={toggleMenu}
               style={{ cursor: "pointer" }}
               className="hover:bg-gray-100 rounded p-1 transition-colors"
             />
@@ -85,7 +85,7 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
                   padding: "0.5rem",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
                   zIndex: 10,
-                  minWidth: "120px"
+                  minWidth: "120px",
                 }}
               >
                 {onEdit && (
@@ -105,7 +105,7 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
                       cursor: "pointer",
                       width: "100%",
                       borderRadius: "0.5rem",
-                      fontSize: "0.875rem"
+                      fontSize: "0.875rem",
                     }}
                     className="hover:bg-gray-100 transition-colors"
                   >
@@ -127,7 +127,7 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
                       width: "100%",
                       color: "#e53935",
                       borderRadius: "0.5rem",
-                      fontSize: "0.875rem"
+                      fontSize: "0.875rem",
                     }}
                     className="hover:bg-red-50 transition-colors"
                   >

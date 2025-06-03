@@ -35,6 +35,9 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   };
 
   const uploadCroppedImage = async (croppedBlob) => {
+    // ⭐ סגור את המודאל מיד!
+    setCropModalOpen(false);
+
     const formData = new FormData();
     formData.append("coverImage", croppedBlob);
 
@@ -59,7 +62,16 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
       alert("שגיאה בהעלאת תמונת קאבר");
     } finally {
       setUploading(false);
-      setCropModalOpen(false);
+      // ⭐ הסרתי את setCropModalOpen(false) מכאן כי זה כבר קרה למעלה
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropModalOpen(false);
+    setImageToCrop(null);
+    // נקה את הinput file כדי שאותו קובץ יוכל להיבחר שוב
+    if (coverInputRef.current) {
+      coverInputRef.current.value = "";
     }
   };
 
@@ -82,6 +94,16 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
         )}
 
         <div className="cover-overlay" />
+
+        {/* ⭐ Loading overlay בזמן העלאה */}
+        {uploading && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+            <div className="text-white text-center">
+              <div className="animate-spin text-4xl mb-2">⏳</div>
+              <p>מעלה תמונה...</p>
+            </div>
+          </div>
+        )}
 
         {isOwnProfile && (
           <button
@@ -112,7 +134,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
       {cropModalOpen && (
         <CropModal
           imageSrc={imageToCrop}
-          onCancel={() => setCropModalOpen(false)}
+          onCancel={handleCropCancel} // ⭐ פונקציה מיוחדת לביטול
           onCropComplete={uploadCroppedImage}
         />
       )}
