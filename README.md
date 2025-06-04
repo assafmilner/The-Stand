@@ -105,7 +105,6 @@ client/
 
 ## 📜 הערות נוספות
 - הקוד נבדק ומכיל ולידציות בצד שרת + לקוח
-- אין שימוש ב־Firebase (כל המערכת מקומית לחלוטין)
 - נבנה עם דגש על scalability, maintainability ו־security
 
 ---
