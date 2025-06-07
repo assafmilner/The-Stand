@@ -23,7 +23,7 @@ const sendVerificationEmail = async (to, token, userName) => {
   try {
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     
-    sendSmtpEmail.subject = 'Verify your email for HaYatzia';
+    sendSmtpEmail.subject = 'כולם כבר ביציע – תאשר את המייל ותתפוס מקום!';
     sendSmtpEmail.htmlContent = `
       <div style="direction: rtl; text-align: right; font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; max-width: 600px; margin: 0 auto; border-radius: 10px;">
         <h1 style="color: #15803d; margin-bottom: 20px;">ברוך הבא ליציע!</h1>

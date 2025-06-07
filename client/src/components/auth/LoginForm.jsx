@@ -49,14 +49,14 @@ const LoginForm = () => {
         <div className="form-container">
           <div className="form-content">
             <AuthHeader
-              title="נערך אימות המייל"
+              title="יש לאמת את החשבון"
               subtitle='נא לאמת את כתובת הדוא"ל שלך לפני ההתחברות.'
             />
             <ResendEmailButton email={email} />
             <div className="form-footer">
               <button
                 type="button"
-                className="form-link "
+                className="form-link bg-transparent"
                 onClick={() => setEmailVerificationRequired(false)}
               >
                 חזור לטופס התחברות

@@ -164,7 +164,7 @@ class FixturesService {
   getLeagueConfig(seasonId) {
     const configs = {
       4644: { name: 'ligat-haal', finalRegularRound: 26, totalRounds: 35 },
-      4966: { name: 'leumit', finalRegularRound: 30, totalRounds: 40 }
+      4966: { name: 'leumit', finalRegularRound: 30, totalRounds: 37 }
     };
     return configs[seasonId] || configs[4644];
   }

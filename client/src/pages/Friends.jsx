@@ -5,6 +5,7 @@ import { useUser } from "../context/UserContext";
 import { useChat } from "../context/ChatContext";
 import { useFriends } from "../hooks/useFriends";
 import teamColors from "../utils/teamStyles";
+import DeleteConfirmationModal from "../components/modal/DeleteConfirmationModal";
 import {
   Users,
   UserPlus,
@@ -26,6 +27,10 @@ const Friends = () => {
   // Chat modal state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatFriend, setSelectedChatFriend] = useState(null);
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [friendToDelete, setFriendToDelete] = useState(null);
 
   const {
     friends,
@@ -74,14 +79,33 @@ const Friends = () => {
     }
   };
 
-  const handleRemoveFriend = async (friendId) => {
-    if (window.confirm("האם אתה בטוח שברצונך להסיר את החבר?")) {
-      const result = await removeFriend(friendId);
-      if (result.success) {
-        console.log(result.message);
-        setSelectedFriend(null);
-      }
+  // פתיחת מודאל המחיקה
+  const handleRemoveFriend = (friend) => {
+    setFriendToDelete(friend);
+    setIsDeleteModalOpen(true);
+  };
+
+  // ביצוע המחיקה בפועל
+  const confirmDeleteFriend = async () => {
+    if (!friendToDelete) return;
+
+    const result = await removeFriend(friendToDelete._id);
+    if (result.success) {
+      console.log(result.message);
+      setSelectedFriend(null); // Clear selected friend if it was the deleted one
+    } else {
+      alert(result.error || "שגיאה במחיקת החבר");
     }
+
+    // סגירת המודאל
+    setIsDeleteModalOpen(false);
+    setFriendToDelete(null);
+  };
+
+  // סגירת מודאל המחיקה
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setFriendToDelete(null);
   };
 
   // Chat functions
@@ -370,11 +394,12 @@ const Friends = () => {
                     <span>שלח הודעה</span>
                   </button>
                   <button
-                    onClick={() => handleRemoveFriend(selectedFriend._id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    onClick={() => handleRemoveFriend(selectedFriend)}
+                    disabled={requestLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
                     <UserMinus size={18} />
-                    <span>הסר חבר</span>
+                    <span>{requestLoading ? "מסיר..." : "הסר חבר"}</span>
                   </button>
                 </div>
               </div>
@@ -429,6 +454,22 @@ const Friends = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDeleteFriend}
+        title="הסר חבר"
+        message={
+          friendToDelete
+            ? `האם אתה בטוח שברצונך להסיר את ${friendToDelete.name} מרשימת החברים שלך?`
+            : "האם אתה בטוח שברצונך להסיר את החבר הזה?"
+        }
+        confirmText="הסר חבר"
+        cancelText="ביטול"
+        type="danger"
+      />
 
       {/* Chat Modal */}
       {isChatOpen && selectedChatFriend && (
