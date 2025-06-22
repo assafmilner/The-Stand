@@ -1,7 +1,5 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const { cloudinary } = require("../utils/cloudinary");
-
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -136,7 +134,7 @@ const getPublicProfile = async (req, res) => {
     
     const user = await User.findById(userId)
       .select("name profilePicture coverImage favoriteTeam location bio createdAt")
-      .lean(); // ⭐ רק זה! שיפור של ~30%
+      .lean(); 
     
     if (!user) {
       return res.status(404).json({ error: "משתמש לא נמצא" });

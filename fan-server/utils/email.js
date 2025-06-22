@@ -1,6 +1,6 @@
 // fan-server/utils/email.js
-const SibApiV3Sdk = require('sib-api-v3-sdk');
-const crypto = require('crypto');
+const SibApiV3Sdk = require('sib-api-v3-sdk'); //import Brevo - the email server we are using for sending emails
+const crypto = require('crypto'); // import the encryption module of Node.js
 
 // Configure API key
 const defaultClient = SibApiV3Sdk.ApiClient.instance;

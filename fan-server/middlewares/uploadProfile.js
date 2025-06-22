@@ -15,7 +15,7 @@ const profileStorage = new CloudinaryStorage({
   params: {
     folder: "profile_pictures", // ✅ שמירה נכונה לתיקייה שונה
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    transformation: [{ width: 400, height: 400, crop: "limit" }],
+    transformation: [{ quality: "auto:eco", width: 720, height: 720, crop: "limit" }],
   },
 });
 
