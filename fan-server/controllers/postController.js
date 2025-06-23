@@ -40,7 +40,7 @@ const getFriendsPosts = async (req, res) => {
       authorId: { $in: friendIds }
     })
     .populate("authorId", "name profilePicture favoriteTeam")
-    .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
+    .populate("likes", "name profilePicture favoriteTeam")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
@@ -108,7 +108,7 @@ const getTeamPosts = async (req, res) => {
       authorId: { $in: teamUserIds }
     })
     .populate("authorId", "name profilePicture favoriteTeam")
-    .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
+    .populate("likes", "name profilePicture favoriteTeam")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
@@ -197,7 +197,7 @@ const getPosts = async (req, res) => {
 
     const posts = await Post.find(query)
       .populate("authorId", "name profilePicture favoriteTeam")
-      .populate("likes", "name profilePicture favoriteTeam") // ⭐ הוספתי את זה!
+      .populate("likes", "name profilePicture favoriteTeam") 
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -253,7 +253,7 @@ const createPost = async (req, res) => {
 
     const savedPost = await newPost.save();
     
-    // ⭐ החזר את הפוסט עם populate מלא
+
     const populatedPost = await Post.findById(savedPost._id)
       .populate("authorId", "name profilePicture favoriteTeam")
       .populate("likes", "name profilePicture favoriteTeam");
@@ -281,7 +281,7 @@ const updatePost = async (req, res) => {
       new: true,
     })
     .populate("authorId", "name profilePicture favoriteTeam")
-    .populate("likes", "name profilePicture favoriteTeam"); // ⭐ הוספתי גם כאן
+    .populate("likes", "name profilePicture favoriteTeam"); 
 
     res.status(200).json(updatedPost);
   } catch (err) {
@@ -338,7 +338,7 @@ const toggleLike = async (req, res) => {
 
     await post.save();
 
-    // ⭐ החזר את הפוסט המעודכן עם populate מלא
+
     const updatedPost = await Post.findById(postId)
       .populate("authorId", "name profilePicture favoriteTeam")
       .populate("likes", "name profilePicture favoriteTeam");

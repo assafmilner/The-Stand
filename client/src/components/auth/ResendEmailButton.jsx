@@ -6,7 +6,7 @@ export default function ResendEmailButton({ email }) {
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
   const handleResend = async (e) => {
-    e.preventDefault(); // למנוע כל התנהגות ברירת מחדל
+    e.preventDefault();
     setStatus("sending");
     try {
       await api.post("/api/auth/resend-verification", { email });
@@ -18,7 +18,7 @@ export default function ResendEmailButton({ email }) {
 
   return (
     <button
-      type="button" // <— חיוני!
+      type="button"
       onClick={handleResend}
       className="form-button mt-2"
       disabled={status === "sending" || status === "sent"}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "utils/api";
 import { Eye, EyeOff, CheckCircle, AlertTriangle } from "lucide-react";
 
 const ChangePasswordForm = () => {
@@ -31,7 +31,7 @@ const ChangePasswordForm = () => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await axios.put(
+      const response = await api.put(
         "http://localhost:3001/api/users/change-password",
         {
           currentPassword,

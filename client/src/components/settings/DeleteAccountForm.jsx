@@ -1,6 +1,6 @@
-import axios from "axios";
 import React, { useState } from "react";
 import { AlertTriangle, CheckCircle } from "lucide-react";
+import api from "utils/api";
 
 const DeleteAccountForm = () => {
   const [confirmText, setConfirmText] = useState("");
@@ -18,7 +18,7 @@ const DeleteAccountForm = () => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await axios.delete(
+      const response = await api.delete(
         "http://localhost:3001/api/users/delete",
         {
           headers: {

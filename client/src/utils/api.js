@@ -18,22 +18,25 @@ api.interceptors.request.use(
 );
 
 // ✅ טיפול גלובלי בשגיאות
-axios.interceptors.response.use(
+api.interceptors.response.use(
   
     res => res,
     err => {
       const { config, response } = err;
   
       // אם זו קריאה ל־login או ל־verify-email או ל־resend-verification – תן ל־catch המקומי לטפל
-      if (
-        response?.status === 401 &&
-        config.url !== "/api/auth/login" &&
-        config.url !== "/api/auth/verify-email" &&
-        config.url !== "/api/auth/resend-verification"
-      ) {
-        window.location = "/login";
-      }
+      
+        const isAuthRoute =
+          config.url !== "/api/auth/login" &&
+          config.url !== "/api/auth/verify-email" &&
+          config.url !== "/api/auth/resend-verification"
+    
   
+        const alreadyOnLoginPage = window.location.pathname === "/login";
+
+    if (response?.status === 401 && !isAuthRoute && !alreadyOnLoginPage) {
+      window.location = "/login";
+    }
       return Promise.reject(err);
     }
   );

@@ -139,7 +139,7 @@ class FixturesService {
 
           return { round, events: data.events || [], success: true };
         } catch (error) {
-          console.error(`   ❌ Round ${round} failed:`, error.message);
+     
           return { round, events: [], success: false, error: error.message };
         }
       });

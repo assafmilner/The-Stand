@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
-import axios from "axios";
 import { useUser } from "../../context/UserContext";
+import api from "utils/api";
 
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
@@ -42,7 +42,7 @@ const ProfilePictureForm = ({ user }) => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await axios.post(
+      const response = await api.post(
         "http://localhost:3001/api/users/upload-profile",
         formData,
         {

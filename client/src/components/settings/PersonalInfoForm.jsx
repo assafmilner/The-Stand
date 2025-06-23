@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "utils/api";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 
 const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"];
@@ -30,7 +30,7 @@ const PersonalInfoForm = ({ user }) => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await axios.put(
+      const res = await api.put(
         "http://localhost:3001/api/users/update-profile",
         { bio, phone },
         {

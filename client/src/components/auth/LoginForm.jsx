@@ -67,7 +67,27 @@ const LoginForm = () => {
 
         {/* decorative side */}
         <div className="decorative-container">
-          {/* ...ה־decorative שלך בדיוק כמו בקוד הקודם */}
+          <div className="field-pattern"></div>
+          <div className="field-elements">
+            <div className="center-circle"></div>
+            <div className="center-dot"></div>
+            <div className="halfway-line"></div>
+            <div className="decorative-column">
+              <div className="decorative-card">
+                <h2 className="decorative-title">התחבר לקהילת האוהדים!</h2>
+                <p className="decorative-text">
+                  אמת את המייל כדי להתחבר לקהילת האוהדים שלך, לעקוב אחרי המשחקים
+                  ולהתחבר עם אוהדים אחרים שחולקים את התשוקה שלך לכדורגל.
+                </p>
+              </div>
+              <div className="field-pattern"></div>
+            </div>
+
+            <div className="penalty-area-top"></div>
+            <div className="penalty-area-bottom"></div>
+            <div className="goal-top"></div>
+            <div className="goal-bottom"></div>
+          </div>
         </div>
       </div>
     );
@@ -83,7 +103,6 @@ const LoginForm = () => {
           {error && <p className="form-error">{error}</p>}
           <form onSubmit={handleLogin} className="form">
             {" "}
-            {/* :contentReference[oaicite:12]{index=12}:contentReference[oaicite:13]{index=13} */}
             <div className="form-group">
               <label htmlFor="email" className="form-label">
                 אימייל
