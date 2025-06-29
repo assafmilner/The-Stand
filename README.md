@@ -27,8 +27,7 @@
   - `font-face`
   - `border-radius`
 - Canvas + Video
-- שימוש ב־JQuery עבור AJAX במודלים ישנים
-- שימוש ב־D3.js להצגת גרפים סטטיסטיים
+
 
 ---
 
