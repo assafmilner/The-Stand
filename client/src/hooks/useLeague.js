@@ -32,7 +32,7 @@ export const useLeague = (favoriteTeam) => {
 
   return { league, leagueType, loading, error };
 };
-
+ const season = "2025-2026";
 // Updated useFixtures hook to use server-side API
 export const useFixtures = (seasonId, leagueType) => {
   const [fixtures, setFixtures] = useState([]);
@@ -46,7 +46,7 @@ export const useFixtures = (seasonId, leagueType) => {
     setLoading(true);
     setError(null);
     
-    const season = "2024-2025";
+   
     
     try {
 
@@ -128,7 +128,7 @@ export const useLeagueTable = (league) => {
       
 
       const data = await fetchFromApi(
-        `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${seasonId}&s=2024-2025`
+        `https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${seasonId}&s=${season}`
       );
 
       if (!data.table) return;
@@ -161,7 +161,7 @@ export const useLeagueTable = (league) => {
       const { seasonId, playoffStartRound, topPlayoffSize } = getLeagueConfig(league);
 
       const lastRoundData = await fetchFromApi(
-        `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${playoffStartRound}&s=2024-2025`
+        `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${playoffStartRound}&s=${season}`
       );
 
       const lastGames = lastRoundData.events || [];
@@ -174,7 +174,7 @@ export const useLeagueTable = (league) => {
 
       for (const r of rounds) {
         const data = await fetchFromApi(
-          `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${r}&s=2024-2025`
+          `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${seasonId}&r=${r}&s=${season}`
         );
 
         if (data?.events) {
@@ -193,7 +193,7 @@ export const useLeagueTable = (league) => {
       setTopPlayoff(topPlayoffTable);
       setBottomPlayoff(bottomPlayoffTable);
     } catch (err) {
-      console.error("Error fetching playoff data:", err);
+      
     } finally {
       setPlayoffLoading(false);
     }

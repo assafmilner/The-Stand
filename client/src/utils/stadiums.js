@@ -12,7 +12,7 @@ const venuesHebrew = {
     "Ramla Municipal Stadium": "אצטדיון נס ציונה",
     "Grundman Stadium": "גרונדמן",
     "Haberfeld Stadium": "הברפלד",
-    "Green Stadium": "אצטדיון גרין",
+    "Green Stadium Nof HaGalil": "אצטדיון גרין",
     "Lod Municipal Stadium[A]":"הברפלד",
     "Acre Municipal Stadium": "אצטדיון עכו",
     "Herzliya Municipal StadiumHerzliya Municipal Stadium": "גרונדמן",

@@ -14,7 +14,7 @@ class FixturesApi {
    * @param {string} format - Response format ('processed', 'raw', 'regular', 'playoff')
    * @returns {Promise<Object>} Fixtures data
    */
-  async getFixtures(seasonId, season = '2024-2025', forceRefresh = false, format = 'processed') {
+  async getFixtures(seasonId, season = '2025-2026', forceRefresh = false, format = 'processed') {
     try {
       const response = await api.get(this.baseURL, {
         params: {
@@ -39,14 +39,14 @@ class FixturesApi {
   /**
    * Get only regular season fixtures
    */
-  async getRegularSeasonFixtures(seasonId, season = '2024-2025', forceRefresh = false) {
+  async getRegularSeasonFixtures(seasonId, season = '2025-2026', forceRefresh = false) {
     return this.getFixtures(seasonId, season, forceRefresh, 'regular');
   }
 
   /**
    * Get only playoff fixtures
    */
-  async getPlayoffFixtures(seasonId, season = '2024-2025', forceRefresh = false) {
+  async getPlayoffFixtures(seasonId, season = '2025-2026', forceRefresh = false) {
     return this.getFixtures(seasonId, season, forceRefresh, 'playoff');
   }
 

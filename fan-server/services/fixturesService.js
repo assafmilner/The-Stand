@@ -169,7 +169,7 @@ class FixturesService {
     return configs[seasonId] || configs[4644];
   }
 
-  async fetchAllFixtures(seasonId, season = '2024-2025', forceRefresh = false) {
+  async fetchAllFixtures(seasonId, season = '2025-2026', forceRefresh = false) {
     const cacheKey = `fixtures_${seasonId}_${season}`;
     if (!forceRefresh && this.isCacheValid(cacheKey, this.CACHE_DURATION.fixtures)) {
 

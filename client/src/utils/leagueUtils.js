@@ -37,7 +37,7 @@ export async function detectLeague(favoriteTeamHebrew) {
    
 
     const ligatHaAlData = await fetchFromApi(
-      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4644&s=2024-2025"
+      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4644&s=2025-2026"
     );
     
     const ligatHaAlTeams = ligatHaAlData.table?.map((team) => team.strTeam) || [];
@@ -54,7 +54,7 @@ export async function detectLeague(favoriteTeamHebrew) {
     // אם לא נמצא בליגת העל, נבדק בליגה הלאומית
 
     const leumitData = await fetchFromApi(
-      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4966&s=2024-2025"
+      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4966&s=2025-2026"
     );
     
     const leumitTeams = leumitData.table?.map((team) => team.strTeam) || [];

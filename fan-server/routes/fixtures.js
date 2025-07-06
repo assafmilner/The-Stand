@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
   try {
     const {
       seasonId,
-      season = '2024-2025',
+      season = '2025-2026',
       force = 'false',
       format = 'processed' // 'processed' | 'raw' | 'regular' | 'playoff'
     } = req.query;
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     if (!seasonId) {
       return res.status(400).json({
         error: 'Missing required parameter: seasonId',
-        example: '/api/fixtures?seasonId=4644&season=2024-2025'
+        example: '/api/fixtures?seasonId=4644&season=2025-2026'
       });
     }
 
@@ -146,7 +146,7 @@ router.delete('/cache', (req, res) => {
 router.get('/debug/:seasonId', async (req, res) => {
   try {
     const { seasonId } = req.params;
-    const { season = '2024-2025', round = null } = req.query;
+    const { season = '2025-2026', round = null } = req.query;
     
 
     

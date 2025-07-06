@@ -22,7 +22,7 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ Error response (${response.status}):`, errorText);
+       
         throw new Error(`Failed to fetch from API. Status: ${response.status}, Message: ${errorText}`);
       }
       

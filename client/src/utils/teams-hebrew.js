@@ -4,7 +4,7 @@ const teamNameMap = {
     badge: "https://r2.thesportsdb.com/images/media/team/badge/lh08ob1625167121.png",
     communityId: "1",
   },
-  "Hapoel Beer Sheva": {
+  "Hapoel Be'er Sheva": {
     name: "הפועל באר שבע",
     badge: "https://r2.thesportsdb.com/images/media/team/badge/978vgx1579019997.png",
     communityId: "2",
@@ -29,7 +29,7 @@ const teamNameMap = {
     badge: "https://r2.thesportsdb.com/images/media/team/badge/xqrw8z1639430750.png",
     communityId: "6",
   },
-  "Hapoel Kiryat Shmona": {
+  "Hapoel Ironi Kiryat Shmona": {
     name: "עירוני קריית שמונה",
     badge: "https://r2.thesportsdb.com/images/media/team/badge/401ntu1579020023.png",
     communityId: "7",
