@@ -195,12 +195,12 @@ class CacheManager {
   // League-specific methods
   
   // Get fixtures cache key
-  getFixturesCacheKey(seasonId, season = '2024-2025') {
+  getFixturesCacheKey(seasonId, season = '2025-2026') {
     return `fixtures_${seasonId}_${season}`;
   }
 
   // Get table cache key
-  getTableCacheKey(seasonId, season = '2024-2025') {
+  getTableCacheKey(seasonId, season = '2025-2026') {
     return `table_${seasonId}_${season}`;
   }
 
@@ -316,7 +316,7 @@ class CacheManager {
   }
 
   // Check if league data is cached
-  hasLeagueData(seasonId, season = '2024-2025') {
+  hasLeagueData(seasonId, season = '2025-2026') {
     const fixturesKey = this.getFixturesCacheKey(seasonId, season);
     const tableKey = this.getTableCacheKey(seasonId, season);
     
@@ -339,7 +339,7 @@ class CacheManager {
 
   // Preload league data (for performance optimization)
   async preloadLeagueData(seasonId, leagueType) {
-    const season = '2024-2025';
+    const season = '2025-2026';
     const fixturesKey = this.getFixturesCacheKey(seasonId, season);
     const tableKey = this.getTableCacheKey(seasonId, season);
     

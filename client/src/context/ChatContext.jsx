@@ -8,15 +8,17 @@ import React, {
 } from "react";
 import api from "../utils/api";
 import socketService from "../services/socketService";
+import { useUser } from "./UserContext";
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
+  const { user } = useUser();
   const [notifications, setNotifications] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
-  const [chatCache, setChatCache] = useState(new Map()); // הוסף cache מקומי
+  const [chatCache, setChatCache] = useState(new Map());
 
   const loadRecentChats = useCallback(async () => {
     if (loading) return;
@@ -43,11 +45,9 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const setActiveChat = useCallback((chatId) => {
-    console.log("Setting active chat:", chatId);
     setActiveChatId(chatId);
   }, []);
 
-  // פונקציה לעדכון ה-cache עם הודעה חדשה
   const addMessageToGlobalCache = useCallback(
     (message) => {
       const chatId =
@@ -59,7 +59,6 @@ export const ChatProvider = ({ children }) => {
         const newCache = new Map(prev);
         const existingMessages = newCache.get(chatId) || [];
 
-        // בדוק אם ההודעה כבר קיימת
         const messageExists = existingMessages.some(
           (msg) => msg._id === message._id
         );
@@ -68,10 +67,6 @@ export const ChatProvider = ({ children }) => {
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
           newCache.set(chatId, updatedMessages);
-          console.log(
-            `Updated cache for chat ${chatId}, total messages:`,
-            updatedMessages.length
-          );
         }
 
         return newCache;
@@ -80,7 +75,6 @@ export const ChatProvider = ({ children }) => {
     [activeChatId]
   );
 
-  // פונקציה לקבלת הודעות מה-cache
   const getCachedMessages = useCallback(
     (chatId) => {
       return chatCache.get(chatId) || [];
@@ -88,7 +82,6 @@ export const ChatProvider = ({ children }) => {
     [chatCache]
   );
 
-  // עדכון שיחות אחרונות
   const updateRecentChat = useCallback(
     (message) => {
       setRecentChats((prev) => {
@@ -133,14 +126,9 @@ export const ChatProvider = ({ children }) => {
   const addNotification = useCallback(
     (notification) => {
       if (activeChatId === notification.senderId) {
-        console.log(
-          "Chat is active, not adding notification for:",
-          notification.senderId
-        );
         return;
       }
 
-      console.log("Adding notification from:", notification.senderName);
       setNotifications((prev) => {
         const exists = prev.some((n) => n.senderId === notification.senderId);
         if (exists) {
@@ -198,23 +186,19 @@ export const ChatProvider = ({ children }) => {
   );
 
   useEffect(() => {
+    if (!user?._id) return;
+
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
     const initSocket = async () => {
       try {
+        if (socketService.isSocketConnected()) return;
+
         await socketService.connect(token);
 
         socketService.onReceiveMessage((msg) => {
-          console.log(
-            "📨 ChatContext received message from:",
-            msg.senderId.name
-          );
-
-          // תמיד הוסף ל-cache
           addMessageToGlobalCache(msg);
-
-          // עדכן שיחות אחרונות
           updateRecentChat(msg);
 
           const notification = {
@@ -234,11 +218,7 @@ export const ChatProvider = ({ children }) => {
     };
 
     initSocket();
-
-    return () => {
-      // אל תסיר listeners כאן!
-    };
-  }, [addMessageToGlobalCache, updateRecentChat, addNotification, showToast]);
+  }, [user?._id, addMessageToGlobalCache, updateRecentChat, addNotification, showToast]);
 
   const value = {
     notifications,
@@ -249,8 +229,8 @@ export const ChatProvider = ({ children }) => {
     markAsRead,
     setActiveChat,
     activeChatId,
-    getCachedMessages, // הוסף את זה
-    addMessageToGlobalCache, // הוסף את זה
+    getCachedMessages,
+    addMessageToGlobalCache,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

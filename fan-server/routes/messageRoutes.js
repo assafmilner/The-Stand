@@ -4,13 +4,15 @@ const router = express.Router();
 const {
   getChatHistory,
   sendMessage,
-  getRecentChats
+  getRecentChats,
+  getUnseenMessages
 } = require("../controllers/messageController");
 const auth = require("../middlewares/auth");
 
 // All routes require authentication
 router.use(auth);
 
+router.get("/unseen", getUnseenMessages);
 // Get chat history between current user and another user
 // GET /api/messages/history/:otherUserId
 router.get("/history/:otherUserId", getChatHistory);

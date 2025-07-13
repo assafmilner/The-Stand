@@ -7,6 +7,7 @@ import api from "../../utils/api";
 const TicketMarketplace = ({ colors }) => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
+  const [allTickets, setAllTickets] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -42,7 +43,15 @@ const TicketMarketplace = ({ colors }) => {
       });
 
       const response = await api.get(`/api/tickets?${queryParams.toString()}`);
-      setTickets(response.data.tickets || []);
+      const fetched = response.data.tickets || [];
+
+      setTickets(fetched);
+
+      // ✅ שמירה של הרשימה המלאה אם אין סינון פעיל
+      const hasFilters = Object.values(filters).some((value) => !!value);
+      if (!hasFilters) {
+        setAllTickets(fetched);
+      }
     } catch (err) {
       console.error("Error fetching tickets:", err);
       setError("שגיאה בטעינת כרטיסים");
@@ -63,7 +72,6 @@ const TicketMarketplace = ({ colors }) => {
 
   const clearFilters = () => {
     const cleared = {
-      stadium: "",
       dateFrom: "",
       dateTo: "",
       priceMin: "",
@@ -72,7 +80,7 @@ const TicketMarketplace = ({ colors }) => {
       isAwayGame: false,
     };
     setFilters(cleared);
-    fetchTickets();
+    setTickets(allTickets); // ✅ שחזור הרשימה המקורית
   };
 
   const hasActiveFilters = Object.values(filters).some((value) => !!value);
@@ -93,7 +101,6 @@ const TicketMarketplace = ({ colors }) => {
         </button>
       </div>
 
-      {/* Filter Bar with button */}
       <div className="rounded-lg shadow-sm border border-gray-200 p-4 bg-white w-fit">
         <div className="flex items-center gap-4">
           <button
@@ -121,7 +128,6 @@ const TicketMarketplace = ({ colors }) => {
         </div>
       </div>
 
-      {/* Filter Panel Separate */}
       {showFilters && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -199,7 +205,6 @@ const TicketMarketplace = ({ colors }) => {
         </div>
       )}
 
-      {/* Tickets grid */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600 text-center">{error}</p>

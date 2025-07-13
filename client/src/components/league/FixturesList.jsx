@@ -3,7 +3,7 @@ import { Calendar, Clock, Landmark } from "lucide-react";
 import teamNameMap from "../../utils/teams-hebrew";
 import stadiums from "../../utils/stadiums";
 
- const FixturesList = ({
+const FixturesList = ({
   fixtures,
   favoriteTeamEnglish,
   colors,

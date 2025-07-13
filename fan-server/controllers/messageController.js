@@ -95,7 +95,8 @@ const sendMessage = async (req, res) => {
     const message = await Message.create({
       senderId: userId,
       receiverId,
-      content: content.trim()
+      content: content.trim(),
+      isRead: flase
     });
 
     await message.populate("senderId", "name profilePicture");
@@ -155,6 +156,35 @@ const getRecentChats = async (req, res) => {
       {
         $unwind: "$user"
       },
+      // 🔽 Lookup to count unread messages per chat
+      {
+        $lookup: {
+          from: "messages",
+          let: { otherUserId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$senderId", "$$otherUserId"] },
+                    { $eq: ["$receiverId", objectId] },
+                    { $eq: ["$isRead", false] }
+                  ]
+                }
+              }
+            },
+            { $count: "count" }
+          ],
+          as: "unreadMessages"
+        }
+      },
+      {
+        $addFields: {
+          unreadCount: {
+            $ifNull: [{ $arrayElemAt: ["$unreadMessages.count", 0] }, 0]
+          }
+        }
+      },
       {
         $project: {
           user: {
@@ -163,32 +193,54 @@ const getRecentChats = async (req, res) => {
             profilePicture: "$user.profilePicture"
           },
           lastMessage: 1,
-          lastMessageTime: 1
+          lastMessageTime: 1,
+          unreadCount: 1
         }
       },
       {
         $sort: { lastMessageTime: -1 }
       },
       {
-        $limit: 20 // Limit to 20 recent chats
+        $limit: 20
       }
     ]);
 
-    res.json({ 
-      success: true, 
-      recentChats: chats 
+    res.json({
+      success: true,
+      recentChats: chats
     });
   } catch (err) {
     console.error("getRecentChats error:", err);
-    res.status(500).json({ 
-      success: false, 
-      error: "Failed to load recent chats" 
+    res.status(500).json({
+      success: false,
+      error: "Failed to load recent chats"
     });
   }
 };
 
+
+const getUnseenMessages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const messages = await Message.find({
+      receiverId: userId,
+      isRead: false
+    })
+      .populate("senderId", "name profilePicture")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, unseenMessages: messages });
+  } catch (err) {
+    console.error("getUnseenMessages error:", err);
+    res.status(500).json({ success: false, error: "Failed to load unseen messages" });
+  }
+};
+
+
 module.exports = {
   getChatHistory,
   sendMessage,
-  getRecentChats
+  getRecentChats,
+  getUnseenMessages
 };

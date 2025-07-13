@@ -1,81 +1,23 @@
 import teamNameMap from "./teams-hebrew";
-import { fetchFromApi } from "./fetchFromApi";
+import api from "./api";
 
 export async function detectLeague(favoriteTeamHebrew) {
-  if (!favoriteTeamHebrew) {
-    console.log("⚠️ No favorite team provided");
-    return null;
-  }
+  if (!favoriteTeamHebrew) return null;
 
-  const reverseTeamMap = Object.entries(teamNameMap).reduce(
-    (acc, [eng, data]) => {
-      acc[data.name] = eng;
-      return acc;
-    },
-    {}
-  );
+  const reverseTeamMap = Object.entries(teamNameMap).reduce((acc, [eng, data]) => {
+    acc[data.name] = eng;
+    return acc;
+  }, {});
 
-  const favoriteTeamEnglish = reverseTeamMap[favoriteTeamHebrew];
-
-  if (!favoriteTeamEnglish) {
-    console.log(`⚠️ No English mapping found for team: ${favoriteTeamHebrew}`);
-    return null;
-  }
-
-  
-
-  // בדיקה עם אחסון cache לזיהוי ליגה
-  const cacheKey = `league_detection_${favoriteTeamEnglish}`;
-  const cachedLeague = localStorage.getItem(cacheKey);
-  
-  if (cachedLeague) {
-
-    return parseInt(cachedLeague);
-  }
+  const teamName = reverseTeamMap[favoriteTeamHebrew];
+  if (!teamName) return null;
 
   try {
-   
-
-    const ligatHaAlData = await fetchFromApi(
-      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4644&s=2025-2026"
-    );
-    
-    const ligatHaAlTeams = ligatHaAlData.table?.map((team) => team.strTeam) || [];
-
-    
-    const isInLigatHaAl = ligatHaAlTeams.includes(favoriteTeamEnglish);
-    
-    if (isInLigatHaAl) {
- 
-      localStorage.setItem(cacheKey, "4644");
-      return 4644;
-    }
-    
-    // אם לא נמצא בליגת העל, נבדק בליגה הלאומית
-
-    const leumitData = await fetchFromApi(
-      "https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=4966&s=2025-2026"
-    );
-    
-    const leumitTeams = leumitData.table?.map((team) => team.strTeam) || [];
-
-    
-    const isInLeumit = leumitTeams.includes(favoriteTeamEnglish);
-    
-    if (isInLeumit) {
-
-      localStorage.setItem(cacheKey, "4966");
-      return 4966;
-    }
-    
-
-
-    localStorage.setItem(cacheKey, "4644");
-    return 4644;
-    
-  } catch (error) {
-    console.error("Failed to detect league:", error);
-    // במקרה של שגיאה, נחזיר ליגת העל כברירת מחדל
-    return 4644;
+    const res = await api.get("/api/league/detect", { params: { teamName } });
+    if (res.data.success) return parseInt(res.data.leagueId, 10);
+    return null;
+  } catch (err) {
+    console.error("detectLeague error:", err);
+    return null;
   }
 }

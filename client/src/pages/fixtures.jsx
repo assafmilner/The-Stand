@@ -1,45 +1,44 @@
-// client/src/pages/fixtures.jsx (Updated to use server API)
 import React, { useEffect, useRef, useState } from "react";
 import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
-import { RefreshCw, Server } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useLeague, useFixtures } from "../hooks/useLeague";
 import { FixturesList } from "../components/league";
 import teamNameMap from "../utils/teams-hebrew";
 import teamColors from "../utils/teamStyles";
-import fixturesApi from "../utils/fixturesApi";
 
 function Fixtures() {
   const { user } = useUser();
-  const { league, leagueType, loading: leagueLoading, error: leagueError } = useLeague(user?.favoriteTeam);
-  const { fixtures, loading, error, refetch, regularSeasonEndDate } = useFixtures(league, leagueType);
+  const {
+    league,
+    leagueType,
+    loading: leagueLoading,
+    error: leagueError,
+  } = useLeague(user?.favoriteTeam);
+  const {
+    fixtures,
+    loading,
+    error,
+    refetch,
+  } = useFixtures(league, leagueType);
+
   const fixtureRefs = useRef({});
-  const [cacheStats, setCacheStats] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
-  // Get English team name for filtering
-  const reverseTeamMap = Object.entries(teamNameMap).reduce(
-    (acc, [eng, data]) => {
-      acc[data.name] = eng;
-      return acc;
-    },
-    {}
-  );
+  const reverseTeamMap = Object.entries(teamNameMap).reduce((acc, [eng, data]) => {
+    acc[data.name] = eng;
+    return acc;
+  }, {});
   const favoriteTeamEnglish = reverseTeamMap[user?.favoriteTeam];
 
-  // Separate fixtures into regular season and playoff based on season property
   const separateFixtures = () => {
-    if (!fixtures.length) return { 
-      regularFixtures: [], 
-      playoffFixtures: []
-    };
+    if (!fixtures.length) return { regularFixtures: [], playoffFixtures: [] };
 
-    const regularFixtures = fixtures.filter(match => match.season === 'regular');
-    const playoffFixtures = fixtures.filter(match => match.season === 'playoff');
+    const regularFixtures = fixtures.filter((match) => match.type === "regular");
+    const playoffFixtures = fixtures.filter((match) => match.type === "playoff");
 
-    // Sort both by date
     regularFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
     playoffFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -48,77 +47,47 @@ function Fixtures() {
 
   const { regularFixtures, playoffFixtures } = separateFixtures();
 
-  // Find the closest upcoming game for the favorite team
+  const parseFixtureDateTime = (fixture) => {
+    return new Date(`${fixture.date}T${(fixture.time || "00:00").padStart(5, "0")}:00`);
+  };
+
   const findClosestUpcomingGame = () => {
     if (!fixtures.length || !favoriteTeamEnglish) return null;
 
-    return fixturesApi.getUpcomingFixturesForTeam(fixtures, favoriteTeamEnglish, 1)[0] || null;
+    const now = new Date();
+    const upcoming = fixtures
+      .filter(
+        (f) =>
+          (f.homeTeam === favoriteTeamEnglish || f.awayTeam === favoriteTeamEnglish) &&
+          parseFixtureDateTime(f) >= now
+      )
+      .sort((a, b) => parseFixtureDateTime(a) - parseFixtureDateTime(b));
+
+    return upcoming[0] || null;
   };
 
-  // Load cache statistics
-  const loadCacheStats = async () => {
-    try {
-      const stats = await fixturesApi.getCacheStats();
-      setCacheStats(stats.data);
-    } catch (error) {
-      console.error('Failed to load cache stats:', error);
-    }
-  };
-
-  // Handle manual refresh with cache clearing
-  const handleForceRefresh = async () => {
-    if (!league) return;
-    
-    setRefreshing(true);
-    try {
-      // Clear cache first
-      await fixturesApi.clearCache(`fixtures_${league}`);
-      // Then refresh data
-      refetch();
-      // Reload cache stats
-      setTimeout(loadCacheStats, 1000);
-    } catch (error) {
-      console.error('Failed to clear cache:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // Load cache stats on component mount
-  useEffect(() => {
-    loadCacheStats();
-  }, []);
-
-  // Auto-scroll to closest game
   useEffect(() => {
     if (!fixtures.length || loading) return;
 
     const closestGame = findClosestUpcomingGame();
-    
-    if (closestGame && fixtureRefs.current[closestGame.id]) {
-      const scrollTimeout = setTimeout(() => {
+    if (!closestGame) return;
+
+    const scrollTimeout = setTimeout(() => {
+      requestAnimationFrame(() => {
         const element = fixtureRefs.current[closestGame.id];
         if (element) {
-          element.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "center",
-            inline: "nearest"
-          });
-          
-          // Add a highlight effect to the closest game
+          element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
           element.style.transform = "scale(1.05)";
           element.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.1)";
-          
-          // Remove the highlight after 2 seconds
           setTimeout(() => {
             element.style.transform = "";
             element.style.boxShadow = "";
           }, 2000);
         }
-      }, 1000);
+      });
+    }, 300);
 
-      return () => clearTimeout(scrollTimeout);
-    }
+    return () => clearTimeout(scrollTimeout);
   }, [fixtures, loading, favoriteTeamEnglish]);
 
   if (leagueLoading || loading) {
@@ -175,62 +144,22 @@ function Fixtures() {
     );
   }
 
-  const nextGame = findClosestUpcomingGame();
-
   return (
     <Layout>
       <div className="fixtures-container dashboard-card">
-        {/* Header with controls */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-4xl font-bold">כל המשחקים של {user?.favoriteTeam}</h2>
-          <div className="flex gap-3">
-           
-            
-            {/* Regular refresh */}
-            <button
-              onClick={refetch}
-              disabled={refreshing}
-              className="text-black px-4 py-2 rounded bg-gray-100 transition-colors inline-flex items-center gap-2"
-              title="רענן מהקש"
-            >
-              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
-              רענן
-            </button>
-            
-            {/* Force refresh */}
-            <button
-              onClick={handleForceRefresh}
-              disabled={refreshing}
-              className="text-white px-4 py-2 rounded bg-red-600 transition-colors inline-flex items-center gap-2"
-              title="רענן מהשרת (נקה Cache)"
-            >
-              <Server size={20} />
-              {refreshing ? 'מרענן...' : 'רענן מהשרת'}
-            </button>
-          </div>
+          <button
+            onClick={refetch}
+            disabled={refreshing}
+            className="text-black px-4 py-2 rounded bg-gray-100 transition-colors inline-flex items-center gap-2"
+            title="רענן את הדף"
+          >
+            <RefreshCw size={20} className={refreshing ? "animate-spin" : ""} />
+            רענן
+          </button>
         </div>
 
-       
-
-        {/* Show info about which game will be highlighted */}
-        {nextGame && (
-          <div className="text-center mb-8 p-4 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-green-800 font-medium">
-              🎯 הדף יפתח במיקום המשחק הקרוב ביותר של {user?.favoriteTeam}
-            </p>
-            <p className="text-green-600 text-sm mt-1">
-              {teamNameMap[nextGame.homeTeam]?.name || nextGame.homeTeam} נגד{" "}
-              {teamNameMap[nextGame.awayTeam]?.name || nextGame.awayTeam} - {" "}
-              {new Date(nextGame.date).toLocaleDateString("he-IL", {
-                weekday: "long",
-                day: "numeric", 
-                month: "long"
-              })}
-            </p>
-          </div>
-        )}
-
-        {/* Regular Season */}
         <FixturesList
           fixtures={regularFixtures}
           favoriteTeamEnglish={favoriteTeamEnglish}
@@ -241,7 +170,6 @@ function Fixtures() {
           isPlayoff={false}
         />
 
-        {/* Playoff */}
         {playoffFixtures.length > 0 && (
           <FixturesList
             fixtures={playoffFixtures}
@@ -253,8 +181,6 @@ function Fixtures() {
             isPlayoff={true}
           />
         )}
-
-       
       </div>
     </Layout>
   );

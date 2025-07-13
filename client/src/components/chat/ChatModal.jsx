@@ -13,8 +13,12 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { loadChatHistory, addMessageToCache, invalidateRecentChats } =
-    useSharedChatCache();
+  const {
+    loadChatHistory,
+    addMessageToCache,
+    invalidateRecentChats,
+    subscribeToUserMessages,
+  } = useSharedChatCache();
 
   const colors = useMemo(
     () => teamColors[user?.favoriteTeam || "הפועל תל אביב"],
@@ -31,10 +35,8 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     const loadMessages = async () => {
       setLoading(true);
       try {
-        // 🔥 כריח טעינה מהשרת (לא מקאש) כדי לקבל הודעות חדשות
         const result = await loadChatHistory(otherUser._id, true); // forceRefresh = true
         setMessages(result.data);
-
         onMarkAsRead?.(otherUser._id);
       } catch (err) {
         console.error("Failed to load chat:", err);
@@ -47,6 +49,32 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     loadMessages();
   }, [isOpen, otherUser?._id, loadChatHistory, onMarkAsRead]);
 
+  // Subscribe to cache updates (live updates)
+  useEffect(() => {
+    if (!isOpen || !otherUser?._id) return;
+
+    const unsubscribe = subscribeToUserMessages(
+      otherUser._id,
+      (updatedMessagesFromCache) => {
+        setMessages((prevMessages) => {
+          // חבר בין cache לבין state קיים
+          const ids = new Set();
+          const merged = [...prevMessages, ...updatedMessagesFromCache]
+            .filter((msg) => {
+              if (ids.has(msg._id)) return false;
+              ids.add(msg._id);
+              return true;
+            })
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+          return merged;
+        });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isOpen, otherUser?._id, subscribeToUserMessages]);
+
   // Setup socket listeners
   useEffect(() => {
     if (!isOpen || !otherUser?._id) return;
@@ -58,28 +86,16 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
     const handleReceiveMessage = (msg) => {
       if (msg.senderId._id === otherUser._id) {
-        // Update cache and local state
-        const updatedMessages = addMessageToCache(otherUser._id, msg);
-        setMessages(updatedMessages);
-
-        // Mark as read since chat is open
+        addMessageToCache(otherUser._id, msg);
         onMarkAsRead?.(otherUser._id);
-
-        // Invalidate recent chats to refresh the list
         invalidateRecentChats();
-
-        // Auto scroll
         setTimeout(() => scrollToBottom(), 100);
       }
     };
 
     const handleMessageSent = (msg) => {
       if (msg.receiverId._id === otherUser._id) {
-        console.log("Message sent confirmed:", msg.content);
-
-        // החלף הודעה אופטימיסטית בהודעה אמיתית
         setMessages((prevMessages) => {
-          // מצא את ההודעה האופטימיסטית
           const optimisticIndex = prevMessages.findIndex(
             (m) =>
               m.isOptimistic &&
@@ -88,33 +104,24 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
           );
 
           if (optimisticIndex >= 0) {
-            // החלף את האופטימיסטית באמיתית
             const newMessages = [...prevMessages];
             newMessages[optimisticIndex] = msg;
             return newMessages;
           } else {
-            // fallback - השתמש ב-cache רגיל
-            const updatedMessages = addMessageToCache(otherUser._id, msg);
-            return updatedMessages;
+            return addMessageToCache(otherUser._id, msg);
           }
         });
 
-        // Invalidate recent chats to refresh the list
         invalidateRecentChats();
-
-        // Auto scroll
         setTimeout(() => scrollToBottom(), 100);
       }
     };
 
     const handleMessageError = (err) => {
       console.error("Message send error:", err);
-
-      // הסר הודעות אופטימיסטיות שנכשלו
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => !msg.isOptimistic)
       );
-
       alert("שליחת ההודעה נכשלה - נסה שוב");
     };
 
@@ -139,7 +146,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     const messageContent = newMessage.trim();
     const tempId = `temp-${Date.now()}`;
 
-    // ✨ Optimistic Update - הוסף הודעה מיד
     const optimisticMessage = {
       _id: tempId,
       content: messageContent,
@@ -149,26 +155,17 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
       isOptimistic: true,
     };
 
-    // הוסף מיד לצ'אט
     setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
-
-    // נקה את השדה
     setNewMessage("");
-
-    // שלח לשרת
     socketService.sendMessage(otherUser._id, messageContent);
-
-    // Auto scroll
     setTimeout(() => scrollToBottom(), 100);
 
-    // Timeout - הסר אחרי 10 שניות אם לא הגיע אישור
     setTimeout(() => {
       setMessages((prevMessages) => {
         const hasOptimistic = prevMessages.some(
           (msg) => msg._id === tempId && msg.isOptimistic
         );
         if (hasOptimistic) {
-          console.log("Message timeout, removing optimistic message");
           return prevMessages.filter((msg) => msg._id !== tempId);
         }
         return prevMessages;
@@ -188,7 +185,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Auto scroll when messages change
   useEffect(() => {
     if (messages.length > 0) {
       scrollToBottom();
@@ -204,7 +200,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
           isMinimized ? "w-80 h-16" : "w-96 h-[600px]"
         } flex flex-col overflow-hidden`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center gap-3">
             <img
@@ -219,7 +214,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
               )}
             </div>
           </div>
-
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
@@ -238,7 +232,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
 
         {!isMinimized && (
           <>
-            {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
               {loading ? (
                 <div className="text-center text-gray-500 py-8">
@@ -290,7 +283,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
                                 }
                               )}
                             </p>
-                            {/* אינדיקטור שליחה */}
                             {message.isOptimistic && (
                               <div className="flex items-center gap-1 mr-2">
                                 <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
@@ -309,7 +301,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
               )}
             </div>
 
-            {/* Input */}
             <div className="p-4 border-t bg-white">
               <div className="flex gap-3 items-end">
                 <textarea

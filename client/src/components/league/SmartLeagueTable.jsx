@@ -5,7 +5,7 @@ import LeagueTable from "./LeagueTable";
 
 const SmartLeagueTable = () => {
   const { user } = useUser();
-  const { leagueType, loading, error } = useLeague(user?.favoriteTeam);
+  const { league, leagueType, loading, error } = useLeague(user?.favoriteTeam);
 
   if (loading) {
     return <p className="text-center text-gray-500">טוען טבלה...</p>;
@@ -17,7 +17,7 @@ const SmartLeagueTable = () => {
     );
   }
 
-  return <LeagueTable league={leagueType} />;
+  return <LeagueTable league={league} />;
 };
 
 export default SmartLeagueTable;

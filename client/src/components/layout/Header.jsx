@@ -19,7 +19,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import "../../styles/index.css";
 import { useChat } from "../../context/ChatContext";
-import { useSharedChatCache } from "../../hooks/useSharedChatCache";
 import { useFriends } from "../../hooks/useFriends";
 import SearchBar from "../search/SearchBar";
 
@@ -31,14 +30,16 @@ const Header = ({ user }) => {
   const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [recentChats, setRecentChats] = useState([]);
-  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
   const friendsDropdownRef = useRef(null);
   const { unreadCount, notifications, markAsRead, setActiveChat } = useChat();
-
-  const { loadRecentChats, getCacheStats } = useSharedChatCache();
-
+  const { recentChats, loadRecentChats } = useChat();
+  useEffect(() => {
+    // טען שיחות רק אם אין עדיין שיחות טעונות
+    loadRecentChats().catch((err) =>
+      console.error("Error loading chats on mount:", err)
+    );
+  }, []);
   // Friends functionality
   const {
     receivedRequests,
@@ -131,15 +132,10 @@ const Header = ({ user }) => {
 
     if (newShowState) {
       // Load recent chats (from cache if available)
-      setLoading(true);
       try {
-        const result = await loadRecentChats();
-        setRecentChats(result.data);
+        await loadRecentChats();
       } catch (err) {
         console.error("Failed to load recent chats:", err);
-        setRecentChats([]);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -271,14 +267,7 @@ const Header = ({ user }) => {
                   </div>
 
                   <div className="max-h-64 overflow-y-auto">
-                    {loading && (
-                      <div className="p-6 text-center text-gray-500">
-                        <div className="animate-spin w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-2"></div>
-                        טוען שיחות...
-                      </div>
-                    )}
-
-                    {!loading && unifiedChats.length > 0 && (
+                    {unifiedChats.length > 0 ? (
                       <div className="p-3">
                         {unifiedChats.slice(0, 8).map((chat) => (
                           <div
@@ -352,9 +341,7 @@ const Header = ({ user }) => {
                           </div>
                         ))}
                       </div>
-                    )}
-
-                    {!loading && unifiedChats.length === 0 && (
+                    ) : (
                       <div className="p-6 text-center text-gray-500">
                         <MessageCircle
                           size={32}

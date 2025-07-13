@@ -57,7 +57,7 @@ const MyTickets = () => {
       setTickets((prev) =>
         prev.filter((ticket) => ticket._id !== ticketToDelete._id)
       );
-      setSuccessMessage("הכרטיס נמחק בהצלחה");
+   
     } catch (err) {
       console.error("Error deleting ticket:", err);
       setError("שגיאה במחיקת הכרטיס");
@@ -147,19 +147,6 @@ const MyTickets = () => {
             הוסף כרטיס
           </button>
         </div>
-
-        {/* הודעת הצלחה */}
-        {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
-            {successMessage}
-            <button
-              onClick={() => setSuccessMessage("")}
-              className="float-right font-bold text-green-700 hover:text-green-900"
-            >
-              ×
-            </button>
-          </div>
-        )}
 
         {/* הודעת שגיאה */}
         {error && (

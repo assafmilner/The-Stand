@@ -2,6 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const FixturesService = require('../services/fixturesService');
+const { syncAllFixturesToDB } = require("../services/fixtureSyncService");
+const { getFixturesFromCacheOrApi } = require('../services/fixtureQueryService');
+
 
 // Create a singleton instance of the fixtures service
 const fixturesService = new FixturesService();
@@ -225,5 +228,75 @@ router.get('/debug/:seasonId', async (req, res) => {
     });
   }
 });
+
+// GET /api/fixtures/round
+router.get('/round', async (req, res) => {
+  try {
+    const { seasonId, round, season = "2025-2026" } = req.query;
+
+    if (!seasonId || !round) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameters: seasonId and round',
+      });
+    }
+
+    const data = await fixturesService.fetchRound(
+      parseInt(seasonId, 10),
+      parseInt(round, 10),
+      season
+    );
+
+    res.json({
+      success: true,
+      events: data.events || [],
+      meta: {
+        seasonId: parseInt(seasonId, 10),
+        round: parseInt(round, 10),
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error in /fixtures/round:", error.message);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch round data",
+      message: error.message
+    });
+  }
+});
+
+router.post('/sync', async (req, res) => {
+  try {
+    const { seasonId, season = '2025-2026' } = req.body;
+
+    if (!seasonId) {
+      return res.status(400).json({ success: false, error: 'seasonId is required' });
+    }
+
+    const result = await syncAllFixturesToDB(seasonId, season);
+    res.json({ success: true, message: "Fixtures synced successfully", result });
+  } catch (error) {
+    console.error("❌ Error in manual fixture sync:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+router.get('/smart', async (req, res) => {
+  const { seasonId, season = '2025-2026' } = req.query;
+  if (!seasonId) {
+    return res.status(400).json({ success: false, error: 'Missing seasonId' });
+  }
+
+  try {
+    const result = await getFixturesFromCacheOrApi(parseInt(seasonId), season);
+    res.json({ success: true, source: result.source, data: result.fixtures });
+  } catch (err) {
+    console.error('❌ Failed to get smart fixtures:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 module.exports = router;

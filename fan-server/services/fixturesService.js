@@ -183,7 +183,8 @@ class FixturesService {
       // Step 1: Determine regular season end date from final round
 
       const finalRoundData = await this.fetchRound(seasonId, config.finalRegularRound, season);
-      const finalDates = (finalRoundData?.events || []).map(e => new Date(e.dateEvent));
+      const events = Array.isArray(finalRoundData?.events) ? finalRoundData.events : [];
+      const finalDates = events.map(e => new Date(e.dateEvent));
       const regularSeasonEndDate = finalDates.length > 0 ? new Date(Math.max(...finalDates)) : null;
 
 
@@ -198,9 +199,11 @@ class FixturesService {
       const allFixturesRaw = [];
       allResults.forEach(({ round, events, success }) => {
         if (success && events) {
-          events.forEach(event => {
-            allFixturesRaw.push({ round, event });
-          });
+          if (Array.isArray(events)) {
+            events.forEach(event => {
+              allFixturesRaw.push({ round, event });
+            });
+          }
         }
       });
 
@@ -213,6 +216,7 @@ class FixturesService {
         const targetList = isRegular ? regularFixtures : playoffFixtures;
 
         targetList.push({
+          seasonId,
           id: event.idEvent,
           homeTeam: event.strHomeTeam,
           awayTeam: event.strAwayTeam,
@@ -222,7 +226,9 @@ class FixturesService {
           round: parseInt(event.intRound, 10),
           homeScore: event.intHomeScore !== null ? parseInt(event.intHomeScore) : null,
           awayScore: event.intAwayScore !== null ? parseInt(event.intAwayScore) : null,
-          season: isRegular ? 'regular' : 'playoff'
+          season,
+          leagueSeason: season,
+          type: isRegular ? 'regular' : 'playoff'
         });
       });
 

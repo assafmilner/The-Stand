@@ -4,12 +4,11 @@ const User = require("../models/User");
 
 // Get all available tickets with filters
 const getAllTickets = async (req, res) => {
-
   try {
     const {
       homeTeam,
       awayTeam,
-      teamName, // New parameter for filtering by either home or away team
+      teamName,
       stadium,
       dateFrom,
       dateTo,
@@ -19,46 +18,50 @@ const getAllTickets = async (req, res) => {
       limit = 20,
     } = req.query;
 
-    // Build filter object
     const filter = { isSoldOut: false };
+
+    // ✅ סינון ברירת מחדל: רק כרטיסים עתידיים
+    const now = new Date();
+    filter.date = { $gte: now };
+
     // סינון לפי מוכרים מאותה קבוצה
-if (req.user && req.user.id) {
-  const currentUser = await User.findById(req.user.id).select('favoriteTeam');
-  if (currentUser && currentUser.favoriteTeam) {
-    const sameTeamUsers = await User.find({ favoriteTeam: currentUser.favoriteTeam }).select('_id');
-    const sameTeamUserIds = sameTeamUsers.map(user => user._id);
-    filter.sellerId = { $in: sameTeamUserIds };
-    
-  }
-}
-    // Handle team filtering - if teamName is provided, show games where the team is either home or away
+    if (req.user && req.user.id) {
+      const currentUser = await User.findById(req.user.id).select("favoriteTeam");
+      if (currentUser && currentUser.favoriteTeam) {
+        const sameTeamUsers = await User.find({ favoriteTeam: currentUser.favoriteTeam }).select("_id");
+        const sameTeamUserIds = sameTeamUsers.map(user => user._id);
+        filter.sellerId = { $in: sameTeamUserIds };
+      }
+    }
+
+    // סינון לפי קבוצה (בית/חוץ או כללי)
     if (teamName) {
       filter.$or = [
         { homeTeam: { $regex: teamName, $options: "i" } },
         { awayTeam: { $regex: teamName, $options: "i" } }
       ];
     } else {
-      // Legacy individual team filtering
       if (homeTeam) filter.homeTeam = { $regex: homeTeam, $options: "i" };
       if (awayTeam) filter.awayTeam = { $regex: awayTeam, $options: "i" };
     }
 
-    if (stadium) filter.stadium = { $regex: stadium, $options: "i" };
-
-    // Date range filter
-    if (dateFrom || dateTo) {
-      filter.date = {};
-      if (dateFrom) filter.date.$gte = new Date(dateFrom);
-      if (dateTo) filter.date.$lte = new Date(dateTo);
+    // סינון אצטדיון
+    if (stadium) {
+      filter.stadium = { $regex: stadium, $options: "i" };
     }
 
-    // Price range filter
+    // 🗓️ סינון טווח תאריכים (משלים את ברירת המחדל)
+    if (dateFrom) filter.date.$gte = new Date(dateFrom);
+    if (dateTo) filter.date.$lte = new Date(dateTo);
+
+    // 💰 סינון לפי מחיר
     if (priceMin || priceMax) {
       filter.price = {};
       if (priceMin) filter.price.$gte = parseFloat(priceMin);
       if (priceMax) filter.price.$lte = parseFloat(priceMax);
     }
 
+    // פאגינציה
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const tickets = await TicketListing.find(filter)
@@ -84,6 +87,7 @@ if (req.user && req.user.id) {
     res.status(500).json({ message: "Error fetching tickets", error: error.message });
   }
 };
+
 
 // Create a new ticket listing
 const createTicket = async (req, res) => {

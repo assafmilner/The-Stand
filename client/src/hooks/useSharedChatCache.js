@@ -1,85 +1,91 @@
-// client/src/hooks/useSharedChatCache.js
 import { useRef, useCallback } from 'react';
 import api from '../utils/api';
 
-// Singleton cache that persists across all components
 const globalChatCache = {
-  chatHistories: new Map(), // userId -> messages[]
-  recentChats: null,        // cached recent chats
-  lastRecentChatsLoad: null // timestamp of last load
+  chatHistories: new Map(),
+  recentChats: null,
+  lastRecentChatsLoad: null,
+  listeners: new Map(),
 };
 
 export const useSharedChatCache = () => {
   const cacheRef = useRef(globalChatCache);
 
-  // Get cached chat history
+  const notifyListeners = useCallback((userId) => {
+    const set = cacheRef.current.listeners.get(userId);
+    if (set) {
+      for (const cb of set) cb(cacheRef.current.chatHistories.get(userId) || []);
+    }
+  }, []);
+
+  const subscribeToUserMessages = useCallback((userId, callback) => {
+    if (!cacheRef.current.listeners.has(userId)) {
+      cacheRef.current.listeners.set(userId, new Set());
+    }
+    cacheRef.current.listeners.get(userId).add(callback);
+
+    return () => {
+      cacheRef.current.listeners.get(userId)?.delete(callback);
+    };
+  }, []);
+
   const getCachedChatHistory = useCallback((userId) => {
     return cacheRef.current.chatHistories.get(userId);
   }, []);
 
- // Load chat history with caching
-const loadChatHistory = useCallback(async (userId, forceRefresh = false) => {
-  // אם forceRefresh = true, דלג על הקאש
-  if (!forceRefresh) {
-    const cached = cacheRef.current.chatHistories.get(userId);
-    if (cached) {
-      return { data: cached, fromCache: true };
+  const loadChatHistory = useCallback(async (userId, forceRefresh = false) => {
+    if (!forceRefresh) {
+      const cached = cacheRef.current.chatHistories.get(userId);
+      if (cached) return { data: cached, fromCache: true };
     }
-  }
 
-  // Load from API
-  try {
-    console.log('Loading chat history from API for:', userId);
-    const res = await api.get(`/api/messages/history/${userId}`);
-    if (res.data.success) {
-      const messages = res.data.messages || [];
-      // Store in cache
-      cacheRef.current.chatHistories.set(userId, messages);
-      console.log('Loaded', messages.length, 'messages from API');
-      return { data: messages, fromCache: false };
+    try {
+      const res = await api.get(`/api/messages/history/${userId}`);
+      if (res.data.success) {
+        const messages = res.data.messages || [];
+        cacheRef.current.chatHistories.set(userId, messages);
+        notifyListeners(userId); // ✅
+        return { data: messages, fromCache: false };
+      }
+      return { data: [], fromCache: false };
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+      return { data: [], fromCache: false };
     }
-    return { data: [], fromCache: false };
-  } catch (err) {
-    console.error('Failed to load chat history:', err);
-    return { data: [], fromCache: false };
-  }
-}, []);
+  }, [notifyListeners]);
 
-  // Add message to cache and return updated messages
   const addMessageToCache = useCallback((userId, message) => {
     const existing = cacheRef.current.chatHistories.get(userId) || [];
-    const updated = [...existing, message];
+    const exists = existing.find((m) => m._id === message._id);
+    if (exists) return existing;
+
+    const updated = [...existing, message].sort((a, b) =>
+      new Date(a.createdAt) - new Date(b.createdAt)
+    );
     cacheRef.current.chatHistories.set(userId, updated);
-
+    notifyListeners(userId); // ✅
     return updated;
-  }, []);
+  }, [notifyListeners]);
 
-  // Get cached recent chats
   const getCachedRecentChats = useCallback(() => {
-    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-    if (cacheRef.current.recentChats && 
-        cacheRef.current.lastRecentChatsLoad > fiveMinutesAgo) {
-
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    if (
+      cacheRef.current.recentChats &&
+      cacheRef.current.lastRecentChatsLoad > fiveMinutesAgo
+    ) {
       return { data: cacheRef.current.recentChats, fromCache: true };
     }
     return null;
   }, []);
 
-  // Load recent chats with caching
   const loadRecentChats = useCallback(async () => {
-    // Check cache first
     const cached = getCachedRecentChats();
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
-    // Load from API
     try {
-
       const res = await api.get('/api/messages/recent');
       if (res.data.success) {
         const chats = res.data.recentChats || [];
-        // Store in cache
         cacheRef.current.recentChats = chats;
         cacheRef.current.lastRecentChatsLoad = Date.now();
         return { data: chats, fromCache: false };
@@ -91,35 +97,29 @@ const loadChatHistory = useCallback(async (userId, forceRefresh = false) => {
     }
   }, [getCachedRecentChats]);
 
-  // Invalidate recent chats cache (when new message arrives)
   const invalidateRecentChats = useCallback(() => {
     cacheRef.current.recentChats = null;
     cacheRef.current.lastRecentChatsLoad = null;
-
   }, []);
 
-  // Clear specific chat cache
   const clearChatCache = useCallback((userId) => {
     cacheRef.current.chatHistories.delete(userId);
-
   }, []);
 
-  // Clear all cache
   const clearAllCache = useCallback(() => {
     cacheRef.current.chatHistories.clear();
     cacheRef.current.recentChats = null;
     cacheRef.current.lastRecentChatsLoad = null;
-
+    cacheRef.current.listeners.clear();
   }, []);
 
-  // Get cache statistics
   const getCacheStats = useCallback(() => {
     return {
       cachedChats: cacheRef.current.chatHistories.size,
       hasRecentChats: !!cacheRef.current.recentChats,
-      recentChatsAge: cacheRef.current.lastRecentChatsLoad 
-        ? Date.now() - cacheRef.current.lastRecentChatsLoad 
-        : null
+      recentChatsAge: cacheRef.current.lastRecentChatsLoad
+        ? Date.now() - cacheRef.current.lastRecentChatsLoad
+        : null,
     };
   }, []);
 
@@ -132,6 +132,7 @@ const loadChatHistory = useCallback(async (userId, forceRefresh = false) => {
     invalidateRecentChats,
     clearChatCache,
     clearAllCache,
-    getCacheStats
+    getCacheStats,
+    subscribeToUserMessages,
   };
 };
