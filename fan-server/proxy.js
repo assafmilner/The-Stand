@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error from API: ${response.status} - ${errorText}`);
+      
       return res.status(response.status).json({ 
         error: `API returned ${response.status}`, 
         details: errorText 

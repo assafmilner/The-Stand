@@ -49,7 +49,7 @@ const teamNameMap = {
     badge: "https://r2.thesportsdb.com/images/media/team/badge/78q5ez1656067666.png",
     communityId: "10",
   },
-  "Maccabi Petach Tikva": {
+  "Maccabi Petah Tikva": {
     name: "מכבי פתח תקווה",
     badge: "https://r2.thesportsdb.com/images/media/team/badge/3bvby91720417514.png",
     communityId: "11",
@@ -149,6 +149,16 @@ const teamNameMap = {
     name: "הפועל רעננה",
     badge: "https://r2.thesportsdb.com/images/media/team/badge/h7annf1513886063.png",
     communityId: "30",
+  },
+    "Hapoel Kiryat Yam": {
+    name: "הפועל קרית ים",
+    badge: "https://r2.thesportsdb.com/images/media/team/badge/vnz6m01751284277.png",
+    communityId: "31",
+  },
+    "Ironi Modi'in": {
+    name: "עירוני מודיעין",
+    badge: "https://r2.thesportsdb.com/images/media/team/badge/8lsfra1751280876.png",
+    communityId: "32",
   },
 };
 

@@ -20,11 +20,11 @@ export async function fetchFromApi(apiUrl, maxRetries = 3) {
       
     
       
-      if (!response.ok) {
-        const errorText = await response.text();
+      // if (!response.ok) {
+      //   const errorText = await response.text();
        
-        throw new Error(`Failed to fetch from API. Status: ${response.status}, Message: ${errorText}`);
-      }
+      //   throw new Error(`Failed to fetch from API. Status: ${response.status}, Message: ${errorText}`);
+      // }
       
       const data = await response.json();
      
