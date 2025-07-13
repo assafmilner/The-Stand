@@ -14,7 +14,7 @@ const messageRoutes = require("./routes/messageRoutes");
 const friendRoutes = require("./routes/friendRoutes"); // New import
 const searchRoutes = require('./routes/search');
 const leagueRoutes = require("./routes/leagueRoutes");
-
+console.log("🔥 SERVER LOADING...");
 dotenv.config();
 mongoose
   .connect(process.env.MONGO_URL)
