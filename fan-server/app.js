@@ -36,6 +36,8 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+
+
 // Routes
 app.use('/api/proxy', proxyRouter);
 const authRoutes = require("./routes/auth");
@@ -65,5 +67,16 @@ app.use((error, req, res, next) => {
     message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
   });
 });
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../client/build');
+  app.use(express.static(clientBuildPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
+
 
 module.exports = app;
