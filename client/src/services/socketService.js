@@ -1,11 +1,9 @@
-// client/src/services/socketService.js
 import { io } from 'socket.io-client';
 
 class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
-    
   }
 
   connect(token) {
@@ -18,11 +16,15 @@ class SocketService {
         this.socket.disconnect();
       }
 
-      this.socket = io(process.env.REACT_APP_SERVER_URL || 'http://localhost:3001', {
+      const serverUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001';
+
+      this.socket = io(serverUrl, {
         auth: { token },
+        withCredentials: true,
+        transports: ['websocket', 'polling'], // ✅ חשוב ל-Render
         reconnection: true,
         reconnectionAttempts: 3,
-        reconnectionDelay: 1000
+        reconnectionDelay: 1000,
       });
 
       this.socket.on('connect', () => {
@@ -58,7 +60,7 @@ class SocketService {
     this.socket.emit('send_message', {
       receiverId,
       content,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
