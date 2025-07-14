@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: the-stand-api
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    rootDir: fan-server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
