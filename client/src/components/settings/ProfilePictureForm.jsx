@@ -5,7 +5,7 @@ import api from "utils/api";
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
   const [preview, setPreview] = useState(
-    user?.profilePicture || "http://localhost:3001/assets/defaultProfilePic.png"
+    user?.profilePicture || " /assets/defaultProfilePic.png"
   );
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -26,7 +26,7 @@ const ProfilePictureForm = ({ user }) => {
 
   const handleRemove = () => {
     setSelectedFile(null);
-    setPreview("http://localhost:3001/assets/defaultProfilePic.png");
+    setPreview(" /assets/defaultProfilePic.png");
   };
 
   const handleSave = async () => {
@@ -42,16 +42,12 @@ const ProfilePictureForm = ({ user }) => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await api.post(
-        "http://localhost:3001/api/users/upload-profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await api.post(" /api/users/upload-profile", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       const imageUrl = response.data.profilePicture;
 

@@ -30,13 +30,11 @@ const PersonalInfoForm = ({ user }) => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await api.put(
-        "http://localhost:3001/api/users/update-profile",
-        { bio, phone },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.put("/api/users/update-profile", {
+        bio,
+        phone,
+        location: selectedLocation, // ✅ גם הוסף את המיקום לעדכון
+      });
       setSuccess(res.data.message);
     } catch (err) {
       setError("שגיאה בעדכון המידע האישי");

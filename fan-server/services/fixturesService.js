@@ -75,7 +75,7 @@ class FixturesService {
     
     try {
       // נסה דרך proxy תחילה
-      const proxyUrl = process.env.THESPORTSDB_PROXY_URL || 'http://localhost:3001/api/proxy';
+      const proxyUrl = process.env.THESPORTSDB_PROXY_URL || ' /api/proxy';
       const url = `${proxyUrl}?url=${encodeURIComponent(apiUrl)}`;
       
       const response = await fetch(url, {

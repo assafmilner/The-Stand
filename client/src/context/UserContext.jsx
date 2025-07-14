@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
       }
 
       try {
-        const res = await api.get("http://localhost:3001/api/users/me", {
+        const res = await api.get(" /api/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

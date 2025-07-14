@@ -32,7 +32,7 @@ const ChangePasswordForm = () => {
       const token = localStorage.getItem("accessToken");
 
       const response = await api.put(
-        "http://localhost:3001/api/users/change-password",
+        " /api/users/change-password",
         {
           currentPassword,
           newPassword,

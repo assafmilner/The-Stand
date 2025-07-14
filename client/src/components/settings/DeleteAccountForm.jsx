@@ -18,14 +18,11 @@ const DeleteAccountForm = () => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await api.delete(
-        "http://localhost:3001/api/users/delete",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.delete(" /api/users/delete", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       console.log("נמחק:", response.data);
       setSuccess(true);

@@ -72,7 +72,7 @@ const UserSchema = new mongoose.Schema({
 
   profilePicture: {
     type: String,
-    default:"http://localhost:3001/assets/defaultProfilePic.png", 
+    default:" /assets/defaultProfilePic.png", 
   },
 
   coverImage: {  

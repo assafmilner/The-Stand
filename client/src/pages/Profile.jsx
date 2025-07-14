@@ -70,10 +70,9 @@ const Profile = () => {
           // For own profile - just get friends (profile data already in context)
           getCurrentUserFriends();
         } else {
-
           const profileResponse = await api.get(`/api/users/profile/${userId}`);
           setProfileUser(profileResponse.data);
-         
+
           await fetchUserFriends(userId);
         }
       } catch (error) {
@@ -135,14 +134,13 @@ const Profile = () => {
 
   const { friends, friendsCount, friendsLoading } = getFriendsData();
 
-  
   if (loading) {
     return (
       <ProfileLayout>
         <div className="profile-container bg-gray-50 " dir="rtl">
           {/* Skeleton */}
           <div className="relative h-64 md:h-80 bg-gray-200 animate-pulse rounded-b-4xl" />
-          
+
           <div className="relative px-4 md:px-8 pb-6">
             <div className="flex flex-col lg:flex-row lg:items-end -mt-16 md:-mt-20 gap-6">
               <div className="flex items-end gap-4">
@@ -154,7 +152,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="text-center py-8">
             <div className="loading-spinner mx-auto mb-4"></div>
             <span>טוען פרופיל...</span>
@@ -195,7 +193,7 @@ const Profile = () => {
                   <img
                     src={
                       displayUser.profilePicture ||
-                      "http://localhost:3001/assets/defaultProfilePic.png"
+                      " /assets/defaultProfilePic.png"
                     }
                     alt="Profile"
                     className="profile-avatar w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg object-cover"
