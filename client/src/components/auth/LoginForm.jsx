@@ -27,7 +27,14 @@ const LoginForm = () => {
     setEmailVerificationRequired(false);
 
     try {
-      const response = await api.post("/api/auth/login", { email, password });
+      const response = await api.post(
+        "/api/auth/login",
+        { email, password },
+        {
+          withCredentials: true,
+        }
+      );
+
       login(response.data.accessToken);
       setUser(response.data.user);
       navigate("/home");
