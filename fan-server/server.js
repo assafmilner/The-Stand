@@ -1,4 +1,5 @@
 // fan-server/server.js
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -7,142 +8,140 @@ const Message = require("./models/Message");
 const User = require("./models/User");
 const app = require("./app");
 
+// Create HTTP server
 const server = http.createServer(app);
+require("dotenv").config();
+console.log("✅ CLIENT_URL =", process.env.CLIENT_URL);
 
+
+// Load CLIENT_URL safely
+const origin = (() => {
+  const envOrigin = process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "*";
+  if (!envOrigin || envOrigin === "/:" || envOrigin.trim() === "") {
+    console.warn("⚠️ CLIENT_URL missing or invalid – falling back to '*'");
+    return "*";
+  }
+  return envOrigin;
+})();
+
+// Set up Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : "*",
+    origin,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-// Simple online users tracking
+// Track online users
 const onlineUsers = new Map();
 
-// Socket authentication
+// Authenticate incoming sockets
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) {
-      return next(new Error("No token provided"));
-    }
+    if (!token) return next(new Error("No token provided"));
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('name profilePicture');
-    
-    if (!user) {
-      return next(new Error("User not found"));
-    }
+    const user = await User.findById(decoded.id).select("name profilePicture");
+
+    if (!user) return next(new Error("User not found"));
 
     socket.userId = decoded.id;
     socket.user = user;
     next();
   } catch (err) {
-    console.error("Socket auth error:", err);
+    console.error("❌ Socket auth error:", err);
     next(new Error("Invalid token"));
   }
 });
 
+// Handle socket connection
 io.on("connection", (socket) => {
   const userId = socket.userId;
-  
-  // Add user to online users
+
+  // Add user to map
   onlineUsers.set(userId, {
     socketId: socket.id,
     user: socket.user,
     lastSeen: new Date()
   });
 
-
-
-  socket.on("send_message", async (data) => {
+  // Handle sending messages
+  socket.on("send_message", async ({ receiverId, content }) => {
     try {
-      const { receiverId, content } = data;
       const senderId = socket.userId;
 
-      // Validation
       if (!receiverId || !content || content.trim().length === 0) {
-        socket.emit("message_error", { error: "Invalid message data" });
-        return;
+        return socket.emit("message_error", { error: "Invalid message data" });
       }
 
       if (content.length > 500) {
-        socket.emit("message_error", { error: "Message too long" });
-        return;
+        return socket.emit("message_error", { error: "Message too long" });
       }
 
-      // Check if receiver exists
-      const receiver = await User.findById(receiverId).select('name profilePicture');
+      const receiver = await User.findById(receiverId).select("name profilePicture");
       if (!receiver) {
-        socket.emit("message_error", { error: "Receiver not found" });
-        return;
+        return socket.emit("message_error", { error: "Receiver not found" });
       }
 
-      // Create message
-      const newMessage = new Message({ 
-        senderId, 
-        receiverId, 
-        content: content.trim() 
+      const newMessage = new Message({
+        senderId,
+        receiverId,
+        content: content.trim()
       });
-      
+
       const savedMessage = await newMessage.save();
       await savedMessage.populate("senderId", "name profilePicture");
       await savedMessage.populate("receiverId", "name profilePicture");
 
       const messageObj = savedMessage.toObject();
 
-      // Send to receiver if online
       const receiverInfo = onlineUsers.get(receiverId);
       if (receiverInfo) {
         io.to(receiverInfo.socketId).emit("receive_message", messageObj);
       }
 
-      // Confirm to sender
       socket.emit("message_sent", messageObj);
-
-   
     } catch (err) {
       console.error("❌ send_message error:", err);
       socket.emit("message_error", { error: "Failed to send message" });
     }
   });
 
-  socket.on("disconnect", (reason) => {
+  // Handle disconnect
+  socket.on("disconnect", () => {
     onlineUsers.delete(userId);
- 
   });
 
-  // Handle connection errors
+  // Handle socket-level errors
   socket.on("error", (error) => {
     console.error("Socket error:", error);
   });
 });
 
-// Cleanup disconnected users every 5 minutes
+// Periodically clean up disconnected users
 setInterval(() => {
   const now = new Date();
   const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-  
+
   for (const [userId, userInfo] of onlineUsers.entries()) {
     if (userInfo.lastSeen < fiveMinutesAgo) {
       onlineUsers.delete(userId);
     }
   }
-  
- 
 }, 5 * 60 * 1000);
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
+// Handle graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down gracefully...");
   server.close(() => {
-    console.log('Server closed');
+    console.log("Server closed");
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
- 
 });

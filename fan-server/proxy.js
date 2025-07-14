@@ -1,73 +1,82 @@
-// fan-server/proxy.js - גרסה משופרת
 const express = require('express');
+const fetch = require('node-fetch'); // ודא שזו הגרסה שאתה משתמש בה
+const { URL } = require('url');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    let targetUrl = req.query.url;
-    if (!targetUrl) {
-      console.error("Missing 'url' parameter");
-      return res.status(400).json({ error: "Missing 'url' parameter" });
+    let { url: targetUrl } = req.query;
+
+    if (!targetUrl || typeof targetUrl !== 'string') {
+      console.error("❌ Missing or invalid 'url' parameter");
+      return res.status(400).json({ error: "Missing or invalid 'url' parameter" });
     }
 
     targetUrl = decodeURIComponent(targetUrl);
 
-
-    if (!targetUrl.startsWith('https://')) {
-      console.error("Invalid URL - must start with https://");
-      return res.status(400).json({ error: "Invalid URL - must use HTTPS" });
+    // וולידציה של URL תקני
+    let urlObj;
+    try {
+      urlObj = new URL(targetUrl);
+    } catch (err) {
+      console.error("❌ Malformed URL");
+      return res.status(400).json({ error: "Malformed URL" });
     }
 
-    // בדיקה שזה URL בטוח
+    if (!urlObj.protocol.startsWith('https')) {
+      console.error("❌ URL must use HTTPS");
+      return res.status(400).json({ error: "URL must use HTTPS" });
+    }
+
+    // דומיינים מותרים בלבד
     const allowedDomains = ['thesportsdb.com'];
-    const urlObj = new URL(targetUrl);
-    if (!allowedDomains.some(domain => urlObj.hostname.includes(domain))) {
-      console.error(`Blocked domain: ${urlObj.hostname}`);
+    const hostnameValid = allowedDomains.some(domain => 
+      urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`)
+    );
+    if (!hostnameValid) {
+      console.error(`❌ Blocked domain: ${urlObj.hostname}`);
       return res.status(403).json({ error: "Domain not allowed" });
     }
 
+    // Fetch עם timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15 שניות
 
-    
-    // הוספת headers כדי לדמות דפדפן רגיל
     const response = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Node.js)',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+        'Connection': 'keep-alive'
       },
-      timeout: 15000, // 15 second timeout
+      signal: controller.signal
     });
 
+    clearTimeout(timeout);
 
-    
     if (!response.ok) {
       const errorText = await response.text();
-      
       return res.status(response.status).json({ 
-        error: `API returned ${response.status}`, 
+        error: `API returned status ${response.status}`, 
         details: errorText 
       });
     }
 
     const data = await response.json();
 
-    
-    // הוספת CORS headers
+    // CORS headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    
-    res.json(data);
+
+    return res.json(data);
+
   } catch (err) {
-    console.error("❌ Proxy error:", err);
+    console.error("❌ Proxy error:", err.message);
     res.status(500).json({ 
       error: "Failed to proxy request", 
       details: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
   }
 });

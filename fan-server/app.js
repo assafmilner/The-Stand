@@ -6,6 +6,8 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 const proxyRouter = require('./proxy');
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/users");
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures"); 
@@ -40,8 +42,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/proxy', proxyRouter);
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
