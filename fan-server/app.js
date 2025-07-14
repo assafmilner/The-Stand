@@ -31,10 +31,22 @@ const app = express();
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // Middlewares
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://the-stand.onrender.com" // ← שים כאן את ה־STATIC SITE שלך
+];
+
 app.use(cors({
-  origin: "http://localhost:3000",  // Frontend domain
-  credentials: true                 // Allow cookies/headers
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
