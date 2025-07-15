@@ -52,7 +52,7 @@ export const useFixtures = (seasonId, leagueType) => {
         params: {
           seasonId: seasonId.toString(),
           season: SEASON,
-          force: forceRefresh.toString(),
+          //force: forceRefresh.toString(),
    
         }
       });
