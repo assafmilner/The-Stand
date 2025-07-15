@@ -210,8 +210,7 @@ a, .link, .nav-item {
 
 .navbar-search input {
   width: 100%;
-  max-width: 800px;        /* מקסימום רוחב */
-  min-width: 600px;        /* כדי לא להיות קטנה מדי במסכים קטנים */
+  max-width: 800px;
   padding: 0.5rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
