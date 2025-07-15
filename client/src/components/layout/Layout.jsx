@@ -3,6 +3,7 @@ import { useUser, UserProvider } from "../../context/UserContext";
 import Header from "./Header";
 import RightSidebar from "./RightSidebar";
 import NextFixtures from "../league/NextFixtures";
+import MobileHamburgerMenu from "./MobileHamburgerMenu";
 import teamColors from "../../utils/teamStyles";
 import "../../styles/index.css";
 import { useNavigate } from "react-router-dom";
@@ -18,14 +19,24 @@ const Layout = ({ children, onChatSelect }) => {
     }
   }, [user, loading, navigate]);
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
   return (
     <div className="home-container">
       <Header user={user} onChatSelect={onChatSelect} />
+      <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
 
       <main className="home-main">
         <div className="dashboard-grid">
           {/* סרגל צד ימין */}
-          <RightSidebar user={user} colors={colors} onChatSelect={onChatSelect} />
+          <RightSidebar
+            user={user}
+            colors={colors}
+            onChatSelect={onChatSelect}
+          />
 
           {/* אזור תוכן מרכזי */}
           <section className="centered-content pt-6">{children}</section>
@@ -38,7 +49,7 @@ const Layout = ({ children, onChatSelect }) => {
       </main>
 
       <footer className="home-footer">
-        © 2025 אסף מילנר וליאת מרלי | כל הזכויות שמורות
+        © 2025 אסף מילנר | כל הזכויות שמורות
       </footer>
     </div>
   );

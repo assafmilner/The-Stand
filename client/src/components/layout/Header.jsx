@@ -34,8 +34,6 @@ const Header = ({ user }) => {
   const friendsDropdownRef = useRef(null);
   const { unreadCount, notifications, markAsRead, setActiveChat } = useChat();
   const { recentChats, loadRecentChats } = useChat();
-  const [showSidebar, setShowSidebar] = useState(false);
-
   useEffect(() => {
     // טען שיחות רק אם אין עדיין שיחות טעונות
     loadRecentChats().catch((err) =>
@@ -218,15 +216,6 @@ const Header = ({ user }) => {
   return (
     <>
       <header className="top-navbar">
-        {window.innerWidth <= 768 && (
-          <button
-            className="hamburger-menu"
-            onClick={() => setShowSidebar(true)}
-          >
-            ☰
-          </button>
-        )}
-
         <div className="navbar-content">
           {/* Left icons */}
           <div className="navbar-icons">
@@ -518,42 +507,6 @@ const Header = ({ user }) => {
             onMarkAsRead={markAsRead}
           />
         </Suspense>
-      )}
-      {showSidebar && (
-        <div
-          className="mobile-sidebar-backdrop"
-          onClick={() => setShowSidebar(false)}
-        >
-          <div className="mobile-sidebar" onClick={(e) => e.stopPropagation()}>
-            {/* התוכן של התפריט הימני שאתה שם ב־right-sidebar */}
-            <nav className="p-4">
-              <div className="nav-item" onClick={() => navigate("/")}>
-                דף הבית
-              </div>
-              <div className="nav-item" onClick={() => navigate("/matches")}>
-                משחקים
-              </div>
-              <div
-                className="nav-item"
-                onClick={() => navigate("/notifications")}
-              >
-                הודעות
-              </div>
-              <div className="nav-item" onClick={() => navigate("/friends")}>
-                חברים
-              </div>
-              <div className="nav-item" onClick={() => navigate("/tickets")}>
-                כרטיסים
-              </div>
-              <div className="nav-item" onClick={() => navigate("/profile")}>
-                פרופיל
-              </div>
-              <div className="nav-item" onClick={() => navigate("/logout")}>
-                התנתק
-              </div>
-            </nav>
-          </div>
-        </div>
       )}
     </>
   );
