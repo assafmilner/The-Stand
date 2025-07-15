@@ -1,0 +1,84 @@
+
+/* ========================
+   Responsive overrides for mobile
+   ======================== */
+
+@media (max-width: 768px) {
+  .navbar-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .navbar-search input {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .navbar-icons {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .user-profile {
+    justify-content: center;
+    padding-bottom: 0.5rem;
+  }
+
+  .app-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .tab-buttons-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .create-post-modern {
+    padding: 0.75rem;
+  }
+
+  .post-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .top-navbar {
+    padding: 0.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+
+  .dashboard-grid > aside:first-of-type,
+  .dashboard-grid > aside:last-of-type {
+    display: none;
+  }
+
+  .dashboard-card,
+  .create-post-modern,
+  .profile-posts {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-avatar {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .profile-stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,6 +1,7 @@
 @import "./auth.css";
 @import "./post.css";
 @import "./ticket.css";
+@import "./responsive.css";
 
 
 @tailwind base;
@@ -210,6 +211,7 @@ a, .link, .nav-item {
 .navbar-search input {
   width: 100%;
   max-width: 800px;        /* מקסימום רוחב */
+  min-width: 600px;        /* כדי לא להיות קטנה מדי במסכים קטנים */
   padding: 0.5rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
@@ -2041,67 +2043,4 @@ button:hover {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-
-
-@media (max-width: 600px) {
-  .navbar-search input {
-    min-width: 100%;
-    max-width: 100%;
-  }
-
-  .dashboard-grid {
-    padding: 0.5rem;
-    gap: 1rem;
-  }
-
-  .tab-buttons-inner {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .create-post-modern {
-    padding: 0.5rem;
-  }
-
-  .post-footer {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
-  }
-
-  .top-navbar {
-    padding: 0.5rem 0.5rem;
-  }
-
-  .navbar-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .navbar-icons {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 600px) {
-  .tab-buttons-inner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-
-@media (max-width: 768px) {
-  .navbar-search input {
-    max-width: 100%;
-  }
 }
