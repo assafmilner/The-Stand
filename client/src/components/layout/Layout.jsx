@@ -18,11 +18,8 @@ const Layout = ({ children, onChatSelect }) => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || !user) {
-    return null; // או Loader אם תרצה
-  }
-
-  const colors = teamColors[user.favoriteTeam];
+  const isReady = !loading && user;
+  const colors = teamColors[user?.favoriteTeam] || teamColors["הפועל תל אביב"];
 
   const handleLogout = () => {
     localStorage.clear();
@@ -31,25 +28,34 @@ const Layout = ({ children, onChatSelect }) => {
 
   return (
     <div className="home-container">
-      <Header user={user} onChatSelect={onChatSelect} />
+      {isReady ? (
+        <>
+          <Header user={user} onChatSelect={onChatSelect} />
 
-      <main className="home-main">
-        <div className="dashboard-grid">
-          <RightSidebar
-            user={user}
-            colors={colors}
-            onChatSelect={onChatSelect}
-          />
-          <section className="centered-content pt-6">{children}</section>
-          <aside>
-            <NextFixtures />
-          </aside>
+          <main className="home-main">
+            <div className="dashboard-grid">
+              <RightSidebar
+                user={user}
+                colors={colors}
+                onChatSelect={onChatSelect}
+              />
+              <section className="centered-content pt-6">{children}</section>
+              <aside>
+                <NextFixtures />
+              </aside>
+            </div>
+          </main>
+
+          <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
+          <footer className="home-footer">
+            © 2025 אסף מילנר | כל הזכויות שמורות
+          </footer>
+        </>
+      ) : (
+        <div className="flex justify-center items-center h-screen text-lg font-bold text-gray-500">
+          טוען את הקהל...
         </div>
-      </main>
-      <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
-      <footer className="home-footer">
-        © 2025 אסף מילנר | כל הזכויות שמורות
-      </footer>
+      )}
     </div>
   );
 };
