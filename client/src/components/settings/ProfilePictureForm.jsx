@@ -37,7 +37,7 @@ const ProfilePictureForm = ({ user }) => {
     if (!selectedFile && preview === DEFAULT_PROFILE_PIC && user?.profilePicture !== DEFAULT_PROFILE_PIC) {
       try {
         const response = await api.put(
-          "/api/users/update-profile-picture",
+          "/api/users/update-profile",
           { profilePicture: DEFAULT_PROFILE_PIC },
           {
             headers: {
