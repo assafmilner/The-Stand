@@ -44,7 +44,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
     setUploading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axios.post(" /api/users/upload-cover", formData, {
+      const response = await axios.post("/api/users/upload-cover", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
