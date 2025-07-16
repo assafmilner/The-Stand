@@ -2,11 +2,13 @@ import React, { useRef, useState } from "react";
 import { useUser } from "../../context/UserContext";
 import api from "utils/api";
 
+const DEFAULT_PROFILE_PIC =
+  "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png";
+
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
   const [preview, setPreview] = useState(
-    user?.profilePicture ||
-      "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png"
+    user?.profilePicture || DEFAULT_PROFILE_PIC
   );
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -25,11 +27,29 @@ const ProfilePictureForm = ({ user }) => {
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     setSelectedFile(null);
-    setPreview(
-      "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png"
-    );
+    setPreview(DEFAULT_PROFILE_PIC);
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await api.put(
+        "/api/users/update-profile-picture",
+        { profilePicture: DEFAULT_PROFILE_PIC },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setUser((prev) => ({
+        ...prev,
+        profilePicture: DEFAULT_PROFILE_PIC,
+      }));
+    } catch (err) {
+      console.error("שגיאה בעדכון תמונת ברירת מחדל:", err);
+    }
   };
 
   const handleSave = async () => {
@@ -54,12 +74,10 @@ const ProfilePictureForm = ({ user }) => {
 
       const imageUrl = response.data.profilePicture;
 
-      // עדכון מקומי בתצוגה
       setPreview(imageUrl);
       setSelectedFile(null);
       setUploading(false);
 
-      // עדכון בקונטקסט הגלובלי
       setUser((prev) => ({
         ...prev,
         profilePicture: imageUrl,
