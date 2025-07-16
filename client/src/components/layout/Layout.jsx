@@ -11,13 +11,18 @@ import { useNavigate } from "react-router-dom";
 const Layout = ({ children, onChatSelect }) => {
   const navigate = useNavigate();
   const { user, loading } = useUser();
-  const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
+
+  if (loading || !user) {
+    return null; // או Loader אם תרצה
+  }
+
+  const colors = teamColors[user.favoriteTeam];
 
   const handleLogout = () => {
     localStorage.clear();
@@ -31,17 +36,12 @@ const Layout = ({ children, onChatSelect }) => {
 
       <main className="home-main">
         <div className="dashboard-grid">
-          {/* סרגל צד ימין */}
           <RightSidebar
             user={user}
             colors={colors}
             onChatSelect={onChatSelect}
           />
-
-          {/* אזור תוכן מרכזי */}
           <section className="centered-content pt-6">{children}</section>
-
-          {/* אזור צד שמאל */}
           <aside>
             <NextFixtures />
           </aside>
