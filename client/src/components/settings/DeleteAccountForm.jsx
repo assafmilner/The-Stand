@@ -18,7 +18,7 @@ const DeleteAccountForm = () => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await api.delete(" /api/users/delete", {
+      const response = await api.delete("/api/users/delete", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
