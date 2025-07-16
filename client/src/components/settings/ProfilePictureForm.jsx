@@ -25,37 +25,35 @@ const ProfilePictureForm = ({ user }) => {
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
+    const token = localStorage.getItem("accessToken");
     setSelectedFile(null);
     setPreview(DEFAULT_PROFILE_PIC);
+
+    try {
+      await api.put(
+        "/api/users/update-profile",
+        { profilePicture: DEFAULT_PROFILE_PIC },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setUser((prev) => ({
+        ...prev,
+        profilePicture: DEFAULT_PROFILE_PIC,
+      }));
+
+      console.log("תמונת ברירת מחדל נשמרה");
+    } catch (err) {
+      console.error("שגיאה בהסרת תמונה:", err);
+    }
   };
 
   const handleSave = async () => {
     const token = localStorage.getItem("accessToken");
-
-    // אם אין קובץ חדש אבל התמונה שונתה לדיפולט
-    if (!selectedFile && preview === DEFAULT_PROFILE_PIC && user?.profilePicture !== DEFAULT_PROFILE_PIC) {
-      try {
-        const response = await api.put(
-          "/api/users/update-profile",
-          { profilePicture: DEFAULT_PROFILE_PIC },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setUser((prev) => ({
-          ...prev,
-          profilePicture: DEFAULT_PROFILE_PIC,
-        }));
-        console.log("תמונת ברירת מחדל נשמרה");
-      } catch (err) {
-        console.error("שגיאה בשמירת תמונת ברירת מחדל:", err);
-      }
-      return;
-    }
 
     if (!selectedFile) {
       console.log("No file selected");
@@ -122,13 +120,15 @@ const ProfilePictureForm = ({ user }) => {
         </button>
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={uploading}
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition mt-4"
-      >
-        {uploading ? "מעלה..." : "שמור תמונה"}
-      </button>
+      {selectedFile && (
+        <button
+          onClick={handleSave}
+          disabled={uploading}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition mt-4"
+        >
+          {uploading ? "מעלה..." : "שמור תמונה"}
+        </button>
+      )}
     </div>
   );
 };

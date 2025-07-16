@@ -6,7 +6,7 @@ const {
   refreshToken,
   logout,
   verifyEmail,
-  resendVerificationEmail
+  resendVerificationEmail,
 } = require("../controllers/authController");
 
 // register

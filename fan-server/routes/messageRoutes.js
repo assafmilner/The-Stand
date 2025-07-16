@@ -5,7 +5,7 @@ const {
   getChatHistory,
   sendMessage,
   getRecentChats,
-  getUnseenMessages
+  getUnseenMessages,
 } = require("../controllers/messageController");
 const auth = require("../middlewares/auth");
 
@@ -17,7 +17,7 @@ router.get("/unseen", getUnseenMessages);
 // GET /api/messages/history/:otherUserId
 router.get("/history/:otherUserId", getChatHistory);
 
-// Send a message to another user  
+// Send a message to another user
 // POST /api/messages
 router.post("/", sendMessage);
 
