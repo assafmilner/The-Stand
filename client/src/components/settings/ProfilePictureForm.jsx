@@ -7,7 +7,9 @@ const DEFAULT_PROFILE_PIC =
 
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
-  const [preview, setPreview] = useState(user?.profilePicture || DEFAULT_PROFILE_PIC);
+  const [preview, setPreview] = useState(
+    user?.profilePicture || DEFAULT_PROFILE_PIC
+  );
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -27,8 +29,6 @@ const ProfilePictureForm = ({ user }) => {
 
   const handleRemove = async () => {
     const token = localStorage.getItem("accessToken");
-    setSelectedFile(null);
-    setPreview(DEFAULT_PROFILE_PIC);
 
     try {
       await api.put(
@@ -46,9 +46,11 @@ const ProfilePictureForm = ({ user }) => {
         profilePicture: DEFAULT_PROFILE_PIC,
       }));
 
-      console.log("תמונת ברירת מחדל נשמרה");
+      setSelectedFile(null);
+      setPreview(DEFAULT_PROFILE_PIC);
+      console.log("✅ תמונת פרופיל הוסרה ונשמרה בשרת");
     } catch (err) {
-      console.error("שגיאה בהסרת תמונה:", err);
+      console.error("❌ שגיאה בעת הסרת תמונת פרופיל:", err);
     }
   };
 
