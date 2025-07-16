@@ -5,7 +5,8 @@ import api from "utils/api";
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
   const [preview, setPreview] = useState(
-    user?.profilePicture || " /assets/defaultProfilePic.png"
+    user?.profilePicture ||
+      "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png"
   );
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
