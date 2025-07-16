@@ -19,8 +19,7 @@ const SearchDropdown = ({
   };
 
   const handlePostClick = (post) => {
-    // אם יש לך post viewer modal, פתח אותו
-    // אחרת אפשר לנווט לעמוד הפוסט
+
     console.log("Post clicked:", post);
     onClose();
   };
