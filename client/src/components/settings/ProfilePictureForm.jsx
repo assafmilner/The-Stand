@@ -26,7 +26,9 @@ const ProfilePictureForm = ({ user }) => {
 
   const handleRemove = () => {
     setSelectedFile(null);
-    setPreview(" /assets/defaultProfilePic.png");
+    setPreview(
+      "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png"
+    );
   };
 
   const handleSave = async () => {
@@ -42,7 +44,7 @@ const ProfilePictureForm = ({ user }) => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await api.post(" /api/users/upload-profile", formData, {
+      const response = await api.post("/api/users/upload-profile", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
