@@ -32,7 +32,6 @@ const Layout = ({ children, onChatSelect }) => {
   return (
     <div className="home-container">
       <Header user={user} onChatSelect={onChatSelect} />
-      <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
 
       <main className="home-main">
         <div className="dashboard-grid">
@@ -47,7 +46,7 @@ const Layout = ({ children, onChatSelect }) => {
           </aside>
         </div>
       </main>
-
+      <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
       <footer className="home-footer">
         © 2025 אסף מילנר | כל הזכויות שמורות
       </footer>
