@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Camera } from "lucide-react";
 import CropModal from "./CropModal";
-import axios from "axios";
+import api from "utils/api";
 
 const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   const [coverImage, setCoverImage] = useState(user?.coverImage);
@@ -35,7 +35,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   };
 
   const uploadCroppedImage = async (croppedBlob) => {
-    // ⭐ סגור את המודאל מיד!
+
     setCropModalOpen(false);
 
     const formData = new FormData();
@@ -44,7 +44,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
     setUploading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axios.post("/api/users/upload-cover", formData, {
+      const response = await api.post("/api/users/upload-cover", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
