@@ -3,7 +3,9 @@ const bcrypt = require("bcryptjs");
 
 const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password -refreshToken");
+    const user = await User.findById(req.user.id).select(
+      "-password -refreshToken"
+    );
     res.json(user);
   } catch (err) {
     console.error(err);
@@ -17,7 +19,9 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: "חובה להזין סיסמה נוכחית וסיסמה חדשה" });
+      return res
+        .status(400)
+        .json({ error: "חובה להזין סיסמה נוכחית וסיסמה חדשה" });
     }
 
     const user = await User.findById(userId);
@@ -43,25 +47,28 @@ const updateProfileInfo = async (req, res) => {
   try {
     const { location, bio, phone } = req.body;
 
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: "משתמש לא נמצא" });
+    const updateData = {};
+    if (typeof location === "string") updateData.location = location;
+    if (typeof bio === "string") updateData.bio = bio;
+    if (typeof phone === "string") updateData.phone = phone;
 
-    if (location) user.location = location;
-    if (bio) user.bio = bio;
-    if (phone) user.phone = phone;
-
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+    });
 
     res.json({
-      message: "הפרטים עודכנו בהצלחה",
-      updatedFields: { location: user.location, bio: user.bio, phone: user.phone },
+      success: true,
+      message: "הפרופיל עודכן בהצלחה",
+      user: updatedUser,
     });
   } catch (err) {
-    console.error("שגיאה בעדכון הפרופיל:", err);
-    res.status(500).json({ error: "שגיאה בשרת" });
+    console.error("🔥 שגיאה בעדכון פרופיל:", err);
+    res.status(500).json({
+      success: false,
+      error: "שגיאה בעדכון הפרופיל",
+    });
   }
 };
-
 
 const uploadProfilePicture = async (req, res) => {
   try {
@@ -70,9 +77,8 @@ const uploadProfilePicture = async (req, res) => {
     }
 
     const uploadResult = {
-      secure_url: req.file.path
+      secure_url: req.file.path,
     };
-    
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
@@ -94,13 +100,12 @@ const deleteAccount = async (req, res) => {
   try {
     const userID = req.user.id;
     await User.findByIdAndDelete(userID);
-    res.json({ message: "החשבון נמחק בהצלחה"});
+    res.json({ message: "החשבון נמחק בהצלחה" });
   } catch (err) {
     console.error("שגיאה במחיקת החשבון", err);
-    res.status(500).json({error:"שגיאה בשרת בעת מחיקת החשבון"});
-
+    res.status(500).json({ error: "שגיאה בשרת בעת מחיקת החשבון" });
   }
-}
+};
 
 const uploadCoverImage = async (req, res) => {
   try {
@@ -109,7 +114,7 @@ const uploadCoverImage = async (req, res) => {
     }
 
     const uploadResult = {
-      secure_url: req.file.path
+      secure_url: req.file.path,
     };
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -131,15 +136,17 @@ const uploadCoverImage = async (req, res) => {
 const getPublicProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const user = await User.findById(userId)
-      .select("name profilePicture coverImage favoriteTeam location bio createdAt")
-      .lean(); 
-    
+      .select(
+        "name profilePicture coverImage favoriteTeam location bio createdAt"
+      )
+      .lean();
+
     if (!user) {
       return res.status(404).json({ error: "משתמש לא נמצא" });
     }
-    
+
     res.json(user);
   } catch (err) {
     console.error(err);
@@ -153,7 +160,7 @@ module.exports = {
   changePassword,
   updateProfileInfo,
   uploadProfilePicture,
-  uploadCoverImage,  
+  uploadCoverImage,
   deleteAccount,
   getPublicProfile,
 };

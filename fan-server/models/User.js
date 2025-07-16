@@ -63,7 +63,7 @@ const UserSchema = new mongoose.Schema({
   location: {
     type: String,
     enum: ['צפון', 'מרכז', 'דרום', 'ירושלים', 'אחר'],
-    default: 'אחר'
+    default: 'צפון'
   },
 
   refreshToken: {

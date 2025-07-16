@@ -33,7 +33,7 @@ const PersonalInfoForm = ({ user }) => {
       const res = await api.put("/api/users/update-profile", {
         bio,
         phone,
-        location: selectedLocation, // ✅ גם הוסף את המיקום לעדכון
+        location: selectedLocation, 
       });
       setSuccess(res.data.message);
     } catch (err) {
