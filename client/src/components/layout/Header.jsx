@@ -369,7 +369,7 @@ const Header = ({ user }) => {
               )}
             </div>
 
-            {/* Friends dropdown - NEW */}
+            {/* Friends dropdown */}
             <div className="relative" ref={friendsDropdownRef}>
               <button
                 className="icon-button relative"
@@ -469,8 +469,10 @@ const Header = ({ user }) => {
             </div>
           </div>
 
-          <div className="navbar-search">
-            <SearchBar />
+          <div className="flex justify-center flex-1 px-4">
+            <div className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[800px]">
+              <SearchBar />
+            </div>
           </div>
 
           <div className="navbar-logo">

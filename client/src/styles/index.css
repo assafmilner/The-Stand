@@ -207,10 +207,8 @@ a, .link, .nav-item {
   color: var(--color-primary);
   
 }
-
 .navbar-search input {
   width: 100%;
-  max-width: 800px;
   padding: 0.5rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
@@ -218,6 +216,26 @@ a, .link, .nav-item {
   font-size: 0.875rem;
   direction: rtl;
   box-sizing: border-box;
+  
+  max-width: 300px;
+}
+
+@media (min-width: 640px) {
+  .navbar-search input {
+    max-width: 400px;
+  }
+}
+
+@media (min-width: 768px) {
+  .navbar-search input {
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .navbar-search input {
+    max-width: 800px;
+  }
 }
 
 
