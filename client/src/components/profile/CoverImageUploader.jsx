@@ -35,11 +35,10 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   };
 
   const uploadCroppedImage = async (croppedBlob) => {
-
     setCropModalOpen(false);
 
     const formData = new FormData();
-    formData.append("coverImage", croppedBlob);
+    formData.append("coverImage", croppedBlob, "cover.jpg");
 
     setUploading(true);
     try {
@@ -58,14 +57,13 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
       alert("שגיאה בהעלאת תמונת קאבר");
     } finally {
       setUploading(false);
-      // ⭐ הסרתי את setCropModalOpen(false) מכאן כי זה כבר קרה למעלה
     }
   };
 
   const handleCropCancel = () => {
     setCropModalOpen(false);
     setImageToCrop(null);
-    // נקה את הinput file כדי שאותו קובץ יוכל להיבחר שוב
+
     if (coverInputRef.current) {
       coverInputRef.current.value = "";
     }
@@ -91,7 +89,6 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
 
         <div className="cover-overlay" />
 
-        {/* ⭐ Loading overlay בזמן העלאה */}
         {uploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
             <div className="text-white text-center">
@@ -130,7 +127,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
       {cropModalOpen && (
         <CropModal
           imageSrc={imageToCrop}
-          onCancel={handleCropCancel} // ⭐ פונקציה מיוחדת לביטול
+          onCancel={handleCropCancel}
           onCropComplete={uploadCroppedImage}
         />
       )}
