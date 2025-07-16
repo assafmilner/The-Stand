@@ -53,7 +53,7 @@ const Layout = ({ children, onChatSelect }) => {
         </>
       ) : (
         <div className="flex justify-center items-center h-screen text-lg font-bold text-gray-500">
-          טוען את הקהל...
+          טוען את היציע...
         </div>
       )}
     </div>
