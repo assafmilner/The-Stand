@@ -7,9 +7,7 @@ const DEFAULT_PROFILE_PIC =
 
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
-  const [preview, setPreview] = useState(
-    user?.profilePicture || DEFAULT_PROFILE_PIC
-  );
+  const [preview, setPreview] = useState(user?.profilePicture || DEFAULT_PROFILE_PIC);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -27,32 +25,38 @@ const ProfilePictureForm = ({ user }) => {
     }
   };
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
     setSelectedFile(null);
     setPreview(DEFAULT_PROFILE_PIC);
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await api.put(
-        "/api/users/update-profile-picture",
-        { profilePicture: DEFAULT_PROFILE_PIC },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setUser((prev) => ({
-        ...prev,
-        profilePicture: DEFAULT_PROFILE_PIC,
-      }));
-    } catch (err) {
-      console.error("שגיאה בעדכון תמונת ברירת מחדל:", err);
-    }
   };
 
   const handleSave = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    // אם אין קובץ חדש אבל התמונה שונתה לדיפולט
+    if (!selectedFile && preview === DEFAULT_PROFILE_PIC && user?.profilePicture !== DEFAULT_PROFILE_PIC) {
+      try {
+        const response = await api.put(
+          "/api/users/update-profile-picture",
+          { profilePicture: DEFAULT_PROFILE_PIC },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setUser((prev) => ({
+          ...prev,
+          profilePicture: DEFAULT_PROFILE_PIC,
+        }));
+        console.log("תמונת ברירת מחדל נשמרה");
+      } catch (err) {
+        console.error("שגיאה בשמירת תמונת ברירת מחדל:", err);
+      }
+      return;
+    }
+
     if (!selectedFile) {
       console.log("No file selected");
       return;
@@ -63,8 +67,6 @@ const ProfilePictureForm = ({ user }) => {
     setUploading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await api.post("/api/users/upload-profile", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
