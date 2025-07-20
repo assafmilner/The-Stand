@@ -48,7 +48,7 @@ const Layout = ({ children, onChatSelect }) => {
 
           <MobileHamburgerMenu colors={colors} onLogout={handleLogout} />
           <footer className="home-footer">
-            © 2025 אסף מילנר | כל הזכויות שמורות
+            © 2025 אסף מילנר וליאת מרלי | כל הזכויות שמורות
           </footer>
         </>
       ) : (
