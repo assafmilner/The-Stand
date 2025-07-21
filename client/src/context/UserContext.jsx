@@ -61,3 +61,4 @@ export const UserProvider = ({ children }) => {
  *
  * Custom hook to consume the user context.
  */
+export const useUser = () => useContext(UserContext);
