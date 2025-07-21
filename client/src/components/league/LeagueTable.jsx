@@ -3,6 +3,19 @@ import { useUser } from "../../context/UserContext";
 import teamNameMap from "../../utils/teams-hebrew";
 import { useLeagueTable } from "../../hooks/useLeague";
 
+/**
+ * LeagueTable component displays the current league standings.
+ * Supports toggling between regular season and playoff tables.
+ *
+ * Props:
+ * - league: the league identifier (used by useLeagueTable to fetch data)
+ *
+ * Behavior:
+ * - Regular/playoff toggle buttons
+ * - Lazy loads playoff data if requested
+ * - Highlights favorite team from user context
+ */
+
 const LeagueTable = ({ league }) => {
   const [mode, setMode] = useState("regular");
   const {
@@ -71,6 +84,21 @@ const LeagueTable = ({ league }) => {
     </div>
   );
 };
+
+/**
+ * LeagueTableSection renders the HTML table of teams.
+ *
+ * Props:
+ * - teams: array of team standings (must include fields like win, draw, points, etc.)
+ * - showRank: if true, display rank column
+ * - badge: if true, show team logo
+ * - type: one of "regular" | "top" | "bottom" (used for special row highlights)
+ *
+ * Design Notes:
+ * - Favorite team is highlighted with yellow
+ * - First in top playoff gets green highlight
+ * - Last 2 in bottom playoff are marked in red (relegation warning)
+ */
 
 const LeagueTableSection = ({ teams, showRank = true, badge = true, type }) => {
   const { user } = useUser();

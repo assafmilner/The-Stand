@@ -1,4 +1,3 @@
-// client/src/pages/Messages.jsx
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Layout from "../components/layout/Layout";
 import { useUser } from "../context/UserContext";
@@ -37,7 +36,7 @@ const Messages = () => {
     [user?.favoriteTeam]
   );
 
-  // טעינת שיחות קיימות
+  // Load existing conversations
   useEffect(() => {
     const loadChats = async () => {
       try {
@@ -55,7 +54,7 @@ const Messages = () => {
     loadChats();
   }, []);
 
-  // טעינת רשימת חברים
+  // Load friends list
   useEffect(() => {
     const loadFriends = async () => {
       try {
@@ -157,9 +156,8 @@ const Messages = () => {
     setNewMessage("");
   };
 
-  // פונקציה לפתיחת שיחה עם חבר
+  // Open conversation with friend
   const handleSelectFriend = (friend) => {
-    // החבר כבר במבנה הנכון: friend._id, friend.name, friend.profilePicture
     setSelectedUser(friend);
     setNewMessage("");
   };
@@ -177,7 +175,6 @@ const Messages = () => {
     }
   };
 
-  // פילטר חברים שאינם כבר בשיחות קיימות
   const availableFriends = friends.filter(
     (friend) => !recentChats.some((chat) => chat.user._id === friend._id)
   );
@@ -186,7 +183,7 @@ const Messages = () => {
     <Layout>
       <div className="flex border rounded-xl overflow-hidden h-[80vh] bg-white shadow-md">
         <div className="w-1/3 p-4 border-l overflow-y-auto bg-gray-50">
-          {/* שיחות קיימות */}
+          {/* Existing Conversations*/}
           <h2 className="text-xl font-semibold mb-4">שיחות</h2>
 
           {loading ? (
@@ -228,7 +225,7 @@ const Messages = () => {
             </div>
           )}
 
-          {/* רשימת חברים */}
+          {/* Friends List*/}
           <div className="border-t pt-4">
             <div className="flex items-center gap-2 mb-4">
               <Users size={18} className="text-gray-600" />

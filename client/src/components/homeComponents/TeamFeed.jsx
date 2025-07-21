@@ -1,9 +1,16 @@
-// client/src/components/homeComponents/TeamFeed.jsx - Using flexible PostList
 import React, { useEffect, useState } from "react";
 import CreatePost from "../post/CreatePost";
 import PostList from "../post/PostList";
 import api from "../../utils/api";
 
+/**
+ * TeamFeed component displays the feed for the user's favorite team.
+ * It fetches the relevant posts from the backend and renders a post creation box and post list.
+ *
+ * Props:
+ * - colors: team colors for styling
+ * - user: the current logged-in user
+ */
 function TeamFeed({ colors, user }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +41,7 @@ function TeamFeed({ colors, user }) {
     }
   }, [user?.favoriteTeam]);
 
+  // If user has no favorite team set, show a placeholder message
   if (!user?.favoriteTeam) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border">
@@ -49,9 +57,10 @@ function TeamFeed({ colors, user }) {
 
   return (
     <section className="space-y-6">
+      {/* Post creation input box */}
       <CreatePost colors={colors} />
 
-      {/* ✅ Use flexible PostList in DISPLAY mode */}
+      {/* List of team posts */}
       <PostList
         posts={posts}
         loading={loading}

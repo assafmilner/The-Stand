@@ -3,6 +3,15 @@ import { useUser } from "../../context/UserContext";
 import Header from "../layout/Header";
 import "../../styles/index.css";
 
+/**
+ * ProfileLayout wraps the user profile pages in a consistent layout.
+ * Includes:
+ * - Header (with user context)
+ * - Main content container with max width
+ * - Footer (static)
+ *
+ * Usage: Used as a wrapper around profile-related routes.
+ */
 const ProfileLayout = ({ children }) => {
   const { user } = useUser();
 
@@ -17,7 +26,7 @@ const ProfileLayout = ({ children }) => {
       </main>
 
       <footer className="home-footer">
-        © 2025 אסף מילנר וליאת מרלי | כל הזכויות שמורות
+        © 2025 אסף מילנר | כל הזכויות שמורות
       </footer>
     </div>
   );

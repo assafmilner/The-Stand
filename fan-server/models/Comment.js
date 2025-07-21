@@ -1,3 +1,7 @@
+// ### Mongoose Schema: Comment
+// Represents a comment on a post. Can also be used to model replies via `parentCommentId`.
+// Includes likes, nested replies, and timestamps (createdAt, updatedAt).
+
 const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
@@ -7,7 +11,7 @@ const commentSchema = new mongoose.Schema(
       ref: "Post",
       required: true,
     },
-    
+
     authorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -19,21 +23,22 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    
-    likes: [{
+
+    likes: [
+      {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: [],
-      }],
-      
-    parentCommentId: {  // שדה חדש לזהות תגובת בת
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",  // מצביע לתגובה על תגובה
-        default: null,
-      },
+      }
+    ],
+
+    parentCommentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null, // If present, indicates this is a reply to another comment
+    },
   },
 
-  
   { timestamps: true }
 );
 

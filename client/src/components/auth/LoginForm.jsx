@@ -1,4 +1,3 @@
-// src/components/auth/LoginForm.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "context/UserContext";
@@ -8,6 +7,11 @@ import ResendEmailButton from "./ResendEmailButton";
 import api from "../../utils/api";
 import "../../styles/auth.css";
 
+/**
+ * LoginForm component handles user authentication flow.
+ * It manages form input, API request, loading state, and error handling.
+ * If email verification is required, it switches to a confirmation view.
+ */
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +24,10 @@ const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles the form submission for user login.
+   * Sends credentials to the server and updates the app state on success.
+   */
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -49,7 +57,8 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   };
-  // מצב של אימות מייל נדרש — לא מציגים כלל את הטופס
+
+  // If email verification is required, show alternate view
   if (emailVerificationRequired) {
     return (
       <div className="auth-container">
@@ -72,7 +81,6 @@ const LoginForm = () => {
           </div>
         </div>
 
-        {/* decorative side */}
         <div className="decorative-container">
           <div className="field-pattern"></div>
           <div className="field-elements">
@@ -99,6 +107,7 @@ const LoginForm = () => {
       </div>
     );
   }
+
   return (
     <div className="auth-container">
       <div className="form-container">
@@ -109,7 +118,6 @@ const LoginForm = () => {
           />
           {error && <p className="form-error">{error}</p>}
           <form onSubmit={handleLogin} className="form">
-            {" "}
             <div className="form-group">
               <label htmlFor="email" className="form-label">
                 אימייל
@@ -176,7 +184,7 @@ const LoginForm = () => {
           </div>
         </div>
       </div>
-      {/* ——— צד שמאל ——— */}
+
       <div className="decorative-container">
         <div className="field-pattern"></div>
         <div className="field-elements">
@@ -199,7 +207,6 @@ const LoginForm = () => {
           <div className="goal-top"></div>
           <div className="goal-bottom"></div>
         </div>
-        {/* …modern-football SVG elements… */}
       </div>
     </div>
   );

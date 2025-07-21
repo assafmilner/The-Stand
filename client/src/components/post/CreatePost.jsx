@@ -4,6 +4,24 @@ import teamsMap from "../../utils/teams-hebrew";
 import api from "utils/api";
 import { Globe, Image as ImageIcon } from "lucide-react";
 
+/**
+ * CreatePost
+ *
+ * A post creation component allowing users to:
+ * - Write text content (up to 500 characters)
+ * - Attach image or video files with a live preview
+ * - Submit posts to the backend via multipart/form-data
+ *
+ * Features:
+ * - Associates the post with the user's favorite team's community
+ * - Displays user's avatar and name
+ * - Shows a styled preview of selected media (image/video)
+ *
+ * Props:
+ * - onPostCreated (function): optional callback when post is successfully created
+ * - colors (object): contains team-specific primary color for the publish button
+ */
+
 const CreatePost = ({ onPostCreated, colors }) => {
   const { user } = useUser();
   const [content, setContent] = useState("");

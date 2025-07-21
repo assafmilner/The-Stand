@@ -1,24 +1,29 @@
-// client/src/components/homeComponents/Community.jsx
+// ### Component: Community
+// Renders the team community feed based on the user's favorite team.
+// If the user hasn't set a favorite team, a fallback message is displayed.
+
 import { useUser } from "../../context/UserContext";
 import Feed from "./Feed";
 
 function Community({ colors }) {
   const { user } = useUser();
 
- 
-
   if (!user?.favoriteTeam) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border">
-        <p className="text-red-500 text-lg font-medium">לא הוגדרה קבוצה אהודה</p>
-        <p className="text-gray-500 mt-2">עדכן את פרטי הפרופיל שלך כדי לראות את קהילת הקבוצה</p>
+        <p className="text-red-500 text-lg font-medium">
+          לא הוגדרה קבוצה אהודה
+        </p>
+        <p className="text-gray-500 mt-2">
+          עדכן את פרטי הפרופיל שלך כדי לראות את קהילת הקבוצה
+        </p>
       </div>
     );
   }
 
   return (
     <section>
-      {/* ✅ Explicitly pass feedType="team" */}
+      {/* Explicitly pass feedType="team" */}
       <Feed
         colors={colors}
         user={user}

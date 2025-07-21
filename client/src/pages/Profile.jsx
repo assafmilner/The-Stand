@@ -1,3 +1,7 @@
+/**
+ * Profile page – displays either the current user's or another user's profile.
+ * Supports cover photo updates, friend system, chat modal, and dynamic content via tabs.
+ */
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Edit3, MessageCircle, Users, Calendar } from "lucide-react";
@@ -15,6 +19,11 @@ import { useFriends } from "../hooks/useFriends";
 import teamColors from "../utils/teamStyles";
 import "../styles/index.css";
 
+/**
+ * Main Profile component logic.
+ * Determines if it's the current user's profile or someone else's,
+ * handles loading and rendering of profile data, friends list, and modals.
+ */
 const Profile = () => {
   const { userId } = useParams();
   const { user: currentUser, setUser } = useUser();
@@ -36,12 +45,13 @@ const Profile = () => {
     getFriends: getCurrentUserFriends,
   } = useFriends();
 
-  // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?._id;
   const displayUser = isOwnProfile ? currentUser : profileUser;
   const colors = teamColors[displayUser?.favoriteTeam || "הפועל תל אביב"];
 
-  // Function to fetch another user's friends
+  /**
+   * Fetch another user's friends (when visiting a different profile).
+   */
   const fetchUserFriends = async (targetUserId) => {
     setProfileFriendsLoading(true);
     try {
@@ -59,6 +69,9 @@ const Profile = () => {
     }
   };
 
+  /**
+   * Fetch profile data when component mounts or userId changes.
+   */
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userId && !currentUser) return;
@@ -67,12 +80,10 @@ const Profile = () => {
         setLoading(true);
 
         if (isOwnProfile) {
-          // For own profile - just get friends (profile data already in context)
           getCurrentUserFriends();
         } else {
           const profileResponse = await api.get(`/api/users/profile/${userId}`);
           setProfileUser(profileResponse.data);
-
           await fetchUserFriends(userId);
         }
       } catch (error) {
@@ -106,7 +117,9 @@ const Profile = () => {
     });
   };
 
-  // Handle friend status changes
+  /**
+   * Handle update of friendship status (after add/remove/accept).
+   */
   const handleFriendStatusChange = (newStatus) => {
     if (isOwnProfile) {
       getCurrentUserFriends();
@@ -115,7 +128,9 @@ const Profile = () => {
     }
   };
 
-  // Get the appropriate friends data based on profile type
+  /**
+   * Get the relevant friend list data based on current profile.
+   */
   const getFriendsData = () => {
     if (isOwnProfile) {
       return {
@@ -134,13 +149,12 @@ const Profile = () => {
 
   const { friends, friendsCount, friendsLoading } = getFriendsData();
 
+  // Skeleton loader
   if (loading) {
     return (
       <ProfileLayout>
         <div className="profile-container bg-gray-50 " dir="rtl">
-          {/* Skeleton */}
           <div className="relative h-64 md:h-80 bg-gray-200 animate-pulse rounded-b-4xl" />
-
           <div className="relative px-4 md:px-8 pb-6">
             <div className="flex flex-col lg:flex-row lg:items-end -mt-16 md:-mt-20 gap-6">
               <div className="flex items-end gap-4">
@@ -152,7 +166,6 @@ const Profile = () => {
               </div>
             </div>
           </div>
-
           <div className="text-center py-8">
             <div className="loading-spinner mx-auto mb-4"></div>
             <span>טוען פרופיל...</span>
@@ -162,6 +175,7 @@ const Profile = () => {
     );
   }
 
+  // Not found
   if (!displayUser) {
     return (
       <ProfileLayout>
@@ -173,6 +187,7 @@ const Profile = () => {
     );
   }
 
+  // Main profile UI
   return (
     <ProfileLayout>
       <div className="profile-container bg-gray-50" dir="rtl">
@@ -183,11 +198,10 @@ const Profile = () => {
           onCoverUpdate={handleCoverUpdate}
         />
 
-        {/* Header section with avatar and basic info */}
+        {/* Profile Header */}
         <div className="relative px-4 md:px-8 pb-6">
           <div className="animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-end -mt-16 md:-mt-20 gap-6">
-              {/* Avatar and Name */}
               <div className="flex items-end gap-4">
                 <div className="relative">
                   <img
@@ -217,7 +231,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Stats and Actions */}
               <div className="flex-1">
                 <div className="profile-stats text-sm mb-4">
                   <div className="profile-stat">
@@ -227,7 +240,6 @@ const Profile = () => {
                       <span className="font-bold">חברים</span>
                     </div>
                   </div>
-
                   <div className="profile-stat">
                     <div className="flex items-center gap-2">
                       <Calendar size={20} />
@@ -238,7 +250,6 @@ const Profile = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="profile-actions">
                   {isOwnProfile ? (
                     <button
@@ -250,14 +261,11 @@ const Profile = () => {
                     </button>
                   ) : (
                     <div className="flex flex-row gap-3">
-                      {/* Friend Button */}
                       <FriendButton
                         targetUser={displayUser}
                         colors={colors}
                         onStatusChange={handleFriendStatusChange}
                       />
-
-                      {/* Message Button */}
                       <button
                         className="profile-btn secondary"
                         onClick={handleSendMessage}
@@ -273,10 +281,9 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Main Content Area */}
+        {/* Main content: Info + Posts/Friends */}
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Side - Profile Info */}
             <div className="lg:col-span-1">
               <ProfileInfo
                 user={displayUser}
@@ -287,7 +294,6 @@ const Profile = () => {
               />
             </div>
 
-            {/* Right Side - Tabs and Content */}
             <div className="lg:col-span-2">
               <ProfileTabs
                 activeTab={activeTab}

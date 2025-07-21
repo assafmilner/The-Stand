@@ -9,6 +9,31 @@ import CreatePost from "./CreatePost";
 import api from "../../utils/api";
 import teamColors from "../../utils/teamStyles";
 
+/**
+ * PostList
+ *
+ * This is a flexible post feed component used across different pages:
+ * - Can render a static list of posts passed as props
+ * - Or fetch posts dynamically using the `usePosts` hook based on `feedType`, `authorId`, or `communityId`
+ * - Supports infinite scroll, post creation, post editing, and deletion
+ *
+ * Props:
+ * - posts (array): optional. If provided, renders these posts instead of fetching
+ * - loading (boolean): optional. Custom loading state for external post data
+ * - error (string): optional. Custom error state for external post data
+ * - authorId (string): optional. If provided, fetches posts by this user
+ * - communityId (string): optional. If provided, fetches posts from this community
+ * - feedType (string): optional. Can be "friends" | "team" to filter feed accordingly
+ * - showCreatePost (boolean): whether to show the CreatePost component
+ * - colors (object): team-based color styling for UI elements
+ * - currentUser (object): user object used for actions like create/edit/delete
+ *
+ * Notes:
+ * - Maintains a local list (`localPosts`) for immediate UI update after post actions
+ * - Merges localPosts and fetchedPosts while avoiding duplicates
+ * - Includes `<PostViewerHandler />` for editing support via modal
+ */
+
 const PostList = ({
   // Props for display-only mode (FriendsFeed/TeamFeed)
   posts: propsPosts = null, // If provided, use these posts

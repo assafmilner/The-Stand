@@ -1,4 +1,3 @@
-// client/src/components/chat/ChatModal.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { X, Send, Minimize2, Maximize2 } from "lucide-react";
 import { useUser } from "../../context/UserContext";
@@ -6,6 +5,16 @@ import teamColors from "../../utils/teamStyles";
 import socketService from "../../services/socketService";
 import { useSharedChatCache } from "../../hooks/useSharedChatCache";
 
+/**
+ * ChatModal displays a real-time private chat window between two users.
+ * It supports chat history, live updates via socket, optimistic UI, and minimization.
+ *
+ * Props:
+ * - isOpen: boolean - controls modal visibility
+ * - onClose: function - callback to close modal
+ * - otherUser: object - user to chat with
+ * - onMarkAsRead: function - marks messages from otherUser as read
+ */
 const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
   const { user } = useUser();
   const [isMinimized, setIsMinimized] = useState(false);
@@ -35,7 +44,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     const loadMessages = async () => {
       setLoading(true);
       try {
-        const result = await loadChatHistory(otherUser._id, true); // forceRefresh = true
+        const result = await loadChatHistory(otherUser._id, true);
         setMessages(result.data);
         onMarkAsRead?.(otherUser._id);
       } catch (err) {
@@ -49,7 +58,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     loadMessages();
   }, [isOpen, otherUser?._id, loadChatHistory, onMarkAsRead]);
 
-  // Subscribe to cache updates (live updates)
+  // Listen for live chat cache updates
   useEffect(() => {
     if (!isOpen || !otherUser?._id) return;
 
@@ -57,7 +66,6 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
       otherUser._id,
       (updatedMessagesFromCache) => {
         setMessages((prevMessages) => {
-          // חבר בין cache לבין state קיים
           const ids = new Set();
           const merged = [...prevMessages, ...updatedMessagesFromCache]
             .filter((msg) => {
@@ -75,7 +83,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     return () => unsubscribe();
   }, [isOpen, otherUser?._id, subscribeToUserMessages]);
 
-  // Setup socket listeners
+  // Register socket listeners
   useEffect(() => {
     if (!isOpen || !otherUser?._id) return;
 
@@ -140,6 +148,9 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     onMarkAsRead,
   ]);
 
+  /**
+   * Sends a message via socket and appends an optimistic placeholder to the UI.
+   */
   const sendMessage = () => {
     if (!newMessage.trim() || !otherUser?._id) return;
 
@@ -160,6 +171,7 @@ const ChatModal = ({ isOpen, onClose, otherUser, onMarkAsRead }) => {
     socketService.sendMessage(otherUser._id, messageContent);
     setTimeout(() => scrollToBottom(), 100);
 
+    // Remove optimistic message if server didn't respond
     setTimeout(() => {
       setMessages((prevMessages) => {
         const hasOptimistic = prevMessages.some(

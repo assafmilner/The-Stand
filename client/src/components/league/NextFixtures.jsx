@@ -5,13 +5,40 @@ import { useLeague, useFixtures } from "../../hooks/useLeague";
 import stadiums from "../../utils/stadiums";
 import teamNameMap from "../../utils/teams-hebrew";
 
+/**
+ * NextFixtures component
+ *
+ * Displays the next 3 upcoming fixtures for the user's favorite team.
+ * Fetches fixtures using `useFixtures` and filters future matches only.
+ *
+ * UI includes:
+ * - A list of upcoming matches (max 3)
+ * - Stadium name, date and time
+ * - Link to view all fixtures
+ *
+ * Design notes:
+ * - Card-like layout using right sidebar
+ * - Matches are styled in a compact list with border and shadow
+ */
+
 const NextFixtures = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const { league } = useLeague(user?.favoriteTeam);
   const { fixtures, loading } = useFixtures(league, user?.favoriteTeam);
 
-  // Get next 3 fixtures for favorite team
+  /**
+   * getUpcomingFixtures
+   *
+   * Filters and returns the next 3 upcoming matches for the user's favorite team.
+   *
+   * Steps:
+   * - Map Hebrew team name back to English
+   * - Filter all fixtures for the team
+   * - Compare match datetime to current time
+   * - Return top 3 sorted by date
+   */
+
   const getUpcomingFixtures = () => {
     if (!fixtures.length || !user?.favoriteTeam) return [];
 

@@ -7,6 +7,11 @@ import { FixturesList } from "../components/league";
 import teamNameMap from "../utils/teams-hebrew";
 import teamColors from "../utils/teamStyles";
 
+/**
+ * Fixtures page displays upcoming and past matches for the user's favorite team.
+ * It fetches fixtures and league info based on the user's selected team,
+ * separates regular and playoff games, and highlights the next upcoming game.
+ */
 function Fixtures() {
   const { user } = useUser();
   const {
@@ -15,6 +20,7 @@ function Fixtures() {
     loading: leagueLoading,
     error: leagueError,
   } = useLeague(user?.favoriteTeam);
+
   const {
     fixtures,
     loading,
@@ -27,12 +33,19 @@ function Fixtures() {
 
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
+  /**
+   * Converts the Hebrew team name to its English key using the teamNameMap.
+   */
   const reverseTeamMap = Object.entries(teamNameMap).reduce((acc, [eng, data]) => {
     acc[data.name] = eng;
     return acc;
   }, {});
   const favoriteTeamEnglish = reverseTeamMap[user?.favoriteTeam];
 
+  /**
+   * Splits fixtures into regular season and playoff arrays,
+   * and sorts each by match date.
+   */
   const separateFixtures = () => {
     if (!fixtures.length) return { regularFixtures: [], playoffFixtures: [] };
 
@@ -47,10 +60,16 @@ function Fixtures() {
 
   const { regularFixtures, playoffFixtures } = separateFixtures();
 
+  /**
+   * Combines fixture's date and time into a JavaScript Date object.
+   */
   const parseFixtureDateTime = (fixture) => {
     return new Date(`${fixture.date}T${(fixture.time || "00:00").padStart(5, "0")}:00`);
   };
 
+  /**
+   * Finds the next upcoming fixture for the user's favorite team.
+   */
   const findClosestUpcomingGame = () => {
     if (!fixtures.length || !favoriteTeamEnglish) return null;
 
@@ -66,6 +85,10 @@ function Fixtures() {
     return upcoming[0] || null;
   };
 
+  /**
+   * On first render, scroll to the closest upcoming game if available.
+   * Adds visual highlight to the relevant fixture card.
+   */
   useEffect(() => {
     if (!fixtures.length || loading) return;
 
@@ -90,6 +113,9 @@ function Fixtures() {
     return () => clearTimeout(scrollTimeout);
   }, [fixtures, loading, favoriteTeamEnglish]);
 
+  /**
+   * Renders loading state with spinner and text.
+   */
   if (leagueLoading || loading) {
     return (
       <Layout>
@@ -104,6 +130,9 @@ function Fixtures() {
     );
   }
 
+  /**
+   * Renders error state with retry button.
+   */
   if (leagueError || error) {
     return (
       <Layout>
@@ -124,6 +153,9 @@ function Fixtures() {
     );
   }
 
+  /**
+   * Renders empty state when no fixtures are found.
+   */
   if (!fixtures.length) {
     return (
       <Layout>
@@ -144,6 +176,10 @@ function Fixtures() {
     );
   }
 
+  /**
+   * Main render: shows fixtures split into regular season and playoffs.
+   * Also includes refresh button and UI heading.
+   */
   return (
     <Layout>
       <div className="fixtures-container dashboard-card">

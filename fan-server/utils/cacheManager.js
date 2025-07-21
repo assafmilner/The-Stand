@@ -1,10 +1,13 @@
-// fan-server/utils/cacheManager.js
+// ### Utility: CacheManager (In-Memory)
+// A simple TTL-based in-memory cache for storing frequently accessed data,
+// such as recent chats. Includes auto-cleanup and max size protection.
+
 class CacheManager {
   constructor() {
     this.cache = new Map();
     this.defaultTTL = 1000 * 60 * 10; // 10 minutes
     this.maxSize = 1000; // Maximum cache entries
-    
+
     // Auto cleanup every 5 minutes
     setInterval(() => this.cleanup(), 5 * 60 * 1000);
   }
@@ -19,7 +22,7 @@ class CacheManager {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -54,15 +57,13 @@ class CacheManager {
         deletedCount++;
       }
     }
-
-
   }
 
   getStats() {
     return {
       size: this.cache.size,
       maxSize: this.maxSize,
-      hitRate: this.hitRate || 0
+      hitRate: this.hitRate || 0,
     };
   }
 

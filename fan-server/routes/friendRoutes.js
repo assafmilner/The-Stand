@@ -1,4 +1,3 @@
-// fan-server/routes/friendRoutes.js
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth");
@@ -10,7 +9,7 @@ const {
   getReceivedRequests,
   getSentRequests,
   removeFriend,
-  getUserFriends
+  getUserFriends,
 } = require("../controllers/friendController");
 
 // All routes require authentication

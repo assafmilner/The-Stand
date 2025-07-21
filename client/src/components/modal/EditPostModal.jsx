@@ -1,6 +1,27 @@
-// FILE: client/src/components/modal/EditPostModal.jsx
 import React, { useState, useEffect } from "react";
 import "../../styles/index.css";
+
+/**
+ * EditPostModal
+ *
+ * A modal component for editing an existing post.
+ *
+ * Props:
+ * - post (object): The post object to edit. Expects `content` and optional `media`.
+ * - onSave (function): Callback called with the updated post object.
+ * - onCancel (function): Called when the user cancels the edit.
+ *
+ * Features:
+ * - Allows editing the post content.
+ * - Supports uploading an image or video.
+ * - Shows a preview of the selected media.
+ * - Allows removal of attached media.
+ *
+ * UI Notes:
+ * - Uses a modal-style layout with a darkened backdrop.
+ * - Simple styling for preview, buttons, and upload.
+ * - Uses native file input under a custom-styled label.
+ */
 
 const EditPostModal = ({ post, onSave, onCancel }) => {
   const [newContent, setNewContent] = useState(post.content || "");

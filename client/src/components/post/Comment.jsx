@@ -8,6 +8,23 @@ import LikeModal from "../modal/LikeModal";
 import LikeButton from "./LikeButton";
 import { Pencil, Trash2 } from "lucide-react";
 
+/**
+ * Comment
+ *
+ * Displays a single comment including:
+ * - Author avatar, name, and timestamp
+ * - Comment content (editable by author)
+ * - Like button with viewer list
+ * - Reply toggle and input
+ * - Nested replies rendering
+ *
+ * Props:
+ * - comment: The comment object to display
+ * - postId: The ID of the post the comment belongs to
+ * - onDelete: Function called when the comment is deleted
+ * - onEdit: Function called with updated content on save
+ */
+
 const Comment = ({ comment, postId, onDelete, onEdit }) => {
   const { user } = useUser();
   const isAuthor = user?._id === comment.authorId._id;
@@ -47,9 +64,7 @@ const Comment = ({ comment, postId, onDelete, onEdit }) => {
         />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "1rem" }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <strong>{comment.authorId.name}</strong>
               <span style={{ color: "#888", fontSize: "0.8rem" }}>
                 {formatDistanceToNow(new Date(comment.createdAt), {

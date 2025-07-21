@@ -1,4 +1,3 @@
-// client/src/components/friends/FriendsList.jsx
 import React, { useState, lazy, Suspense } from "react";
 import {
   Users,
@@ -16,6 +15,23 @@ import DeleteConfirmationModal from "../modal/DeleteConfirmationModal";
 
 const ChatModal = lazy(() => import("../chat/ChatModal"));
 
+/**
+ * FriendsList displays a list of current friends with optional actions like:
+ * - Viewing profile
+ * - Sending message (opens chat modal)
+ * - Removing friend (opens confirmation modal)
+ *
+ * Props:
+ * - friends: array - list of user objects
+ * - loading: boolean - shows skeletons when true
+ * - showActions: boolean - toggle quick actions and menu
+ * - showRemove: boolean - whether to show "Remove Friend"
+ * - showMessage: boolean - whether to show "Send Message"
+ * - colors: object - styling (e.g. based on favorite team)
+ * - onFriendRemoved: function - called after removing a friend
+ * - onMessageClick: function - optional callback for handling message button
+ * - emptyMessage / emptySubMessage: fallback text when list is empty
+ */
 const FriendsList = ({
   friends = [],
   loading = false,
@@ -31,67 +47,62 @@ const FriendsList = ({
   const navigate = useNavigate();
   const { removeFriend, requestLoading } = useFriends();
   const { markAsRead } = useChat();
+
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
-  
-  // State למודאלים
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [friendToDelete, setFriendToDelete] = useState(null);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [chatWithFriend, setChatWithFriend] = useState(null);
 
-  // פתיחת מודאל המחיקה
+  /**
+   * Opens the delete confirmation modal.
+   */
   const handleRemoveFriend = (friend) => {
     setFriendToDelete(friend);
     setIsDeleteModalOpen(true);
     setActionMenuOpen(null);
   };
 
-  // ביצוע המחיקה בפועל
+  /**
+   * Confirms and executes the actual deletion.
+   */
   const confirmDeleteFriend = async () => {
     if (!friendToDelete) return;
-    
     const result = await removeFriend(friendToDelete._id);
-    if (result.success) {
-      onFriendRemoved?.(friendToDelete);
-    } else {
-      alert(result.error);
-    }
-    
+    if (result.success) onFriendRemoved?.(friendToDelete);
+    else alert(result.error);
     setFriendToDelete(null);
   };
 
-  // סגירת מודאל המחיקה
+  /**
+   * Closes the delete modal and resets state.
+   */
   const closeDeleteModal = () => {
     setIsDeleteModalOpen(false);
     setFriendToDelete(null);
   };
 
-  // טיפול בלחיצה על הודעה
+  /**
+   * Handles message click - either with external handler or opens chat modal.
+   */
   const handleMessageClick = (friend) => {
     if (onMessageClick) {
-      // אם יש callback מותאם אישית מהקומפוננטה האב
       onMessageClick(friend);
     } else {
-      // Default behavior - פתח ChatModal
       if (!friend || !friend._id) {
         alert("שגיאה: לא ניתן לפתוח צ'אט עם החבר");
         return;
       }
-
-      // הכנת פרטי החבר למודאל הצ'אט
-      const friendData = {
+      setChatWithFriend({
         _id: friend._id,
         name: friend.name,
         profilePicture: friend.profilePicture,
-      };
-
-      setChatWithFriend(friendData);
+      });
       setIsChatModalOpen(true);
     }
     setActionMenuOpen(null);
   };
 
-  // סגירת מודאל הצ'אט
   const closeChatModal = () => {
     setIsChatModalOpen(false);
     setChatWithFriend(null);
@@ -102,21 +113,19 @@ const FriendsList = ({
     setActionMenuOpen(null);
   };
 
-  const formatJoinDate = (date) => {
-    return new Date(date).toLocaleDateString("he-IL", {
-      year: "numeric",
-      month: "long",
-    });
-  };
+  const formatJoinDate = (date) =>
+    new Date(date).toLocaleDateString("he-IL", { year: "numeric", month: "long" });
 
-  const formatFriendshipDate = (date) => {
-    return new Date(date).toLocaleDateString("he-IL", {
+  const formatFriendshipDate = (date) =>
+    new Date(date).toLocaleDateString("he-IL", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
-  };
 
+  /**
+   * Skeleton loading cards
+   */
   if (loading) {
     return (
       <div className="space-y-4">
@@ -137,18 +146,22 @@ const FriendsList = ({
     );
   }
 
+  /**
+   * Empty state fallback
+   */
   if (friends.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border">
         <Users size={48} className="mx-auto mb-4 text-gray-300" />
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          {emptyMessage}
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">{emptyMessage}</h3>
         <p className="text-gray-500 text-sm">{emptySubMessage}</p>
       </div>
     );
   }
 
+  /**
+   * Main list UI
+   */
   return (
     <>
       <div className="space-y-4">
@@ -160,10 +173,7 @@ const FriendsList = ({
             <div className="p-4">
               <div className="flex items-start gap-4">
                 {/* Profile Picture */}
-                <div
-                  className="cursor-pointer"
-                  onClick={() => handleProfileClick(friend)}
-                >
+                <div className="cursor-pointer" onClick={() => handleProfileClick(friend)}>
                   <img
                     src={friend.profilePicture || "/defaultProfilePic.png"}
                     alt={friend.name}
@@ -171,11 +181,10 @@ const FriendsList = ({
                   />
                 </div>
 
-                {/* Friend Info */}
+                {/* User Info and Actions */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      {/* Name and Team */}
                       <h3
                         className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
                         onClick={() => handleProfileClick(friend)}
@@ -189,7 +198,6 @@ const FriendsList = ({
                         אוהד {friend.favoriteTeam}
                       </p>
 
-                      {/* Additional Info */}
                       <div className="space-y-1 text-xs text-gray-500">
                         {friend.location && (
                           <div className="flex items-center gap-1">
@@ -197,17 +205,12 @@ const FriendsList = ({
                             <span>{friend.location}</span>
                           </div>
                         )}
-
                         {friend.friendshipDate && (
                           <div className="flex items-center gap-1">
                             <Users size={12} />
-                            <span>
-                              חברים מאז{" "}
-                              {formatFriendshipDate(friend.friendshipDate)}
-                            </span>
+                            <span>חברים מאז {formatFriendshipDate(friend.friendshipDate)}</span>
                           </div>
                         )}
-
                         {friend.createdAt && (
                           <div className="flex items-center gap-1">
                             <Calendar size={12} />
@@ -217,48 +220,43 @@ const FriendsList = ({
                       </div>
                     </div>
 
-                    {/* Actions Menu */}
+                    {/* Action Menu */}
                     {showActions && (
                       <div className="relative">
                         <button
                           onClick={() =>
-                            setActionMenuOpen(
-                              actionMenuOpen === friend._id ? null : friend._id
-                            )
+                            setActionMenuOpen(actionMenuOpen === friend._id ? null : friend._id)
                           }
                           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full bg-transparent transition-colors"
                         >
                           <MoreVertical size={16} />
                         </button>
-
                         {actionMenuOpen === friend._id && (
                           <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
                             <div className="py-1">
                               <button
                                 onClick={() => handleProfileClick(friend)}
-                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-transparent transition-colors"
+                                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                               >
                                 <User size={16} />
                                 צפה בפרופיל
                               </button>
-
                               {showMessage && (
                                 <button
                                   onClick={() => handleMessageClick(friend)}
-                                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-transparent transition-colors"
+                                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                 >
                                   <MessageCircle size={16} />
                                   שלח הודעה
                                 </button>
                               )}
-
                               {showRemove && (
                                 <>
                                   <hr className="my-1" />
                                   <button
                                     onClick={() => handleRemoveFriend(friend)}
                                     disabled={requestLoading}
-                                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 bg-transparent transition-colors disabled:opacity-50"
+                                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                                   >
                                     <UserMinus size={16} />
                                     {requestLoading ? "מסיר..." : "הסר חבר"}
@@ -272,7 +270,7 @@ const FriendsList = ({
                     )}
                   </div>
 
-                  {/* Quick Actions Row */}
+                  {/* Quick Action Buttons */}
                   {showActions && (
                     <div className="flex gap-2 mt-3">
                       {showMessage && (
@@ -284,7 +282,6 @@ const FriendsList = ({
                           הודעה
                         </button>
                       )}
-
                       <button
                         onClick={() => handleProfileClick(friend)}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -299,8 +296,6 @@ const FriendsList = ({
             </div>
           </div>
         ))}
-
-        {/* Click outside handler for action menu */}
         {actionMenuOpen && (
           <div
             className="fixed inset-0 z-5"
@@ -309,14 +304,14 @@ const FriendsList = ({
         )}
       </div>
 
-      {/* מודאל אישור מחיקה */}
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
         onConfirm={confirmDeleteFriend}
         title="הסר חבר"
         message={
-          friendToDelete 
+          friendToDelete
             ? `האם אתה בטוח שברצונך להסיר את ${friendToDelete.name} מרשימת החברים שלך?`
             : "האם אתה בטוח שברצונך להסיר את החבר הזה?"
         }
@@ -325,7 +320,7 @@ const FriendsList = ({
         type="danger"
       />
 
-      {/* מודאל צ'אט */}
+      {/* Chat Modal */}
       {isChatModalOpen && chatWithFriend && (
         <Suspense
           fallback={

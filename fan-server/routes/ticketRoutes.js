@@ -1,4 +1,7 @@
-// fan-server/routes/ticketRoutes.js
+// ### Express Router: Ticket Routes
+// Defines ticket-related endpoints for listing, creating, viewing, updating,
+// and deleting match tickets. Includes access control for sellers.
+
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth");

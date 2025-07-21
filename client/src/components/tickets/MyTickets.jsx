@@ -7,6 +7,14 @@ import api from "../../utils/api";
 import teamColors from "../../utils/teamStyles";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal";
 
+/**
+ * MyTickets component
+ *
+ * Displays all tickets created by the current user.
+ * - Tickets are grouped into active and sold.
+ * - Supports delete, mark as sold/available, and view ticket actions.
+ * - Includes statistics and visual feedback for user interaction.
+ */
 const MyTickets = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,10 +26,12 @@ const MyTickets = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // State למודל המחיקה
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
 
+  /**
+   * Fetch tickets on component mount and handle navigation state message.
+   */
   useEffect(() => {
     fetchMyTickets();
     if (location.state?.message) {
@@ -30,6 +40,9 @@ const MyTickets = () => {
     }
   }, [location.state]);
 
+  /**
+   * Fetch user's own tickets from the backend.
+   */
   const fetchMyTickets = async () => {
     setLoading(true);
     setError("");
@@ -44,11 +57,17 @@ const MyTickets = () => {
     }
   };
 
+  /**
+   * Triggers the delete confirmation modal.
+   */
   const handleDeleteClick = (ticket) => {
     setTicketToDelete(ticket);
     setShowDeleteModal(true);
   };
 
+  /**
+   * Confirms deletion of the selected ticket and updates local state.
+   */
   const handleConfirmDelete = async () => {
     if (!ticketToDelete) return;
 
@@ -57,7 +76,6 @@ const MyTickets = () => {
       setTickets((prev) =>
         prev.filter((ticket) => ticket._id !== ticketToDelete._id)
       );
-   
     } catch (err) {
       console.error("Error deleting ticket:", err);
       setError("שגיאה במחיקת הכרטיס");
@@ -66,6 +84,9 @@ const MyTickets = () => {
     }
   };
 
+  /**
+   * Toggles ticket's sold-out status (sold <=> available).
+   */
   const handleToggleSoldOut = async (ticketId, currentStatus) => {
     try {
       const response = await api.put(`/api/tickets/${ticketId}`, {
@@ -89,6 +110,9 @@ const MyTickets = () => {
     }
   };
 
+  /**
+   * Renders action buttons for each ticket card (view, delete, toggle status).
+   */
   const renderActions = (ticket, sold) => (
     <div className="flex justify-center gap-2 mt-4">
       <button
@@ -131,6 +155,14 @@ const MyTickets = () => {
   const activeTickets = tickets.filter((ticket) => !ticket.isSoldOut);
   const soldTickets = tickets.filter((ticket) => ticket.isSoldOut);
 
+  /**
+   * Main render section
+   * - Displays header, add button
+   * - Error and loading handling
+   * - Tickets statistics
+   * - Active and sold ticket lists using TicketCard
+   * - Delete confirmation modal
+   */
   return (
     <>
       <div className="space-y-6">
@@ -148,7 +180,6 @@ const MyTickets = () => {
           </button>
         </div>
 
-        {/* הודעת שגיאה */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
@@ -161,7 +192,6 @@ const MyTickets = () => {
           </div>
         )}
 
-        {/* Loading */}
         {loading && (
           <div className="text-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-4"></div>
@@ -169,7 +199,6 @@ const MyTickets = () => {
           </div>
         )}
 
-        {/* סטטיסטיקות */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -196,7 +225,6 @@ const MyTickets = () => {
           </div>
         )}
 
-        {/* תוכן הכרטיסים */}
         {!loading && !error && (
           <>
             {tickets.length === 0 && (
@@ -257,7 +285,6 @@ const MyTickets = () => {
         )}
       </div>
 
-      {/* Modal אישור מחיקה */}
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {

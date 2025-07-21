@@ -2,11 +2,22 @@ import React, { useState } from "react";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import api from "utils/api";
 
+/**
+ * DeleteAccountForm allows the user to permanently delete their account.
+ *
+ * Features:
+ * - Requires manual confirmation by typing "מחק"
+ * - Sends DELETE request to API with token
+ * - Logs out the user and redirects after success
+ */
 const DeleteAccountForm = () => {
   const [confirmText, setConfirmText] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  /**
+   * Validates confirmation input and calls the delete endpoint.
+   */
   const handleDelete = async () => {
     if (confirmText !== "מחק") {
       setError('כדי למחוק את החשבון, יש לכתוב "מחק" בתיבה');

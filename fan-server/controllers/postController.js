@@ -1,4 +1,3 @@
-// fan-server/controllers/postController.js - Enhanced with better debugging
 
 const Post = require("../models/Post");
 const User = require("../models/User");
@@ -147,7 +146,7 @@ const getTeamPosts = async (req, res) => {
   }
 };
 
-// Generic getPosts (keep for backward compatibility)
+// Generic getPosts 
 const getPosts = async (req, res) => {
   try {
     const { 

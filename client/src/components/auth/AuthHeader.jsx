@@ -1,5 +1,13 @@
 import React from "react";
 
+/**
+ * AuthHeader component displays a consistent header for authentication pages.
+ * It includes the project logo, a title, and a subtitle.
+ *
+ * Props:
+ * - title: string - main heading text
+ * - subtitle: string - subheading text
+ */
 const AuthHeader = ({ title, subtitle }) => {
   return (
     <div className="form-header">

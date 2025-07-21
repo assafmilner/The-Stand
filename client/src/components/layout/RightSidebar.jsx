@@ -5,9 +5,23 @@ import {
   LogOut,
   Ticket,
   MessageCircle,
-  Users
+  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+/**
+ * RightSidebar renders the main vertical navigation menu used in desktop and mobile.
+ * Provides quick access to home, fixtures, messages, friends, tickets, profile, and logout.
+ *
+ * Props:
+ * - colors: team-specific color styles (used for border-top highlight)
+ * - onLogout: optional logout callback (if not provided, defaults to localStorage clear + redirect)
+ *
+ * 📐 UI Notes:
+ * - This component is styled as a fixed sidebar (right-aligned on large screens)
+ * - Each menu item uses a consistent icon + label pattern with spacing
+ * - Active highlight color is controlled by `colors.primary` passed from context
+ */
 
 const RightSidebar = ({ colors, onLogout }) => {
   const navigate = useNavigate();
@@ -44,7 +58,7 @@ const RightSidebar = ({ colors, onLogout }) => {
           >
             <MessageCircle size={18} /> הודעות
           </li>
-           <li
+          <li
             className="nav-item flex items-center gap-2"
             onClick={() => navigate("/friends")}
           >

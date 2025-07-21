@@ -1,10 +1,16 @@
-// client/src/components/homeComponents/Feed.jsx - Simplified to let PostList handle everything
-
 import React from "react";
 import PostList from "../post/PostList";
 
+/**
+ * FriendsFeed displays the feed of posts from the user's friends.
+ * Delegates post handling and creation to the PostList component.
+ *
+ * Props:
+ * - colors: team colors for styling
+ * - user: the current logged-in user
+ * - feedType: optional, defaults to "friends"
+ */
 const FriendsFeed = ({ colors, user, feedType = "friends" }) => {
-  // Simply pass the props to PostList and let it handle the data fetching and updates
   return (
     <PostList
       feedType={feedType}

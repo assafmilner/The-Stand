@@ -2,17 +2,32 @@ import React from "react";
 import { MapPin, Calendar, Users, Phone, Heart, Mail } from "lucide-react";
 import teamNameMap from "../../utils/teams-hebrew";
 
+/**
+ * ProfileInfo renders a user's profile information in one of two layouts:
+ *  - "About" tab: full-width detailed view with multiple cards
+ *  - "Compact": sidebar-friendly layout with reduced information
+ *
+ * Props:
+ * - user: the profile owner
+ * - isOwnProfile: whether the viewer is the user themself
+ * - colors: primary/secondary team colors for themed background
+ * - friendsCount: number of confirmed friends (fallbacks to 0)
+ * - compact: if true, renders compact version
+ * - showAsAbout: if true, renders detailed version
+ */
 const ProfileInfo = ({
   user,
   isOwnProfile,
   colors,
-  friendsCount = 0, // Now we trust the prop from Profile component
+  friendsCount = 0,
   compact = false,
   showAsAbout = false,
 }) => {
-  // Use the friends count passed as prop
   const displayFriendsCount = friendsCount;
 
+  /**
+   * Looks up team metadata (e.g. badge) from Hebrew-English map
+   */
   const getTeamData = () => {
     const teamEnglishName = Object.keys(teamNameMap).find(
       (key) => teamNameMap[key].name === user?.favoriteTeam
@@ -20,6 +35,9 @@ const ProfileInfo = ({
     return teamNameMap[teamEnglishName] || {};
   };
 
+  /**
+   * Formats phone numbers (assumes Israeli format)
+   */
   const formatPhoneNumber = (phone) => {
     if (!phone) return "";
     const cleaned = phone.replace(/\D/g, "");
@@ -31,7 +49,9 @@ const ProfileInfo = ({
     return phone;
   };
 
-  // About tab version - full width detailed view
+  // ----------------------------
+  // Full "About" layout version
+  // ----------------------------
   if (showAsAbout) {
     return (
       <div className="space-y-6">
@@ -57,7 +77,6 @@ const ProfileInfo = ({
                 </div>
               )}
 
-              {/* Show email only for own profile */}
               {isOwnProfile && user.email && (
                 <div className="profile-info-item">
                   <Mail size={18} className="profile-info-icon" />
@@ -65,7 +84,6 @@ const ProfileInfo = ({
                 </div>
               )}
 
-              {/* Show phone only for own profile */}
               {isOwnProfile && user.phone && (
                 <div className="profile-info-item">
                   <Phone size={18} className="profile-info-icon" />
@@ -73,7 +91,6 @@ const ProfileInfo = ({
                 </div>
               )}
 
-              {/* Join date - visible to everyone */}
               <div className="profile-info-item">
                 <Calendar size={18} className="profile-info-icon" />
                 <span>
@@ -86,7 +103,7 @@ const ProfileInfo = ({
 
           {/* Team and Additional Info */}
           <div className="space-y-6">
-            {/* Team Card - visible to everyone */}
+            {/* Favorite Team Card */}
             <div
               className="profile-team-card"
               style={{
@@ -111,12 +128,11 @@ const ProfileInfo = ({
               </div>
             </div>
 
-            {/* Additional Info Card - visible to everyone */}
+            {/* Additional Info Card */}
             <div className="profile-info-card">
               <h2>פרטים נוספים</h2>
 
               <div className="space-y-3">
-                {/* Friends count - visible to everyone - NOW USING REAL COUNT */}
                 <div className="profile-info-item">
                   <Users size={18} className="profile-info-icon" />
                   <span>
@@ -126,7 +142,6 @@ const ProfileInfo = ({
                   </span>
                 </div>
 
-                {/* Gender - visible to everyone if provided */}
                 {user.gender && (
                   <div className="profile-info-item">
                     <span className="w-5 h-5 flex-shrink-0 text-gray-500">
@@ -136,7 +151,6 @@ const ProfileInfo = ({
                   </div>
                 )}
 
-                {/* Birth date - you can make this visible to everyone if you want */}
                 {user.birthDate && (
                   <div className="profile-info-item">
                     <span className="w-5 h-5 flex-shrink-0 text-gray-500">
@@ -156,7 +170,9 @@ const ProfileInfo = ({
     );
   }
 
+  // ----------------------------
   // Compact sidebar version
+  // ----------------------------
   if (compact) {
     return (
       <div className="space-y-6">
@@ -167,7 +183,6 @@ const ProfileInfo = ({
             מידע כללי
           </h2>
           <div className="space-y-3">
-            {/* Friends count - NOW USING REAL COUNT */}
             <div className="profile-info-item">
               <Users size={18} className="profile-info-icon" />
               <span>
@@ -195,7 +210,7 @@ const ProfileInfo = ({
           </div>
         </div>
 
-        {/* Team Card */}
+        {/* Favorite Team Card */}
         <div
           className="profile-team-card"
           style={{
@@ -220,7 +235,7 @@ const ProfileInfo = ({
           </div>
         </div>
 
-        {/* Bio Card */}
+        {/* Optional bio if exists */}
         {user.bio && (
           <div className="profile-info-card">
             <h2>אודות</h2>

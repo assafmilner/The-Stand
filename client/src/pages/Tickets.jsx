@@ -5,6 +5,15 @@ import MyTickets from "../components/tickets/MyTickets";
 import { useUser } from "../context/UserContext";
 import teamColors from "../utils/teamStyles";
 
+/**
+ * Tickets Page
+ *
+ * This page displays two tabs:
+ * - "Community Tickets": Marketplace with tickets for sale by users.
+ * - "My Tickets": Tickets published by the logged-in user.
+ *
+ * Uses teamColors for dynamic styling based on user's favorite team.
+ */
 
 const TicketsPage = () => {
   const { user } = useUser();
@@ -13,7 +22,7 @@ const TicketsPage = () => {
 
   return (
     <Layout>
-      {/* טאב סלקטור */}
+      {/* Selector Tab */}
       <div className="flex justify-center my-6">
         <div
           className="tab-wrapper"
@@ -50,7 +59,7 @@ const TicketsPage = () => {
         </div>
       </div>
 
-      {/* תוכן לפי טאב */}
+      {/* Content by tab */}
       {selectedTab === "community" && <TicketMarketplace colors={colors} />}
       {selectedTab === "mine" && <MyTickets />}
     </Layout>

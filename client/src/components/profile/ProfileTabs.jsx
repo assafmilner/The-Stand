@@ -1,5 +1,15 @@
 import React from "react";
 
+/**
+ * ProfileTabs renders a 2-tab navigation bar for the profile view:
+ * - "Posts"
+ * - "Friends"
+ *
+ * Props:
+ * - activeTab: currently selected tab
+ * - setActiveTab: function to update selected tab
+ * - colors: primary color used for the active tab indicator
+ */
 const ProfileTabs = ({ activeTab, setActiveTab, colors }) => {
   const tabs = [
     { id: "posts", label: "פוסטים" },

@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
+// ### Function: getCurrentUser
+// Returns the currently authenticated user, excluding sensitive fields.
 const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
@@ -13,6 +15,8 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+// ### Function: changePassword
+// Allows the user to change their password after validating the current one.
 const changePassword = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -43,6 +47,8 @@ const changePassword = async (req, res) => {
   }
 };
 
+// ### Function: updateProfileInfo
+// Updates basic profile fields: location, bio, and phone.
 const updateProfileInfo = async (req, res) => {
   try {
     const { location, bio, phone } = req.body;
@@ -70,6 +76,8 @@ const updateProfileInfo = async (req, res) => {
   }
 };
 
+// ### Function: uploadProfilePicture
+// Updates the profile picture of the user based on an uploaded file.
 const uploadProfilePicture = async (req, res) => {
   try {
     if (!req.file) {
@@ -96,17 +104,8 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
-const deleteAccount = async (req, res) => {
-  try {
-    const userID = req.user.id;
-    await User.findByIdAndDelete(userID);
-    res.json({ message: "החשבון נמחק בהצלחה" });
-  } catch (err) {
-    console.error("שגיאה במחיקת החשבון", err);
-    res.status(500).json({ error: "שגיאה בשרת בעת מחיקת החשבון" });
-  }
-};
-
+// ### Function: uploadCoverImage
+// Updates the user's cover image using the uploaded file.
 const uploadCoverImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -133,6 +132,21 @@ const uploadCoverImage = async (req, res) => {
   }
 };
 
+// ### Function: deleteAccount
+// Deletes the authenticated user's account from the database.
+const deleteAccount = async (req, res) => {
+  try {
+    const userID = req.user.id;
+    await User.findByIdAndDelete(userID);
+    res.json({ message: "החשבון נמחק בהצלחה" });
+  } catch (err) {
+    console.error("שגיאה במחיקת החשבון", err);
+    res.status(500).json({ error: "שגיאה בשרת בעת מחיקת החשבון" });
+  }
+};
+
+// ### Function: getPublicProfile
+// Returns a user's public profile by user ID (for viewing other users' pages).
 const getPublicProfile = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -154,7 +168,7 @@ const getPublicProfile = async (req, res) => {
   }
 };
 
-// עדכון module.exports להוסיף את הפונקציה החדשה
+// ### Export: Profile controller functions
 module.exports = {
   getCurrentUser,
   changePassword,

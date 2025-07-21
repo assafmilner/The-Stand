@@ -1,4 +1,3 @@
-// client/src/context/ChatContext.jsx
 import React, {
   createContext,
   useContext,
@@ -10,7 +9,28 @@ import api from "../utils/api";
 import socketService from "../services/socketService";
 import { useUser } from "./UserContext";
 
+/**
+ * ChatContext
+ *
+ * Provides global chat functionality and real-time socket integration.
+ * Features:
+ * - Live notifications
+ * - Caching of recent messages per user
+ * - Socket connection lifecycle and message handlers
+ */
+
 const ChatContext = createContext();
+
+/**
+ * ChatProvider
+ *
+ * Wraps the app and makes chat state & methods available to all children.
+ * Handles:
+ * - Notifications
+ * - Recent chats
+ * - Socket connection
+ * - Chat message caching
+ */
 
 export const ChatProvider = ({ children }) => {
   const { user } = useUser();
@@ -19,6 +39,13 @@ export const ChatProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
   const [chatCache, setChatCache] = useState(new Map());
+
+  /**
+   * loadRecentChats
+   *
+   * Fetches the latest chats from the server for display in sidebar.
+   * Prevents multiple concurrent loads.
+   */
 
   const loadRecentChats = useCallback(async () => {
     if (loading) return;
@@ -36,6 +63,12 @@ export const ChatProvider = ({ children }) => {
     }
   }, [loading]);
 
+  /**
+   * markAsRead
+   *
+   * Clears notifications from a specific sender or all.
+   */
+
   const markAsRead = useCallback((senderId = null) => {
     if (senderId) {
       setNotifications((prev) => prev.filter((n) => n.senderId !== senderId));
@@ -44,9 +77,22 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * setActiveChat
+   *
+   * Marks a chat as currently opened (prevents duplicate notifications).
+   */
+
   const setActiveChat = useCallback((chatId) => {
     setActiveChatId(chatId);
   }, []);
+
+  /**
+   * addMessageToGlobalCache
+   *
+   * Caches a new message by chat ID (other user’s ID).
+   * Prevents duplicates and keeps messages sorted chronologically.
+   */
 
   const addMessageToGlobalCache = useCallback(
     (message) => {
@@ -75,12 +121,25 @@ export const ChatProvider = ({ children }) => {
     [activeChatId]
   );
 
+  /**
+   * getCachedMessages
+   *
+   * Returns cached messages for a given chat.
+   */
+
   const getCachedMessages = useCallback(
     (chatId) => {
       return chatCache.get(chatId) || [];
     },
     [chatCache]
   );
+
+  /**
+   * updateRecentChat
+   *
+   * Updates or prepends a recent chat based on a new incoming message.
+   * Keeps list sorted with most recent on top.
+   */
 
   const updateRecentChat = useCallback(
     (message) => {
@@ -123,6 +182,13 @@ export const ChatProvider = ({ children }) => {
     [activeChatId]
   );
 
+  /**
+   * addNotification
+   *
+   * Adds a new message notification unless chat is open.
+   * Updates existing one if already present.
+   */
+
   const addNotification = useCallback(
     (notification) => {
       if (activeChatId === notification.senderId) {
@@ -158,6 +224,13 @@ export const ChatProvider = ({ children }) => {
     [activeChatId]
   );
 
+  /**
+   * showToast
+   *
+   * Displays a toast notification for a new message unless on /messages page.
+   * Auto-dismisses after 4 seconds.
+   */
+
   const showToast = useCallback(
     (message) => {
       if (activeChatId === message.senderId) {
@@ -184,6 +257,10 @@ export const ChatProvider = ({ children }) => {
     },
     [activeChatId]
   );
+
+  /**
+   * useEffect: Init socket and register listeners on mount (once user is ready)
+   */
 
   useEffect(() => {
     if (!user?._id) return;
@@ -218,7 +295,17 @@ export const ChatProvider = ({ children }) => {
     };
 
     initSocket();
-  }, [user?._id, addMessageToGlobalCache, updateRecentChat, addNotification, showToast]);
+  }, [
+    user?._id,
+    addMessageToGlobalCache,
+    updateRecentChat,
+    addNotification,
+    showToast,
+  ]);
+
+  /**
+   * Context value exposed to consumers
+   */
 
   const value = {
     notifications,
@@ -235,6 +322,12 @@ export const ChatProvider = ({ children }) => {
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
+
+/**
+ * useChat
+ *
+ * Custom hook to consume chat context safely.
+ */
 
 export const useChat = () => {
   const context = useContext(ChatContext);

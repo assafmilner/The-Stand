@@ -2,6 +2,26 @@ import React, { useState, useEffect } from "react";
 import { ThumbsUp } from "lucide-react";
 import api from "../../utils/api";
 
+/**
+ * LikeButton
+ *
+ * A like/unlike toggle component for posts or comments.
+ * Supports optimistic UI updates and server synchronization.
+ *
+ * Features:
+ * - Highlights the button if the current user has liked the item
+ * - Displays the total number of likes
+ * - Handles both "post" and "comment" types via dynamic API routing
+ *
+ * Props:
+ * - id (string): ID of the post or comment
+ * - type (string): "post" | "comment" (default: "post")
+ * - likes (array): array of users who liked
+ * - userId (string): ID of the current user
+ * - onLikeToggle (function): callback with updated like list after toggle
+ * - className (string): optional class name for styling
+ */
+
 export default function LikeButton({
   id,
   type = "post",
@@ -59,7 +79,7 @@ export default function LikeButton({
       style={{
         background: "none",
         border: "none",
-        color: "#4f46e5", // צבע אחיד לכולם
+        color: "#4f46e5",
         fontSize: "0.9rem",
         cursor: "pointer",
         padding: 0,

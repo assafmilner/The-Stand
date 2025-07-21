@@ -1,4 +1,3 @@
-// client/src/components/tickets/TicketDetails.jsx
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -19,6 +18,19 @@ import stadiums from "../../utils/stadiums";
 
 const ChatModal = lazy(() => import("../chat/ChatModal"));
 
+/**
+ * TicketDetails component
+ *
+ * Displays full information for a single ticket.
+ * - Shows match data, pricing, seller details, notes, safety tips, etc.
+ * - Allows user to contact the seller via chat modal
+ * - Lazy-loads ChatModal for performance optimization
+ *
+ * Layout:
+ * - Two-column grid: main content + sidebar
+ * - Uses Tailwind utility classes for styling
+ */
+
 const TicketDetails = ({ colors }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,7 +45,19 @@ const TicketDetails = ({ colors }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState(null);
 
+  /**
+   * useEffect hook
+   *
+   * Triggers fetch for ticket details by ID.
+   */
+
   useEffect(() => {
+    /**
+     * fetchTicketDetails
+     *
+     * Retrieves ticket information from the backend.
+     * Handles loading and error states.
+     */
     fetchTicketDetails();
   }, [id]);
 
@@ -52,6 +76,12 @@ const TicketDetails = ({ colors }) => {
     }
   };
 
+  /**
+   * formatDate
+   *
+   * Converts a date string to Hebrew-readable format.
+   */
+
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString("he-IL", {
       weekday: "long",
@@ -61,6 +91,12 @@ const TicketDetails = ({ colors }) => {
     });
   };
 
+  /**
+   * formatPrice
+   *
+   * Formats a number into ILS currency string.
+   */
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("he-IL", {
       style: "currency",
@@ -68,13 +104,31 @@ const TicketDetails = ({ colors }) => {
     }).format(price);
   };
 
+  /**
+   * getTeamName
+   *
+   * Maps an English team name to Hebrew.
+   */
+
   const getTeamName = (englishName) => {
     return teamNameMap[englishName]?.name || englishName;
   };
 
+  /**
+   * getStadiumName
+   *
+   * Maps stadium ID to human-readable stadium name.
+   */
+
   const getStadiumName = (venue) => {
     return stadiums[venue] || venue;
   };
+
+  /**
+   * handleContactSeller
+   *
+   * Prepares and opens the chat modal with the ticket's seller.
+   */
 
   const handleContactSeller = () => {
     if (!ticket || !ticket.sellerId) {
@@ -93,12 +147,25 @@ const TicketDetails = ({ colors }) => {
     setIsChatOpen(true);
   };
 
+  /**
+   * handleCloseChatModal
+   *
+   * Closes the chat modal and resets the selected seller.
+   */
+
   const handleCloseChatModal = () => {
     setIsChatOpen(false);
     setSelectedSeller(null);
   };
 
   const isOwnTicket = user && ticket && ticket.sellerId._id === user._id;
+
+  /**
+   * Conditional rendering for:
+   * - Loading screen
+   * - Error fallback
+   * - Full ticket layout (main + sidebar)
+   */
 
   if (loading) {
     return (
@@ -130,6 +197,14 @@ const TicketDetails = ({ colors }) => {
       </div>
     );
   }
+  
+  /**
+   * JSX Render:
+   * - Header with back button and "sold" label
+   * - Left: game, pricing, notes
+   * - Right: seller info, safety tips, listing metadata
+   * - Chat modal loaded via Suspense
+   */
 
   return (
     <Layout>

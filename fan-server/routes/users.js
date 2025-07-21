@@ -1,3 +1,7 @@
+// ### Express Router: User Routes
+// Handles user profile operations, including authentication-protected endpoints
+// for profile data, password updates, image uploads, and account deletion.
+
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth");

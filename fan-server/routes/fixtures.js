@@ -1,4 +1,3 @@
-// fan-server/routes/fixtures.js
 const express = require("express");
 const router = express.Router();
 const FixturesService = require("../services/fixturesService");

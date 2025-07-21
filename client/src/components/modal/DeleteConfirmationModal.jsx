@@ -1,15 +1,36 @@
 import React from "react";
 import { X, Trash2, AlertTriangle } from "lucide-react";
 
-const DeleteConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "מחק פוסט", 
+/**
+ * DeleteConfirmationModal
+ *
+ * A reusable modal component for confirming destructive actions (e.g., delete).
+ *
+ * Props:
+ * - isOpen (bool): Whether the modal is visible
+ * - onClose (function): Called when the modal is dismissed
+ * - onConfirm (function): Called when the user confirms the action
+ * - title (string): Title text shown at the top
+ * - message (string): Message shown in the modal body
+ * - confirmText (string): Text on the confirm button
+ * - cancelText (string): Text on the cancel button
+ * - type (string): Style preset (e.g., "danger", "warning")
+ *
+ * UX notes:
+ * - Uses Lucide icons for visual indication of action type
+ * - Includes a warning message for irreversible actions
+ * - Background click and [X] button both close the modal
+ */
+
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "מחק פוסט",
   message = "האם אתה בטוח שברצונך למחוק את הפוסט הזה?",
   confirmText = "מחק",
   cancelText = "ביטול",
-  type = "danger" // danger, warning, info
+  type = "danger", // danger, warning, info
 }) => {
   if (!isOpen) return null;
 
@@ -17,13 +38,13 @@ const DeleteConfirmationModal = ({
     danger: {
       icon: <Trash2 size={24} className="text-red-600" />,
       confirmButton: "bg-red-600 hover:bg-red-700 text-white",
-      iconBg: "bg-red-100"
+      iconBg: "bg-red-100",
     },
     warning: {
       icon: <AlertTriangle size={24} className="text-yellow-600" />,
       confirmButton: "bg-yellow-600 hover:bg-yellow-700 text-white",
-      iconBg: "bg-yellow-100"
-    }
+      iconBg: "bg-yellow-100",
+    },
   };
 
   const styles = typeStyles[type] || typeStyles.danger;
@@ -43,15 +64,13 @@ const DeleteConfirmationModal = ({
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X size={20}  />
+            <X size={20} />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-600 text-right leading-relaxed">
-            {message}
-          </p>
+          <p className="text-gray-600 text-right leading-relaxed">{message}</p>
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-500 text-right">
               ⚠️ פעולה זו בלתי הפיכה - לא ניתן לשחזר לאחר המחיקה

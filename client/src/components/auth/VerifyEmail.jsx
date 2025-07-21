@@ -1,8 +1,12 @@
-// src/components/auth/VerifyEmail.jsx
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 
+/**
+ * VerifyEmail component handles email verification from a URL token.
+ * It reads the token from the query string, sends a request to the server,
+ * and displays appropriate status messages to the user.
+ */
 export default function VerifyEmail() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -10,7 +14,6 @@ export default function VerifyEmail() {
   const [error, setError] = useState("");
   const verificationAttempted = useRef(false);
 
-  // שולף את ?token= מה־query string
   const token = useMemo(
     () => new URLSearchParams(location.search).get("token"),
     [location.search]
@@ -18,7 +21,6 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      // Prevent multiple calls for same token
       if (verificationAttempted.current) return;
       verificationAttempted.current = true;
 
@@ -29,23 +31,17 @@ export default function VerifyEmail() {
       }
 
       try {
-        // שולח GET עם query־param
         await api.get(`/api/auth/verify-email/${encodeURIComponent(token)}`);
-
-        // הצלחה
         setStatus("success");
-        // מוחק את הטוקן מה־URL
         window.history.replaceState(
           {},
           document.title,
           window.location.pathname
         );
-        // ניווט חזרה ללוגין אחרי 2 שניות
         setTimeout(() => navigate("/login", { replace: true }), 2000);
       } catch (err) {
         console.error("Verification error:", err);
         const resp = err.response;
-        // special case: כבר אומת בעבר
         const msg = resp?.data?.message || resp?.data?.error;
         if (
           resp?.status === 400 &&
@@ -61,7 +57,6 @@ export default function VerifyEmail() {
           return;
         }
 
-        // טיפול בשגיאות רגילות
         setStatus("error");
         if (resp) {
           if (resp.status === 400) {
@@ -93,7 +88,7 @@ export default function VerifyEmail() {
       </div>
     );
   }
-  // status === "error"
+
   return (
     <div className="text-center p-4">
       <h2>אימות נכשל</h2>

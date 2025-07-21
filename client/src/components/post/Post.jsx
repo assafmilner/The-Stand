@@ -5,6 +5,19 @@ import PostActions from "./PostActions";
 import { usePostViewer } from "../../hooks/usePostViewer";
 import { useUser } from "../../context/UserContext";
 
+/**
+ * Post
+ *
+ * A full post component composed of header, content, and action sections.
+ * It supports owner-specific features such as editing and deleting posts.
+ * Uses context to check ownership and trigger edit via PostViewer.
+ *
+ * Props:
+ * - post (object): the post object with content, author, media, etc.
+ * - onDelete (function): callback to delete the post
+ * - colors (object): team-based styling (e.g., primary color)
+ */
+
 const Post = ({ post, onDelete, colors }) => {
   const { user } = useUser();
   const { openPost } = usePostViewer();
@@ -12,7 +25,6 @@ const Post = ({ post, onDelete, colors }) => {
   const isOwner = user?._id === post.authorId._id;
 
   const handleDelete = () => {
-    // פשוט קורא ל-onDelete - המודל כבר טיפל באישור
     onDelete(post._id);
   };
 
@@ -23,7 +35,7 @@ const Post = ({ post, onDelete, colors }) => {
         createdAt={post.createdAt}
         isOwner={isOwner}
         onEdit={isOwner ? () => openPost(post._id, post, "edit") : null}
-        onDelete={isOwner ? handleDelete : null} // ← כאן השינוי - ללא window.confirm
+        onDelete={isOwner ? handleDelete : null}
       />
 
       <PostContent content={post.content} media={post.media} />

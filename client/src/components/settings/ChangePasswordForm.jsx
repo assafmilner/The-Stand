@@ -2,6 +2,15 @@ import React, { useState } from "react";
 import api from "utils/api";
 import { Eye, EyeOff, CheckCircle, AlertTriangle } from "lucide-react";
 
+/**
+ * ChangePasswordForm allows the user to update their account password.
+ *
+ * Features:
+ * - Toggle visibility for password fields
+ * - Client-side confirmation match check
+ * - Sends PUT request with current + new password to API
+ * - Displays success or error feedback to the user
+ */
 const ChangePasswordForm = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -14,10 +23,15 @@ const ChangePasswordForm = () => {
   const toggleCurrentPasswordVisibility = () => {
     setShowCurrentPasswords((prev) => !prev);
   };
+
   const toggleNewPasswordVisibility = () => {
     setShowNewPasswords((prev) => !prev);
   };
 
+  /**
+   * Submits password change request to the API.
+   * Validates matching new+confirm password fields before sending.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -72,6 +86,7 @@ const ChangePasswordForm = () => {
         </div>
       )}
 
+      {/* Current password input with visibility toggle */}
       <div className="relative">
         <label className="block text-sm font-medium mb-1">סיסמה נוכחית</label>
         <input
@@ -89,6 +104,7 @@ const ChangePasswordForm = () => {
         </span>
       </div>
 
+      {/* New password input with visibility toggle */}
       <div className="relative">
         <label className="block text-sm font-medium mb-1">סיסמה חדשה</label>
         <input
@@ -106,6 +122,7 @@ const ChangePasswordForm = () => {
         </span>
       </div>
 
+      {/* Confirm new password (no toggle) */}
       <div className="relative">
         <label className="block text-sm font-medium mb-1">
           אימות סיסמה חדשה
@@ -119,6 +136,7 @@ const ChangePasswordForm = () => {
         />
       </div>
 
+      {/* Submit button */}
       <div className="col-span-2 flex justify-end mt-4">
         <button type="submit" className="px-4 py-2 bg-primary rounded">
           שמור סיסמה חדשה

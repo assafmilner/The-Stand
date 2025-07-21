@@ -5,6 +5,18 @@ import api from "utils/api";
 const DEFAULT_PROFILE_PIC =
   "https://res.cloudinary.com/ddygnvbr7/image/upload/v1752662044/defaultProfilePic_pngf2x.png";
 
+/**
+ * ProfilePictureForm allows the user to upload, preview, and save a new profile picture.
+ * It also supports removing the profile image and resetting to a default placeholder.
+ *
+ * Props:
+ * - user: current user object
+ *
+ * State:
+ * - preview: local image preview (base64 or URL)
+ * - selectedFile: file selected from user input
+ * - uploading: loading state while saving to server
+ */
 const ProfilePictureForm = ({ user }) => {
   const { setUser } = useUser();
   const [preview, setPreview] = useState(
@@ -14,6 +26,9 @@ const ProfilePictureForm = ({ user }) => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  /**
+   * Handles local file selection and preview update.
+   */
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
@@ -27,6 +42,10 @@ const ProfilePictureForm = ({ user }) => {
     }
   };
 
+  /**
+   * Resets the user's profile picture to the default image.
+   * Sends a PUT request and updates local state.
+   */
   const handleRemove = async () => {
     const token = localStorage.getItem("accessToken");
 
@@ -48,19 +67,18 @@ const ProfilePictureForm = ({ user }) => {
 
       setSelectedFile(null);
       setPreview(DEFAULT_PROFILE_PIC);
-      console.log("✅ תמונת פרופיל הוסרה ונשמרה בשרת");
     } catch (err) {
       console.error("❌ שגיאה בעת הסרת תמונת פרופיל:", err);
     }
   };
 
+  /**
+   * Uploads the selected image to the server and updates the user context.
+   */
   const handleSave = async () => {
     const token = localStorage.getItem("accessToken");
 
-    if (!selectedFile) {
-      console.log("No file selected");
-      return;
-    }
+    if (!selectedFile) return;
 
     const formData = new FormData();
     formData.append("image", selectedFile);

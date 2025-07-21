@@ -5,6 +5,23 @@ import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal";
 
+/**
+ * PostHeader
+ *
+ * Displays the top section of a post, including:
+ * - Author information (avatar, name, timestamp)
+ * - Link to author's profile
+ * - Dropdown menu for post actions (edit/delete) – only visible to the post owner
+ * - Modal confirmation for delete action
+ *
+ * Props:
+ * - author (object): the post author's data (must include _id, name, profilePicture)
+ * - createdAt (string): timestamp for when the post was created
+ * - isOwner (boolean): whether the current user is the post owner
+ * - onEdit (function): callback to trigger editing (optional)
+ * - onDelete (function): callback to trigger deletion (optional)
+ */
+
 const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -19,8 +36,8 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
   };
 
   const handleDeleteClick = () => {
-    setShowMenu(false); // סגור את התפריט
-    setShowDeleteModal(true); // פתח את המודל
+    setShowMenu(false);
+    setShowDeleteModal(true);
   };
 
   const handleConfirmDelete = () => {
@@ -141,7 +158,7 @@ const PostHeader = ({ author, createdAt, isOwner, onEdit, onDelete }) => {
         )}
       </div>
 
-      {/* Modal אישור מחיקה */}
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

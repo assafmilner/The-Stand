@@ -1,4 +1,3 @@
-// client/src/components/layout/Header.jsx
 import React, {
   useState,
   useRef,
@@ -23,6 +22,15 @@ import { useFriends } from "../../hooks/useFriends";
 import SearchBar from "../search/SearchBar";
 
 const ChatModal = lazy(() => import("../chat/ChatModal"));
+
+/**
+ * Header component provides the top navigation bar for the app.
+ * Includes links to settings, chat, friend requests, search bar, and user profile.
+ * Handles dropdowns for messages and friend requests with real-time indicators.
+ *
+ * Props:
+ * - user: the current logged-in user
+ */
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
@@ -226,7 +234,7 @@ const Header = ({ user }) => {
               <Settings size={20} />
             </button>
 
-            {/* Messages dropdown */}
+            {/* Messages dropdown button with unread badge */}
             <div className="relative" ref={dropdownRef}>
               <button
                 className="icon-button relative"
@@ -369,7 +377,7 @@ const Header = ({ user }) => {
               )}
             </div>
 
-            {/* Friends dropdown */}
+            {/* Friend requests dropdown */}
             <div className="relative" ref={friendsDropdownRef}>
               <button
                 className="icon-button relative"
@@ -475,6 +483,7 @@ const Header = ({ user }) => {
             </div>
           </div>
 
+          {/* App logo and user profile icon */}
           <div className="navbar-logo">
             <span
               className="logo-text tracking-wide"
@@ -496,7 +505,7 @@ const Header = ({ user }) => {
         </div>
       </header>
 
-      {/* Chat Modal */}
+      {/* Chat modal (lazy-loaded) */}
       {isChatOpen && selectedChatUser && (
         <Suspense fallback={<div>טוען צ'אט...</div>}>
           <ChatModal

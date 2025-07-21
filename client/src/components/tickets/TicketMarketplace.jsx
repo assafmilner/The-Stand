@@ -4,10 +4,24 @@ import { useNavigate } from "react-router-dom";
 import TicketCard from "./TicketCard";
 import api from "../../utils/api";
 
+/**
+ * TicketMarketplace component
+ *
+ * Displays all available tickets in a public marketplace.
+ * - Users can filter tickets by price, date, and game type (home/away)
+ * - Supports dynamic filtering and restoration of full list
+ * - Displays cards using the TicketCard component
+ *
+ * Design:
+ * - Filter controls with toggles and form inputs
+ * - Responsive grid layout for tickets
+ * - Conditional rendering for errors, empty results, and loading state
+ */
+
 const TicketMarketplace = ({ colors }) => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
-  const [allTickets, setAllTickets] = useState([]); 
+  const [allTickets, setAllTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -21,9 +35,22 @@ const TicketMarketplace = ({ colors }) => {
     isAwayGame: false,
   });
 
+  /**
+   * useEffect
+   *
+   * Fetches all tickets on component mount.
+   */
+
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  /**
+   * fetchTickets
+   *
+   * Calls the backend with query params derived from the filter state.
+   * Updates both tickets and full backup list (if no filters applied).
+   */
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -60,15 +87,33 @@ const TicketMarketplace = ({ colors }) => {
     }
   };
 
+  /**
+   * handleFilterChange
+   *
+   * Updates the filters object in state by key.
+   */
+
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
   };
 
+  /**
+   * applyFilters
+   *
+   * Applies current filters by re-fetching from backend.
+   */
+
   const applyFilters = () => {
     fetchTickets();
     setShowFilters(false);
   };
+
+  /**
+   * clearFilters
+   *
+   * Resets all filters and restores original unfiltered list.
+   */
 
   const clearFilters = () => {
     const cleared = {
@@ -80,8 +125,14 @@ const TicketMarketplace = ({ colors }) => {
       isAwayGame: false,
     };
     setFilters(cleared);
-    setTickets(allTickets); // ✅ שחזור הרשימה המקורית
+    setTickets(allTickets);
   };
+
+  /**
+   * clearFilters
+   *
+   * Resets all filters and restores original unfiltered list.
+   */
 
   const hasActiveFilters = Object.values(filters).some((value) => !!value);
 

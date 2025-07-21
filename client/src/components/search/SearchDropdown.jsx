@@ -1,9 +1,18 @@
-// client/src/components/search/SearchDropdown.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { User, MessageSquare, Ticket, ArrowLeft, Loader2 } from "lucide-react";
 import teamNameMap from "../../utils/teams-hebrew";
 
+/**
+ * SearchDropdown displays categorized quick search results (users, posts, tickets).
+ *
+ * Props:
+ * - results: object containing users, posts, tickets arrays
+ * - loading: whether the search is currently loading
+ * - query: the current search string
+ * - onClose: callback to close the dropdown
+ * - onSeeAllResults: callback to navigate to full results page
+ */
 const SearchDropdown = ({
   results,
   loading,
@@ -13,17 +22,25 @@ const SearchDropdown = ({
 }) => {
   const navigate = useNavigate();
 
+  /**
+   * Navigate to selected user's profile and close dropdown.
+   */
   const handleUserClick = (user) => {
     navigate(`/profile/${user._id}`);
     onClose();
   };
 
+  /**
+   * Placeholder click handler for posts (can be extended to navigate).
+   */
   const handlePostClick = (post) => {
-
     console.log("Post clicked:", post);
     onClose();
   };
 
+  /**
+   * Navigate to selected ticket's detail page and close dropdown.
+   */
   const handleTicketClick = (ticket) => {
     navigate(`/tickets/${ticket._id}`);
     onClose();
@@ -37,19 +54,23 @@ const SearchDropdown = ({
     return `₪${price.toFixed(0)}`;
   };
 
-  // פונקציה לתרגום שם קבוצה
+  /**
+   * Translates a team name from English to Hebrew (fallbacks to original if not found).
+   */
   const getTeamName = (englishName) => {
     return teamNameMap[englishName]?.name || englishName;
   };
 
   return (
     <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border z-50 max-h-96 overflow-hidden">
+      {/* Loading state */}
       {loading ? (
         <div className="p-6 text-center text-gray-500">
           <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
           <p>מחפש...</p>
         </div>
-      ) : !results ||
+      ) : // Empty state
+      !results ||
         (!results.users?.length &&
           !results.posts?.length &&
           !results.tickets?.length) ? (
@@ -58,6 +79,7 @@ const SearchDropdown = ({
           <p className="text-sm">נסה מילות חיפוש אחרות</p>
         </div>
       ) : (
+        // Result sections
         <div className="max-h-80 overflow-y-auto">
           {/* Users Section */}
           {results.users?.length > 0 && (
@@ -178,7 +200,7 @@ const SearchDropdown = ({
         </div>
       )}
 
-      {/* See All Results Button */}
+      {/* "See All Results" Button */}
       {results &&
         (results.users?.length > 0 ||
           results.posts?.length > 0 ||

@@ -1,3 +1,8 @@
+// ### Mongoose Schema: User
+// Defines the user model for the platform, including authentication fields,
+// personal preferences (favorite team, location, gender), and profile metadata.
+// Used for user management, search, and personalization features.
+
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(

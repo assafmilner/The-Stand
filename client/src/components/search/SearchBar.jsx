@@ -1,10 +1,18 @@
-// client/src/components/search/SearchBar.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SearchDropdown from "./SearchDropdown";
 import { useSearch } from "../../hooks/useSearch";
 
+/**
+ * SearchBar provides live search functionality with debounced input.
+ * - Shows a dropdown with quick results
+ * - Navigates to full search page on submit
+ *
+ * Behavior:
+ * - Triggers search after 2+ characters
+ * - Closes dropdown when clicking outside
+ */
 const SearchBar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +23,10 @@ const SearchBar = () => {
   const { quickResults, loading, performQuickSearch, clearResults } =
     useSearch();
 
-  // Debounced search effect
+  /**
+   * Triggers search when query is at least 2 characters.
+   * Clears results when query is cleared.
+   */
   useEffect(() => {
     if (query.length >= 2) {
       performQuickSearch(query);
@@ -26,7 +37,9 @@ const SearchBar = () => {
     }
   }, [query, performQuickSearch, clearResults]);
 
-  // Close dropdown when clicking outside
+  /**
+   * Closes dropdown when clicking outside the component.
+   */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -52,6 +65,9 @@ const SearchBar = () => {
     inputRef.current?.focus();
   };
 
+  /**
+   * Navigates to the full search results page.
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -96,7 +112,7 @@ const SearchBar = () => {
         </div>
       </form>
 
-      {/* Search Dropdown */}
+      {/* Dropdown with quick results */}
       {isOpen && (
         <SearchDropdown
           results={quickResults}

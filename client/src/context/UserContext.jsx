@@ -1,12 +1,29 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "utils/api";
 
+/**
+ * UserContext
+ *
+ * Provides the authenticated user's data throughout the app.
+ */
 export const UserContext = createContext();
 
+/**
+ * UserProvider
+ *
+ * Fetches the current user on mount (if accessToken exists),
+ * and exposes `user`, `setUser`, and `loading` to consumers.
+ */
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * useEffect: On mount
+   *
+   * - Attempts to fetch user data from the backend
+   * - Uses Bearer token from localStorage
+   */
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("accessToken");
@@ -39,4 +56,8 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+/**
+ * useUser
+ *
+ * Custom hook to consume the user context.
+ */

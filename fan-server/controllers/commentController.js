@@ -1,8 +1,13 @@
-// commentController.js - תיקון בqontroller לוודא שהעדכון עובד בדאטה בייס
+// ### Comment Controller
+// Handles CRUD operations for post comments, replies, likes, and comment counting.
+
 const Comment = require("../models/Comment");
 const Post = require("../models/Post");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
+// ### Function: createComment
+// Creates a new comment or reply on a post.
+// Requires: postId, content, optional parentCommentId
 const createComment = async (req, res) => {
   try {
     const { postId, content, parentCommentId } = req.body;
@@ -12,7 +17,12 @@ const createComment = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const newComment = new Comment({ postId, authorId, content, parentCommentId });
+    const newComment = new Comment({
+      postId,
+      authorId,
+      content,
+      parentCommentId,
+    });
     await newComment.populate("authorId", "name profilePicture");
     await newComment.save();
 
@@ -23,16 +33,19 @@ const createComment = async (req, res) => {
   }
 };
 
+// ### Function: getCommentsByPost
+// Retrieves main comments (not replies) for a given post,
+// along with their first-level replies and pagination info.
 const getCommentsByPost = async (req, res) => {
   const { postId } = req.params;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
-  
+
   try {
-    const mainComments = await Comment.find({ 
-      postId, 
-      parentCommentId: null 
+    const mainComments = await Comment.find({
+      postId,
+      parentCommentId: null,
     })
       .populate("authorId", "name profilePicture")
       .populate("likes", "name profilePicture")
@@ -47,20 +60,22 @@ const getCommentsByPost = async (req, res) => {
           .populate("likes", "name profilePicture")
           .sort({ createdAt: 1 });
 
-        const totalReplies = await Comment.countDocuments({ parentCommentId: comment._id });
+        const totalReplies = await Comment.countDocuments({
+          parentCommentId: comment._id,
+        });
 
         return {
           ...comment.toObject(),
           replies: replies,
           repliesCount: totalReplies,
-          hasMoreReplies: totalReplies > 2
+          hasMoreReplies: totalReplies > 2,
         };
       })
     );
 
-    const totalComments = await Comment.countDocuments({ 
-      postId, 
-      parentCommentId: null 
+    const totalComments = await Comment.countDocuments({
+      postId,
+      parentCommentId: null,
     });
     const hasMore = skip + mainComments.length < totalComments;
 
@@ -70,8 +85,8 @@ const getCommentsByPost = async (req, res) => {
         currentPage: page,
         totalPages: Math.ceil(totalComments / limit),
         hasMore,
-        totalComments
-      }
+        totalComments,
+      },
     });
   } catch (err) {
     console.error("Error fetching comments:", err);
@@ -79,6 +94,8 @@ const getCommentsByPost = async (req, res) => {
   }
 };
 
+// ### Function: getRepliesByComment
+// Fetches paginated replies to a specific comment.
 const getRepliesByComment = async (req, res) => {
   const { commentId } = req.params;
   const page = parseInt(req.query.page) || 1;
@@ -93,7 +110,9 @@ const getRepliesByComment = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    const totalReplies = await Comment.countDocuments({ parentCommentId: commentId });
+    const totalReplies = await Comment.countDocuments({
+      parentCommentId: commentId,
+    });
     const hasMore = skip + replies.length < totalReplies;
 
     res.status(200).json({
@@ -102,8 +121,8 @@ const getRepliesByComment = async (req, res) => {
         currentPage: page,
         totalPages: Math.ceil(totalReplies / limit),
         hasMore,
-        totalReplies
-      }
+        totalReplies,
+      },
     });
   } catch (err) {
     console.error("Error fetching replies:", err);
@@ -111,28 +130,28 @@ const getRepliesByComment = async (req, res) => {
   }
 };
 
+// ### Function: updateComment
+// Updates the content of an existing comment by its author.
 const updateComment = async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
 
   try {
-    // בדוק שהמשתמש הוא בעל התגובה
     const comment = await Comment.findById(id);
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // בדוק הרשאות
     if (comment.authorId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized to edit this comment" });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to edit this comment" });
     }
 
-    // עדכן את התגובה
     comment.content = content;
-    comment.updatedAt = new Date(); // הוסף את updatedAt אם אין
+    comment.updatedAt = new Date();
     await comment.save();
 
-    // החזר את התגובה המעודכנת עם הpopulate
     const updatedComment = await Comment.findById(id)
       .populate("authorId", "name profilePicture")
       .populate("likes", "name profilePicture");
@@ -144,17 +163,20 @@ const updateComment = async (req, res) => {
   }
 };
 
+// ### Function: deleteComment
+// Deletes a comment if the user is the owner.
 const deleteComment = async (req, res) => {
   const { id } = req.params;
   try {
-    // בדוק שהמשתמש הוא בעל התגובה
     const comment = await Comment.findById(id);
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
     if (comment.authorId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized to delete this comment" });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this comment" });
     }
 
     await Comment.findByIdAndDelete(id);
@@ -165,12 +187,17 @@ const deleteComment = async (req, res) => {
   }
 };
 
+// ### Function: toggleLikeComment
+// Toggles like/unlike on a comment by the current user.
 const toggleLikeComment = async (req, res) => {
   try {
     const commentId = req.params.id;
     const userId = req.user.id;
 
-    const comment = await Comment.findById(commentId).populate("likes", "name profilePicture");
+    const comment = await Comment.findById(commentId).populate(
+      "likes",
+      "name profilePicture"
+    );
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
     const alreadyLiked = comment.likes.some(
@@ -187,7 +214,10 @@ const toggleLikeComment = async (req, res) => {
 
     await comment.save();
 
-    const updatedComment = await Comment.findById(commentId).populate("likes", "name profilePicture");
+    const updatedComment = await Comment.findById(commentId).populate(
+      "likes",
+      "name profilePicture"
+    );
     res.status(200).json(updatedComment);
   } catch (err) {
     console.error("❌ Error toggling like:", err);
@@ -195,6 +225,8 @@ const toggleLikeComment = async (req, res) => {
   }
 };
 
+// ### Function: getCommentCountByPost
+// Returns the total number of comments for a given post.
 const getCommentCountByPost = async (req, res) => {
   const { postId } = req.params;
   try {
@@ -205,6 +237,7 @@ const getCommentCountByPost = async (req, res) => {
   }
 };
 
+// ### Export: Comment controller methods
 module.exports = {
   createComment,
   getCommentsByPost,

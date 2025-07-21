@@ -1,4 +1,3 @@
-// src/components/auth/SignupForm.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
@@ -6,6 +5,11 @@ import teamColors from "../../utils/teamStyles";
 import AuthHeader from "./AuthHeader";
 import "../../styles/auth.css";
 
+/**
+ * SignupForm handles the user registration process.
+ * It collects user details, validates input, and submits to the server.
+ * After successful registration, the user is prompted to verify their email.
+ */
 const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -18,7 +22,6 @@ const SignupForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +30,10 @@ const SignupForm = () => {
 
   const navigate = useNavigate();
 
+  /**
+   * Handles the signup form submission.
+   * Validates passwords and sends registration data to the API.
+   */
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
@@ -83,7 +90,6 @@ const SignupForm = () => {
             {error && <p className="form-error">{error}</p>}
 
             <form onSubmit={handleSignup} className="form">
-              {/* שם מלא */}
               <div className="form-group">
                 <label htmlFor="fullName" className="form-label">
                   שם מלא
@@ -99,7 +105,6 @@ const SignupForm = () => {
                 />
               </div>
 
-              {/* אימייל */}
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   אימייל
@@ -114,7 +119,7 @@ const SignupForm = () => {
                   required
                 />
               </div>
-              {/*סיסמא*/}
+
               <div className="form-group">
                 <label htmlFor="password" className="form-label">
                   סיסמה
@@ -144,7 +149,6 @@ const SignupForm = () => {
                 />
               </div>
 
-              {/* מיקום */}
               <label htmlFor="location" className="form-label">
                 מיקום בישראל
               </label>
@@ -162,7 +166,6 @@ const SignupForm = () => {
                 ))}
               </select>
 
-              {/* טלפון */}
               <div className="form-group">
                 <label htmlFor="phone" className="form-label">
                   טלפון
@@ -178,7 +181,6 @@ const SignupForm = () => {
                 />
               </div>
 
-              {/* מין */}
               <div className="form-group">
                 <label htmlFor="gender" className="form-label">
                   מין
@@ -197,7 +199,6 @@ const SignupForm = () => {
                 </select>
               </div>
 
-              {/* תאריך לידה */}
               <div className="form-group">
                 <label htmlFor="birthDate" className="form-label">
                   תאריך לידה
@@ -212,7 +213,6 @@ const SignupForm = () => {
                 />
               </div>
 
-              {/* קבוצה אהודה */}
               <div className="form-group">
                 <label htmlFor="favoriteTeam" className="form-label">
                   קבוצה אהודה
@@ -233,7 +233,6 @@ const SignupForm = () => {
                 </select>
               </div>
 
-              {/* ביוגרפיה */}
               <div className="form-group">
                 <label htmlFor="bio" className="form-label">
                   ביוגרפיה קצרה
@@ -248,7 +247,6 @@ const SignupForm = () => {
                 />
               </div>
 
-              {/* כפתור הרשמה */}
               <button
                 type="submit"
                 className="form-button"
@@ -258,7 +256,6 @@ const SignupForm = () => {
               </button>
             </form>
 
-            {/* כיתוב תחתון */}
             <div className="form-footer">
               <p>
                 כבר יש לך חשבון?{" "}
@@ -271,7 +268,6 @@ const SignupForm = () => {
         </div>
       )}
 
-      {/* הצד הדקורטיבי שלך — תשמור אותו בדיוק */}
       <div className="decorative-container">
         <div className="field-pattern"></div>
         <div className="field-elements">

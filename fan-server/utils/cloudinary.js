@@ -1,3 +1,6 @@
+// ### Config: Cloudinary Initialization
+// Sets up Cloudinary with credentials from environment variables for media uploads.
+
 const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({

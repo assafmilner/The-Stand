@@ -3,6 +3,19 @@ import { Calendar, Clock, Landmark } from "lucide-react";
 import teamNameMap from "../../utils/teams-hebrew";
 import stadiums from "../../utils/stadiums";
 
+/**
+ * FixturesList renders a grid of upcoming or past football matches.
+ *
+ * Props:
+ * - fixtures: Array of match objects (each with id, date, time, teams, etc.)
+ * - favoriteTeamEnglish: Name of the user's favorite team in English (used for highlighting)
+ * - colors: team-specific colors (used to style favorite matches)
+ * - title: optional section title
+ * - groupByRound: if true, fixtures are grouped by match round
+ * - fixtureRefs: optional ref map to access fixture elements
+ * - isPlayoff: if true, modifies round labels for playoff display
+ */
+
 const FixturesList = ({
   fixtures,
   favoriteTeamEnglish,
@@ -20,6 +33,12 @@ const FixturesList = ({
     );
   }
 
+    /**
+   * Renders a single match fixture card.
+   * Highlights the match if it involves the favorite team.
+   * Includes date, time, teams, optional score, and venue.
+   */
+  
   const renderFixture = (match) => {
     const isFavoriteMatch =
       match.homeTeam === favoriteTeamEnglish ||

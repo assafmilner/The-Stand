@@ -1,34 +1,31 @@
+// ### Utility: JWT Token Management
+// Provides helper functions to generate and verify JWT access and refresh tokens
+// for authentication and session handling.
+
 const jwt = require("jsonwebtoken");
 
 function generateAccessToken(payload) {
-    return jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "15m" }
-    );
-  }
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "15m",
+  });
+}
 
-  function generateRefreshToken(payload) {
-    return jwt.sign(
-      payload,
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
-    );
-  }
+function generateRefreshToken(payload) {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+  });
+}
 
-  function verifyToken(token) {
-    try {
-      return jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return null;
-    }
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return null;
   }
-  
-  
+}
 
-  module.exports = {
-    generateAccessToken,
-    generateRefreshToken,
-    verifyToken,
-  };
-  
+module.exports = {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+};

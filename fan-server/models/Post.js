@@ -1,3 +1,7 @@
+// ### Mongoose Schema: Post
+// Represents a post in a community feed. Includes content, media, and likes.
+// Posts belong to a specific user (`authorId`) and community (`communityId`).
+
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
@@ -36,9 +40,9 @@ const PostSchema = new mongoose.Schema({
 { timestamps: true }
 );
 
-PostSchema.index({ content: "text" });
-PostSchema.index({ authorId: 1, createdAt: -1 });
-PostSchema.index({ createdAt: -1 });
-
+// Indexes for optimized search and feed sorting
+PostSchema.index({ content: "text" });                // Full-text search on post content
+PostSchema.index({ authorId: 1, createdAt: -1 });     // Author feed sorting
+PostSchema.index({ createdAt: -1 });                  // Global feed or community sorting
 
 module.exports = mongoose.model("Post", PostSchema);

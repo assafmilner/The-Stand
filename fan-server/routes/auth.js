@@ -1,3 +1,7 @@
+// ### Express Router: Auth Routes
+// Defines authentication-related API endpoints for user registration, login,
+// logout, token refresh, and email verification flows.
+
 const express = require("express");
 const router = express.Router();
 const {

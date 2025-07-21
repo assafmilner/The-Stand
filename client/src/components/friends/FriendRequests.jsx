@@ -1,4 +1,3 @@
-// client/src/components/friends/FriendRequests.jsx
 import React, { useState } from "react";
 import {
   Check,
@@ -12,9 +11,22 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useFriends } from "../../hooks/useFriends";
 
+/**
+ * FriendRequests renders a list of incoming or outgoing friend requests.
+ * It supports accepting, rejecting, and visual feedback per request type.
+ *
+ * Props:
+ * - requests: array - list of friend request objects
+ * - type: string - 'received' or 'sent'
+ * - loading: boolean - whether to show loading skeletons
+ * - colors: object - primary color styling per team
+ * - onRequestHandled: function - callback after accept/reject
+ * - emptyMessage: string - custom empty state title
+ * - emptySubMessage: string - custom empty state description
+ */
 const FriendRequests = ({
   requests = [],
-  type = "received", // 'received' or 'sent'
+  type = "received",
   loading = false,
   colors,
   onRequestHandled,
@@ -29,24 +41,16 @@ const FriendRequests = ({
   const handleAcceptRequest = async (request) => {
     setProcessingRequest(request.id);
     const result = await acceptFriendRequest(request.id);
-
-    if (result.success) {
-      onRequestHandled?.(request, "accepted");
-    } else {
-      alert(result.error);
-    }
+    if (result.success) onRequestHandled?.(request, "accepted");
+    else alert(result.error);
     setProcessingRequest(null);
   };
 
   const handleRejectRequest = async (request) => {
     setProcessingRequest(request.id);
     const result = await rejectFriendRequest(request.id);
-
-    if (result.success) {
-      onRequestHandled?.(request, "rejected");
-    } else {
-      alert(result.error);
-    }
+    if (result.success) onRequestHandled?.(request, "rejected");
+    else alert(result.error);
     setProcessingRequest(null);
   };
 
@@ -60,35 +64,20 @@ const FriendRequests = ({
     const diffInHours = Math.floor((now - requestDate) / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInHours < 1) {
-      return "לפני כמה דקות";
-    } else if (diffInHours < 24) {
-      return `לפני ${diffInHours} שעות`;
-    } else if (diffInDays === 1) {
-      return "אתמול";
-    } else if (diffInDays < 7) {
-      return `לפני ${diffInDays} ימים`;
-    } else {
-      return requestDate.toLocaleDateString("he-IL", {
-        day: "numeric",
-        month: "short",
-        year:
-          requestDate.getFullYear() !== now.getFullYear()
-            ? "numeric"
-            : undefined,
-      });
-    }
+    if (diffInHours < 1) return "לפני כמה דקות";
+    if (diffInHours < 24) return `לפני ${diffInHours} שעות`;
+    if (diffInDays === 1) return "אתמול";
+    if (diffInDays < 7) return `לפני ${diffInDays} ימים`;
+
+    return requestDate.toLocaleDateString("he-IL", {
+      day: "numeric",
+      month: "short",
+      year:
+        requestDate.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    });
   };
 
-  // Default empty messages based on type
-  const defaultEmptyMessage =
-    type === "received" ? "אין בקשות חברות חדשות" : "לא שלחת בקשות חברות";
-
-  const defaultEmptySubMessage =
-    type === "received"
-      ? "בקשות חברות שיישלחו אליך יופיעו כאן"
-      : "בקשות ששלחת לאחרים יופיעו כאן";
-
+  // Show loading placeholders
   if (loading) {
     return (
       <div className="space-y-4">
@@ -119,10 +108,16 @@ const FriendRequests = ({
       <div className="text-center py-12 bg-white rounded-xl border">
         <UserPlus size={48} className="mx-auto mb-4 text-gray-300" />
         <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          {emptyMessage || defaultEmptyMessage}
+          {emptyMessage ||
+            (type === "received"
+              ? "אין בקשות חברות חדשות"
+              : "לא שלחת בקשות חברות")}
         </h3>
         <p className="text-gray-500 text-sm">
-          {emptySubMessage || defaultEmptySubMessage}
+          {emptySubMessage ||
+            (type === "received"
+              ? "בקשות חברות שיישלחו אליך יופיעו כאן"
+              : "בקשות ששלחת לאחרים יופיעו כאן")}
         </p>
       </div>
     );
@@ -157,14 +152,12 @@ const FriendRequests = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      {/* Name and Team */}
                       <h3
                         className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors mb-1"
                         onClick={() => handleProfileClick(user._id)}
                       >
                         {user.name}
                       </h3>
-
                       <p
                         className="text-sm mb-2"
                         style={{ color: colors?.primary || "#3B82F6" }}
@@ -172,14 +165,12 @@ const FriendRequests = ({
                         אוהד {user.favoriteTeam}
                       </p>
 
-                      {/* Additional Info */}
                       <div className="space-y-1 text-xs text-gray-500">
                         {user.location && (
                           <div className="flex items-center gap-1">
                             <span>📍 {user.location}</span>
                           </div>
                         )}
-
                         <div className="flex items-center gap-1">
                           <Calendar size={12} />
                           <span>
@@ -191,15 +182,14 @@ const FriendRequests = ({
                       </div>
                     </div>
 
-                    {/* Status/Actions */}
+                    {/* Actions */}
                     <div className="flex flex-col items-end gap-2">
                       {type === "received" ? (
-                        // Received requests - show accept/reject buttons
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleAcceptRequest(request)}
                             disabled={isProcessing || requestLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                           >
                             {isProcessing ? (
                               <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full"></div>
@@ -212,7 +202,7 @@ const FriendRequests = ({
                           <button
                             onClick={() => handleRejectRequest(request)}
                             disabled={isProcessing || requestLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                           >
                             {isProcessing ? (
                               <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full"></div>
@@ -223,7 +213,6 @@ const FriendRequests = ({
                           </button>
                         </div>
                       ) : (
-                        // Sent requests - show pending status
                         <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg">
                           <Clock size={14} />
                           <span className="text-xs font-medium">
@@ -234,7 +223,7 @@ const FriendRequests = ({
                     </div>
                   </div>
 
-                  {/* Quick Actions Row */}
+                  {/* Quick Actions */}
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => handleProfileClick(user._id)}

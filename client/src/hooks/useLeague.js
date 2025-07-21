@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
-import { detectLeague } from '../utils/leagueUtils';
-import api from '../utils/api';
-import { calculateTable } from '../utils/leagueTable';
+import { useState, useEffect } from "react";
+import { detectLeague } from "../utils/leagueUtils";
+import api from "../utils/api";
+import { calculateTable } from "../utils/leagueTable";
 
 const SEASON = "2025-2026";
 
-// מזהה את הליגה לפי הקבוצה
+/**
+ * useLeague
+ *
+ * Detects the league ID and league type (ligat-haal / leumit)
+ * for the user's favorite team.
+ *
+ * @param {string} favoriteTeam - Hebrew name of the team
+ * @returns {object} { league, leagueType, loading, error }
+ */
 export const useLeague = (favoriteTeam) => {
   const [league, setLeague] = useState(null);
   const [leagueType, setLeagueType] = useState(null);
@@ -20,7 +28,7 @@ export const useLeague = (favoriteTeam) => {
       try {
         const seasonId = await detectLeague(favoriteTeam);
         setLeague(seasonId);
-        setLeagueType(seasonId === 4644 ? 'ligat-haal' : 'leumit');
+        setLeagueType(seasonId === 4644 ? "ligat-haal" : "leumit");
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,7 +42,15 @@ export const useLeague = (favoriteTeam) => {
   return { league, leagueType, loading, error };
 };
 
-// מביא את לוח המשחקים מהשרת
+/**
+ * useFixtures
+ *
+ * Fetches fixtures for a given season and league type.
+ * Returns a list of matches and metadata (regular season end date).
+ *
+ * @param {number} seasonId
+ * @param {string} leagueType
+ */
 export const useFixtures = (seasonId, leagueType) => {
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,25 +64,28 @@ export const useFixtures = (seasonId, leagueType) => {
     setError(null);
 
     try {
-      const response = await api.get('/api/fixtures/smart', {
+      const response = await api.get("/api/fixtures/smart", {
         params: {
           seasonId: seasonId.toString(),
           season: SEASON,
           //force: forceRefresh.toString(),
-   
-        }
+        },
       });
 
       if (!response.data.success) {
-        throw new Error(response.data.error || 'Failed to fetch fixtures');
+        throw new Error(response.data.error || "Failed to fetch fixtures");
       }
-      
+
       const fixturesArray = response.data.data || [];
       setFixtures(fixturesArray);
-     
-      setRegularSeasonEndDate(fixturesArray.regularSeasonEndDate ? new Date(fixturesArray.regularSeasonEndDate) : null);
+
+      setRegularSeasonEndDate(
+        fixturesArray.regularSeasonEndDate
+          ? new Date(fixturesArray.regularSeasonEndDate)
+          : null
+      );
     } catch (err) {
-      console.error('❌ Error fetching fixtures:', err);
+      console.error("❌ Error fetching fixtures:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -82,11 +101,18 @@ export const useFixtures = (seasonId, leagueType) => {
     loading,
     error,
     refetch: () => fetchAllFixtures(true),
-    regularSeasonEndDate
+    regularSeasonEndDate,
   };
 };
 
-// טבלת ליגה חכמה מהשרת
+/**
+ * useLeagueTable
+ *
+ * Fetches the regular season table and computes playoff tables if applicable.
+ * Handles logic for both Ligat Ha'Al and Leumit league formats.
+ *
+ * @param {number} leagueId
+ */
 export const useLeagueTable = (leagueId) => {
   const [regularTable, setRegularTable] = useState([]);
   const [topPlayoff, setTopPlayoff] = useState([]);
@@ -95,8 +121,10 @@ export const useLeagueTable = (leagueId) => {
   const [playoffLoading, setPlayoffLoading] = useState(false);
 
   const getLeagueConfig = (id) => {
-    if (id === 4644) return { seasonId: 4644, playoffStartRound: 26, topPlayoffSize: 6 };
-    if (id === 4966) return { seasonId: 4966, playoffStartRound: 30, topPlayoffSize: 8 };
+    if (id === 4644)
+      return { seasonId: 4644, playoffStartRound: 26, topPlayoffSize: 6 };
+    if (id === 4966)
+      return { seasonId: 4966, playoffStartRound: 30, topPlayoffSize: 8 };
     return { seasonId: 0, playoffStartRound: 0, topPlayoffSize: 0 };
   };
 
@@ -104,7 +132,6 @@ export const useLeagueTable = (leagueId) => {
     if (!leagueId) return;
     setLoading(true);
     try {
-
       const res = await api.get("/api/league/table", {
         params: {
           seasonId: leagueId,
@@ -123,46 +150,47 @@ export const useLeagueTable = (leagueId) => {
   };
 
   const fetchPlayoffData = async () => {
-  try {
-    setPlayoffLoading(true);
-    const { seasonId, playoffStartRound, topPlayoffSize } = getLeagueConfig(leagueId);
+    try {
+      setPlayoffLoading(true);
+      const { seasonId, playoffStartRound, topPlayoffSize } =
+        getLeagueConfig(leagueId);
 
-    // שליפת המחזור האחרון בעונה הסדירה
-    const roundRes = await api.get("/api/fixtures/round", {
-      params: { seasonId, round: playoffStartRound - 1, season: SEASON }
-    });
+      const roundRes = await api.get("/api/fixtures/round", {
+        params: { seasonId, round: playoffStartRound - 1, season: SEASON },
+      });
 
-    const lastRoundGames = roundRes.data?.events || [];
+      const lastRoundGames = roundRes.data?.events || [];
 
-    // בדיקת תאריך אחרון
-    const lastGameDate = lastRoundGames
-      .map((g) => new Date(`${g.dateEvent}T${g.strTime || "00:00:00"}`))
-      .sort((a, b) => b - a)[0];
+      const lastGameDate = lastRoundGames
+        .map((g) => new Date(`${g.dateEvent}T${g.strTime || "00:00:00"}`))
+        .sort((a, b) => b - a)[0];
 
-    if (!lastGameDate || new Date() < lastGameDate) {
-      console.log("⏳ Waiting for regular season to end before showing playoff table");
-      return;
+      if (!lastGameDate || new Date() < lastGameDate) {
+        console.log(
+          "⏳ Waiting for regular season to end before showing playoff table"
+        );
+        return;
+      }
+
+      const res = await api.get("/api/league/playoff", {
+        params: { seasonId, season: SEASON },
+      });
+
+      if (res.data.success && res.data.games?.length && regularTable.length) {
+        const { topPlayoffTable, bottomPlayoffTable } = calculateTable(
+          res.data.games,
+          regularTable,
+          { topPlayoffSize }
+        );
+        setTopPlayoff(topPlayoffTable);
+        setBottomPlayoff(bottomPlayoffTable);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching playoff data:", err);
+    } finally {
+      setPlayoffLoading(false);
     }
-
-    const res = await api.get("/api/league/playoff", {
-      params: { seasonId, season: SEASON },
-    });
-
-    if (res.data.success && res.data.games?.length && regularTable.length) {
-      const { topPlayoffTable, bottomPlayoffTable } = calculateTable(
-        res.data.games,
-        regularTable,
-        { topPlayoffSize }
-      );
-      setTopPlayoff(topPlayoffTable);
-      setBottomPlayoff(bottomPlayoffTable);
-    }
-  } catch (err) {
-    console.error("❌ Error fetching playoff data:", err);
-  } finally {
-    setPlayoffLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchRegularSeason();
@@ -175,6 +203,6 @@ export const useLeagueTable = (leagueId) => {
     loading,
     playoffLoading,
     fetchPlayoffData,
-    refetch: fetchRegularSeason
+    refetch: fetchRegularSeason,
   };
 };

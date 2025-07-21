@@ -1,4 +1,3 @@
-// client/src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
@@ -20,20 +19,19 @@ const SearchResultsPage = () => {
   const [selectedTab, setSelectedTab] = useState("all");
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
-  // הוספת state לפילטרים
   const [filters, setFilters] = useState({
-    // פילטרים לפוסטים
+    // Posts filter
     contentText: "",
     authorName: "",
     postDateFrom: "",
     postDateTo: "",
 
-    // פילטרים למשתמשים
+    // Users filter
     userName: "",
     gender: "",
     location: "",
 
-    // פילטרים לכרטיסים
+    // Tickets filter
     priceMin: "",
     priceMax: "",
     ticketDateFrom: "",
@@ -44,12 +42,10 @@ const SearchResultsPage = () => {
 
   useEffect(() => {
     if (query) {
-      // מעביר את הפילטרים ל-API
       performFullSearch(query, filters);
     }
   }, [query, filters, performFullSearch]);
 
-  // עדכון פילטר
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -57,7 +53,7 @@ const SearchResultsPage = () => {
     }));
   };
 
-  // ניקוי פילטרים
+  // Clear filters
   const clearFilters = () => {
     setFilters({
       contentText: "",
@@ -74,7 +70,7 @@ const SearchResultsPage = () => {
     });
   };
 
-  // בדיקה האם יש פילטרים פעילים
+  // Check if there are active filters
   const hasActiveFilters = () => {
     return Object.values(filters).some((value) => value !== "");
   };
@@ -186,7 +182,7 @@ const SearchResultsPage = () => {
           )}
         </div>
 
-        {/* כפתור חיפוש מתקדם */}
+        {/* Advanced search button */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
@@ -206,16 +202,13 @@ const SearchResultsPage = () => {
           </button>
 
           {hasActiveFilters() && (
-            <button
-              onClick={clearFilters}
-              className="text-sm underline"
-            >
+            <button onClick={clearFilters} className="text-sm underline">
               נקה פילטרים
             </button>
           )}
         </div>
 
-        {/* פאנל חיפוש מתקדם */}
+        {/* Advanced search */}
         {showAdvancedSearch && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -231,7 +224,7 @@ const SearchResultsPage = () => {
             </div>
 
             <div className="space-y-6">
-              {/* פילטרים לפוסטים */}
+              {/* Posts filter */}
               <div className="border-b pb-4">
                 <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                   <MessageSquare size={16} className="text-green-600" />
@@ -295,7 +288,7 @@ const SearchResultsPage = () => {
                 </div>
               </div>
 
-              {/* פילטרים למשתמשים */}
+              {/* Users filter */}
               <div className="border-b pb-4">
                 <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                   <User size={16} className="text-blue-600" />
@@ -354,7 +347,7 @@ const SearchResultsPage = () => {
                 </div>
               </div>
 
-              {/* פילטרים לכרטיסים */}
+              {/* Tickets filter */}
               <div>
                 <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                   <Ticket size={16} className="text-purple-600" />
@@ -421,7 +414,6 @@ const SearchResultsPage = () => {
           </div>
         )}
 
-        {/* הטאבים והתוצאות הקיימות שלך נשארות זהות */}
         <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg">
           {tabItems.map((tab) => (
             <button
@@ -446,7 +438,6 @@ const SearchResultsPage = () => {
           </div>
         )}
 
-        {/* התוצאות הקיימות שלך נשארות בדיוק כמו שהיו */}
         {!loading && fullResults && (
           <div className="space-y-6">
             {/* Users Results */}

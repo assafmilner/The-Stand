@@ -1,9 +1,17 @@
-// client/src/components/friends/FriendButton.jsx
 import React, { useState, useEffect } from "react";
 import { UserPlus, Users, Clock, Check, X } from "lucide-react";
 import { useFriends } from "../../hooks/useFriends";
 import { useUser } from "../../context/UserContext";
 
+/**
+ * FriendButton manages the friend request interaction between the current user and a target user.
+ * The button adapts based on friendship state: none, sent, received, or friends.
+ *
+ * Props:
+ * - targetUser: object - user to send/accept/remove friendship with
+ * - colors: object - theme colors for the user's favorite team
+ * - onStatusChange: function - callback to notify parent of status updates
+ */
 const FriendButton = ({ targetUser, colors, onStatusChange }) => {
   const { user: currentUser } = useUser();
   const [buttonState, setButtonState] = useState("loading");
@@ -21,26 +29,22 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     getSentRequests,
   } = useFriends();
 
-  
-
-  // Check if same team (required for friend requests)
   const sameTeam = currentUser.favoriteTeam === targetUser.favoriteTeam;
 
+  // Load all relevant friendship data
   useEffect(() => {
     const loadFriendshipData = async () => {
       if (!targetUser._id) return;
-
-      // Load all friendship data
       await Promise.all([
         getFriends(),
         getReceivedRequests(),
         getSentRequests(),
       ]);
     };
-
     loadFriendshipData();
   }, [targetUser._id, getFriends, getReceivedRequests, getSentRequests]);
 
+  // Determine current relationship status
   useEffect(() => {
     if (targetUser._id) {
       const status = getFriendshipStatus(targetUser._id);
@@ -94,7 +98,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     }
   };
 
-  // Don't show button if not same team
   if (!sameTeam) {
     return (
       <div className="text-center p-3 bg-gray-100 rounded-lg text-gray-600 text-sm">
@@ -103,7 +106,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     );
   }
 
-  // Loading state
   if (buttonState === "loading") {
     return (
       <button className="profile-btn secondary w-full" disabled>
@@ -113,7 +115,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     );
   }
 
-  // Friends state
   if (buttonState === "friends") {
     return (
       <div className="space-y-2">
@@ -142,7 +143,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     );
   }
 
-  // Sent request state
   if (buttonState === "sent") {
     return (
       <button className="profile-btn secondary w-full" disabled>
@@ -152,7 +152,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     );
   }
 
-  // Received request state
   if (buttonState === "received") {
     return (
       <div className="space-y-2">
@@ -189,7 +188,6 @@ const FriendButton = ({ targetUser, colors, onStatusChange }) => {
     );
   }
 
-  // No relationship - can send request
   return (
     <button
       onClick={handleSendRequest}

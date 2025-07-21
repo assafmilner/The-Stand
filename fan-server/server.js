@@ -1,4 +1,6 @@
-// fan-server/server.js
+// ### Entry Point: Server with Express + Socket.IO
+// Initializes HTTP server, WebSocket handling, JWT-based socket authentication,
+// real-time chat messaging, and online user tracking.
 
 const express = require("express");
 const http = require("http");
@@ -11,32 +13,32 @@ const app = require("./app");
 // Create HTTP server
 const server = http.createServer(app);
 require("dotenv").config();
-console.log("✅ CLIENT_URL =", process.env.CLIENT_URL);
+console.log("CLIENT_URL =", process.env.CLIENT_URL);
 
-
-// Load CLIENT_URL safely
+// Determine allowed origin for CORS
 const origin = (() => {
-  const envOrigin = process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "*";
+  const envOrigin =
+    process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "*";
   if (!envOrigin || envOrigin === "/:" || envOrigin.trim() === "") {
-    console.warn("⚠️ CLIENT_URL missing or invalid – falling back to '*'");
+    console.warn("CLIENT_URL missing or invalid – falling back to '*'");
     return "*";
   }
   return envOrigin;
 })();
 
-// Set up Socket.IO with CORS
+// Initialize Socket.IO with CORS support
 const io = new Server(server, {
   cors: {
     origin,
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
-// Track online users
+// Track connected users
 const onlineUsers = new Map();
 
-// Authenticate incoming sockets
+// Socket authentication middleware (JWT)
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
@@ -51,7 +53,7 @@ io.use(async (socket, next) => {
     socket.user = user;
     next();
   } catch (err) {
-    console.error("❌ Socket auth error:", err);
+    console.error("Socket auth error:", err);
     next(new Error("Invalid token"));
   }
 });
@@ -60,11 +62,11 @@ io.use(async (socket, next) => {
 io.on("connection", (socket) => {
   const userId = socket.userId;
 
-  // Add user to map
+  // Register user as online
   onlineUsers.set(userId, {
     socketId: socket.id,
     user: socket.user,
-    lastSeen: new Date()
+    lastSeen: new Date(),
   });
 
   // Handle sending messages
@@ -80,7 +82,9 @@ io.on("connection", (socket) => {
         return socket.emit("message_error", { error: "Message too long" });
       }
 
-      const receiver = await User.findById(receiverId).select("name profilePicture");
+      const receiver = await User.findById(receiverId).select(
+        "name profilePicture"
+      );
       if (!receiver) {
         return socket.emit("message_error", { error: "Receiver not found" });
       }
@@ -88,7 +92,7 @@ io.on("connection", (socket) => {
       const newMessage = new Message({
         senderId,
         receiverId,
-        content: content.trim()
+        content: content.trim(),
       });
 
       const savedMessage = await newMessage.save();
@@ -104,7 +108,7 @@ io.on("connection", (socket) => {
 
       socket.emit("message_sent", messageObj);
     } catch (err) {
-      console.error("❌ send_message error:", err);
+      console.error("send_message error:", err);
       socket.emit("message_error", { error: "Failed to send message" });
     }
   });
@@ -120,7 +124,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Periodically clean up disconnected users
+// Periodic cleanup of stale connections
 setInterval(() => {
   const now = new Date();
   const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
@@ -132,7 +136,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// Handle graceful shutdown
+// Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("SIGTERM received. Shutting down gracefully...");
   server.close(() => {
@@ -143,5 +147,5 @@ process.on("SIGTERM", () => {
 // Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -1,3 +1,8 @@
+/**
+ * Home page – serves as the main dashboard after login.
+ * Contains tabbed navigation for the user's feed, team community, and league table.
+ * Uses dynamic tab switching with smooth transitions and team-based coloring.
+ */
 import React, { useState } from "react";
 import { useUser } from "../context/UserContext";
 import Layout from "../components/layout/Layout";
@@ -7,11 +12,16 @@ import SmartLeagueTable from "../components/league/SmartLeagueTable";
 import teamColors from "../utils/teamStyles";
 import "../styles/index.css";
 
+/**
+ * Main Home component – handles loading state, tab selection and rendering corresponding views.
+ */
 const Home = () => {
   const { user, loading } = useUser();
   const [selectedTab, setSelectedTab] = useState("feed");
+
   const colors = teamColors[user?.favoriteTeam || "הפועל תל אביב"];
 
+  // Show loading while fetching user data
   if (loading) {
     return (
       <Layout>
@@ -20,8 +30,12 @@ const Home = () => {
     );
   }
 
+  // If user not loaded yet
   if (!user) return null;
 
+  /**
+   * Tab items: each represents a section on the home page.
+   */
   const tabItems = [
     { key: "feed", label: "פיד " },
     { key: "groups", label: `קהילת ${user.favoriteTeam || "הקבוצה שלי"}` },
@@ -30,7 +44,7 @@ const Home = () => {
 
   return (
     <Layout>
-      {/* Tab selector */}
+      {/* Tab selector bar */}
       <div className="flex justify-center my-6">
         <div
           className="tab-wrapper"
@@ -64,7 +78,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Tab content */}
+      {/* Tab content rendering with animation */}
       <div className="transition-all duration-500 ease-in-out">
         {selectedTab === "feed" && (
           <div key="feed" className="animate-fade-in">

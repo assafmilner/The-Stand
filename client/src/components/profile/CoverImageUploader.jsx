@@ -3,6 +3,16 @@ import { Camera } from "lucide-react";
 import CropModal from "./CropModal";
 import api from "utils/api";
 
+/**
+ * CoverImageUploader allows users to upload and update their profile cover image.
+ * Includes support for cropping and preview before uploading.
+ *
+ * Props:
+ * - user: the currently viewed user
+ * - isOwnProfile: boolean indicating whether the profile is editable
+ * - colors: fallback gradient colors if no image is present
+ * - onCoverUpdate: callback when the cover image is successfully updated
+ */
 const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   const [coverImage, setCoverImage] = useState(user?.coverImage);
   const [uploading, setUploading] = useState(false);
@@ -10,6 +20,10 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
   const [imageToCrop, setImageToCrop] = useState(null);
   const coverInputRef = useRef(null);
 
+  /**
+   * Triggered when a file is selected.
+   * Validates the file, reads it and opens crop modal.
+   */
   const handleCoverUpload = (event) => {
     if (!isOwnProfile) return;
 
@@ -34,6 +48,10 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
     reader.readAsDataURL(file);
   };
 
+  /**
+   * Uploads the cropped image to the server.
+   * Sends multipart/form-data with Authorization header.
+   */
   const uploadCroppedImage = async (croppedBlob) => {
     setCropModalOpen(false);
 
@@ -60,6 +78,9 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
     }
   };
 
+  /**
+   * Resets crop modal and input field if user cancels cropping.
+   */
   const handleCropCancel = () => {
     setCropModalOpen(false);
     setImageToCrop(null);
@@ -71,6 +92,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
 
   return (
     <>
+      {/* Cover Image Section (gradient fallback if missing) */}
       <div className="relative profile-cover h-64 md:h-80 rounded-b-2xl overflow-hidden">
         {coverImage ? (
           <img
@@ -87,8 +109,10 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
           />
         )}
 
+        {/* Optional overlay styling for visual polish */}
         <div className="cover-overlay" />
 
+        {/* Loading overlay during upload */}
         {uploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
             <div className="text-white text-center">
@@ -98,6 +122,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
           </div>
         )}
 
+        {/* Upload button (visible only on own profile) */}
         {isOwnProfile && (
           <button
             onClick={() => coverInputRef.current?.click()}
@@ -113,6 +138,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
           </button>
         )}
 
+        {/* Hidden file input trigger */}
         {isOwnProfile && (
           <input
             ref={coverInputRef}
@@ -124,6 +150,7 @@ const CoverImageUploader = ({ user, isOwnProfile, colors, onCoverUpdate }) => {
         )}
       </div>
 
+      {/* Crop modal logic */}
       {cropModalOpen && (
         <CropModal
           imageSrc={imageToCrop}

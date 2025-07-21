@@ -1,25 +1,26 @@
-// fan-server/controllers/searchController.js
+// ### Search Controller
+// Handles advanced and quick search across users, posts, and ticket listings.
+// Searches are scoped to users from the same favorite team.
+
 const User = require("../models/User");
 const Post = require("../models/Post");
 const TicketListing = require("../models/TicketListing");
 const Friend = require("../models/Friend");
 
-// חיפוש משתמשים (רק מאותה קבוצה)
+// ### Function: searchUsers
+// Searches for users from the same team, with optional filters (name, gender, location).
+// Prioritizes friends in results if available.
 const searchUsers = async (query, currentUser, limit = null, filters = {}) => {
   try {
     let searchQuery = {
       favoriteTeam: currentUser.favoriteTeam,
     };
 
-    // חיפוש כללי או ספציפי בשם
     if (query || filters.userName) {
       const searchName = filters.userName || query;
       searchQuery.name = { $regex: searchName, $options: "i" };
-    } else if (query) {
-      searchQuery.name = { $regex: query, $options: "i" };
     }
 
-    // הוספת פילטרים נוספים
     if (filters.gender) {
       searchQuery.gender = filters.gender;
     }
@@ -37,7 +38,6 @@ const searchUsers = async (query, currentUser, limit = null, filters = {}) => {
 
     const users = await dbQuery;
 
-    // אם צריך לתת עדיפות לחברים
     if (users.length > 0) {
       const friendships = await Friend.find({
         $or: [
@@ -46,17 +46,15 @@ const searchUsers = async (query, currentUser, limit = null, filters = {}) => {
         ],
       });
 
-      const friendIds = friendships.map((friendship) => {
-        return friendship.senderId.toString() === currentUser._id.toString()
-          ? friendship.receiverId.toString()
-          : friendship.senderId.toString();
-      });
+      const friendIds = friendships.map((f) =>
+        f.senderId.toString() === currentUser._id.toString()
+          ? f.receiverId.toString()
+          : f.senderId.toString()
+      );
 
-      // מיון: חברים ראשונים
       users.sort((a, b) => {
         const aIsFriend = friendIds.includes(a._id.toString());
         const bIsFriend = friendIds.includes(b._id.toString());
-
         if (aIsFriend && !bIsFriend) return -1;
         if (!aIsFriend && bIsFriend) return 1;
         return a.name.localeCompare(b.name);
@@ -70,18 +68,16 @@ const searchUsers = async (query, currentUser, limit = null, filters = {}) => {
   }
 };
 
-// חיפוש פוסטים (בתוכן + בשם הכותב) - רק מאותה קבוצה!
+// ### Function: searchPosts
+// Searches posts from users of the same team based on content, author name, and date filters.
 const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
   try {
-    // חיפוש משתמשים מאותה קבוצה שיש להם את השם הזה
     const usersFromSameTeam = await User.find({
       favoriteTeam: currentUser.favoriteTeam,
     }).select("_id");
 
-    // בניית OR conditions לחיפוש
     let orConditions = [];
 
-    // חיפוש בתוכן - כללי או ספציפי
     const contentSearchText = filters.contentText || query;
     if (contentSearchText) {
       orConditions.push({
@@ -89,7 +85,6 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
       });
     }
 
-    // חיפוש לפי שם מחבר
     if (filters.authorName) {
       const usersByName = await User.find({
         name: { $regex: filters.authorName, $options: "i" },
@@ -100,7 +95,6 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
         orConditions.push({ authorId: { $in: usersByName.map((u) => u._id) } });
       }
     } else if (query && !filters.contentText) {
-      // אם זה חיפוש כללי בלי פילטר ספציפי, חפש גם בשמות
       const usersByName = await User.find({
         name: { $regex: query, $options: "i" },
         favoriteTeam: currentUser.favoriteTeam,
@@ -112,16 +106,13 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
     }
 
     let searchQuery = {
-      // רק פוסטים של אוהדים מאותה קבוצה
       authorId: { $in: usersFromSameTeam.map((u) => u._id) },
     };
 
-    // הוספת OR conditions אם יש
     if (orConditions.length > 0) {
       searchQuery.$or = orConditions;
     }
 
-    // הוספת פילטרי תאריך
     if (filters.postDateFrom || filters.dateFrom) {
       const dateFrom = filters.postDateFrom || filters.dateFrom;
       searchQuery.createdAt = {
@@ -130,10 +121,9 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
       };
     }
     if (filters.postDateTo || filters.dateTo) {
-      const dateTo = filters.postDateTo || filters.dateTo;
-      const endDate = new Date(dateTo);
-      endDate.setHours(23, 59, 59, 999);
-      searchQuery.createdAt = { ...searchQuery.createdAt, $lte: endDate };
+      const dateTo = new Date(filters.postDateTo || filters.dateTo);
+      dateTo.setHours(23, 59, 59, 999);
+      searchQuery.createdAt = { ...searchQuery.createdAt, $lte: dateTo };
     }
 
     let dbQuery = Post.find(searchQuery)
@@ -151,7 +141,9 @@ const searchPosts = async (query, currentUser, limit = null, filters = {}) => {
   }
 };
 
-// חיפוש כרטיסים (בהערות + קבוצות + שם המוכר) - רק של מוכרים מאותה קבוצה!
+// ### Function: searchTickets
+// Searches ticket listings from sellers of the same team.
+// Matches on seller name, team names, and notes with date/price filters.
 const searchTickets = async (
   query,
   currentUser,
@@ -159,7 +151,6 @@ const searchTickets = async (
   filters = {}
 ) => {
   try {
-    // חיפוש מוכרים מאותה קבוצה לפי שם
     const sellersFromSameTeam = await User.find({
       favoriteTeam: currentUser.favoriteTeam,
     }).select("_id");
@@ -208,21 +199,14 @@ const searchTickets = async (
         "הפועל רעננה": "Hapoel Raanana",
       };
 
-      Object.entries(teamNameMap).forEach(([hebrew, english]) => {
-        if (hebrew.includes(searchQuery)) {
-          queries.push(
-            { homeTeam: { $regex: english, $options: "i" } },
-            { awayTeam: { $regex: english, $options: "i" } }
-          );
+      Object.entries(teamNameMap).forEach(([he, en]) => {
+        if (he.includes(searchQuery)) {
+          queries.push({ homeTeam: { $regex: en, $options: "i" } });
+          queries.push({ awayTeam: { $regex: en, $options: "i" } });
         }
-      });
-
-      Object.entries(teamNameMap).forEach(([hebrew, english]) => {
-        if (english.toLowerCase().includes(searchQuery.toLowerCase())) {
-          queries.push(
-            { homeTeam: { $regex: hebrew, $options: "i" } },
-            { awayTeam: { $regex: hebrew, $options: "i" } }
-          );
+        if (en.toLowerCase().includes(searchQuery.toLowerCase())) {
+          queries.push({ homeTeam: { $regex: he, $options: "i" } });
+          queries.push({ awayTeam: { $regex: he, $options: "i" } });
         }
       });
 
@@ -250,7 +234,6 @@ const searchTickets = async (
       searchQuery.$or = orConditions;
     }
 
-    // פילטרי מחיר
     if (filters.priceMin) {
       searchQuery.price = {
         ...searchQuery.price,
@@ -264,7 +247,6 @@ const searchTickets = async (
       };
     }
 
-    // פילטרי תאריך מהמשתמש
     if (filters.ticketDateFrom) {
       searchQuery.date = {
         ...searchQuery.date,
@@ -297,7 +279,8 @@ const searchTickets = async (
   }
 };
 
-// חיפוש מהיר לדרופדאון (5 מכל סוג)
+// ### Function: quickSearch
+// Searches 5 users, 5 posts, and 5 tickets simultaneously for a given query.
 const quickSearch = async (req, res) => {
   try {
     const { q } = req.query;
@@ -310,7 +293,6 @@ const quickSearch = async (req, res) => {
       });
     }
 
-    // חיפוש במקביל
     const [users, posts, tickets] = await Promise.all([
       searchUsers(q, currentUser, 5),
       searchPosts(q, currentUser, 5),
@@ -332,27 +314,24 @@ const quickSearch = async (req, res) => {
   }
 };
 
-// חיפוש מלא עם פילטרים מתקדמים
+// ### Function: fullSearch
+// Returns all results matching the given query and filter set, across all entity types.
 const fullSearch = async (req, res) => {
   try {
     const {
       q,
       type = "all",
-      // פילטרים לפוסטים
       contentText,
       authorName,
       postDateFrom,
       postDateTo,
-      // פילטרים למשתמשים
       userName,
       gender,
       location,
-      // פילטרים לכרטיסים
       priceMin,
       priceMax,
       ticketDateFrom,
       ticketDateTo,
-      // פילטרים ישנים (לתמיכה לאחור)
       dateFrom,
       dateTo,
     } = req.query;
@@ -366,18 +345,14 @@ const fullSearch = async (req, res) => {
       });
     }
 
-    // ארגון הפילטרים
     const filters = {
-      // פוסטים
       contentText,
       authorName,
       postDateFrom: postDateFrom || dateFrom,
       postDateTo: postDateTo || dateTo,
-      // משתמשים
       userName,
       gender,
       location,
-      // כרטיסים
       priceMin,
       priceMax,
       ticketDateFrom,
@@ -386,20 +361,14 @@ const fullSearch = async (req, res) => {
 
     let results = {};
 
-    // חזיר את כל התוצאות בלי pagination
     if (type === "all" || type === "users") {
-      const allUsers = await searchUsers(q, currentUser, null, filters);
-      results.users = allUsers;
+      results.users = await searchUsers(q, currentUser, null, filters);
     }
-
     if (type === "all" || type === "posts") {
-      const allPosts = await searchPosts(q, currentUser, null, filters);
-      results.posts = allPosts;
+      results.posts = await searchPosts(q, currentUser, null, filters);
     }
-
     if (type === "all" || type === "tickets") {
-      const allTickets = await searchTickets(q, currentUser, null, filters);
-      results.tickets = allTickets;
+      results.tickets = await searchTickets(q, currentUser, null, filters);
     }
 
     res.json({
@@ -427,6 +396,7 @@ const fullSearch = async (req, res) => {
   }
 };
 
+// ### Export: Search methods
 module.exports = {
   quickSearch,
   fullSearch,

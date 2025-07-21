@@ -1,4 +1,7 @@
-// fan-server/routes/messageRoutes.js
+// ### Express Router: Message Routes
+// Handles user messaging features including chat history, sending messages,
+// retrieving recent conversations, and unseen message count.
+
 const express = require("express");
 const router = express.Router();
 const {
@@ -13,16 +16,8 @@ const auth = require("../middlewares/auth");
 router.use(auth);
 
 router.get("/unseen", getUnseenMessages);
-// Get chat history between current user and another user
-// GET /api/messages/history/:otherUserId
 router.get("/history/:otherUserId", getChatHistory);
-
-// Send a message to another user
-// POST /api/messages
 router.post("/", sendMessage);
-
-// Get recent chats for current user
-// GET /api/messages/recent
 router.get("/recent", getRecentChats);
 
 module.exports = router;

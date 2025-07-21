@@ -1,10 +1,15 @@
-// fan-server/app.js (Updated with Friend routes)
+// ### Server Setup (Express Application)
+// Initializes and configures the main Express server, including DB connection,
+// CORS policy, middleware, routes, static file serving, error handling,
+// and frontend fallback for production deployment.
+
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+
 const proxyRouter = require("./proxy");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
@@ -13,27 +18,30 @@ const commentRoutes = require("./routes/commentRoutes");
 const fixturesRoutes = require("./routes/fixtures");
 const ticketRoutes = require("./routes/ticketRoutes");
 const messageRoutes = require("./routes/messageRoutes");
-const friendRoutes = require("./routes/friendRoutes"); // New import
+const friendRoutes = require("./routes/friendRoutes");
 const searchRoutes = require("./routes/search");
 const leagueRoutes = require("./routes/leagueRoutes");
-console.log("🔥 SERVER LOADING...");
+
+console.log(" SERVER LOADING...");
 dotenv.config();
+
 mongoose
   .connect(process.env.MONGO_URL)
-  .then(() => console.log("✅ Connected to MongoDB"))
+  .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1); // עצור את השרת אם אין DB
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Stop server if DB connection fails
   });
+
 const app = express();
 
-// Static files
+// Serve static assets (images, etc.)
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
-// Middlewares
+// Middleware: CORS with whitelisted origins
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://the-stand.onrender.com", // ← שים כאן את ה־STATIC SITE שלך
+  "https://the-stand.onrender.com",
 ];
 
 app.use(
@@ -52,9 +60,8 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
+// API routes
 app.use("/api/proxy", proxyRouter);
-
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
@@ -66,14 +73,14 @@ app.use("/api/friends", friendRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/league", leagueRoutes);
 
-// Root check
+// Root route check
 app.get("/", (req, res) => {
-  res.send("Server is running ✅");
+  res.send("Server is running");
 });
 
-// Error handling middleware
+// Global error handler
 app.use((error, req, res, next) => {
-  console.error("❌ Unhandled error:", error);
+  console.error("Unhandled error:", error);
   res.status(500).json({
     success: false,
     error: "Internal server error",
@@ -84,7 +91,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Serve React frontend in production
+// Serve React frontend (production)
 if (process.env.NODE_ENV === "production") {
   const clientBuildPath = path.join(__dirname, "../client/build");
   app.use(express.static(clientBuildPath));

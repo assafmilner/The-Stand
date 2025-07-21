@@ -8,6 +8,27 @@ import LikeButton from "./LikeButton";
 import { useLike } from "../../hooks/useLike";
 import api from "utils/api";
 
+/**
+ * Reply
+ *
+ * This component renders a single reply to a comment, including:
+ * - Author info and timestamp
+ * - Like button and modal
+ * - Edit and delete options (for author only)
+ * - Edit mode with inline saving
+ *
+ * Props:
+ * - reply (object): the reply data to display
+ * - postId (string): ID of the post this reply belongs to
+ * - parentCommentId (string): ID of the parent comment
+ * - onDelete (function): callback after successful deletion
+ *
+ * Notes:
+ * - Deletion requires confirmation and triggers API call
+ * - Supports optimistic UI update for editing
+ * - Uses `useLike` for internal like state and sync
+ */
+
 const Reply = ({ reply, postId, parentCommentId, onDelete }) => {
   const { user } = useUser();
   const isAuthor = user?._id === reply.authorId._id;
@@ -36,7 +57,7 @@ const Reply = ({ reply, postId, parentCommentId, onDelete }) => {
         alert("אין לך הרשאה למחוק תגובה זו.");
       } else if (status === 404) {
         alert("תגובה זו לא קיימת יותר.");
-        onDelete?.(); // מיידע את הקומפוננטה האב שהתגובה כבר לא קיימת
+        onDelete?.();
       } else {
         console.error("❌ שגיאה במחיקת תגובת בן:", err);
         alert("שגיאה כללית במחיקת תגובה.");
@@ -57,8 +78,6 @@ const Reply = ({ reply, postId, parentCommentId, onDelete }) => {
           },
         }
       );
-      
-      
 
       const updated = res.data;
       setEditedContent(updated.content);

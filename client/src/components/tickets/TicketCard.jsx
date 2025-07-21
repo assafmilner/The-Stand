@@ -4,9 +4,27 @@ import { useNavigate } from "react-router-dom";
 import teamNameMap from "../../utils/teams-hebrew";
 import stadiums from "../../utils/stadiums";
 
+/**
+ * TicketCard component
+ *
+ * Displays a summary card for a single ticket listing.
+ * - Shows match details (teams, date, time, stadium)
+ * - Shows quantity, price per ticket, and total price
+ * - Optional notes and seller information
+ * - Clickable to navigate to ticket detail page
+ * - Supports additional actions (edit/delete/toggle sold)
+ *
+ * Design:
+ * - Responsive, hoverable card layout
+ * - Uses Lucide icons for better UX
+ * - Tailwind-based styling
+ */
 const TicketCard = ({ ticket, showSellerInfo = true, extraActions }) => {
   const navigate = useNavigate();
 
+  /**
+   * Formats a date string into a Hebrew-readable format.
+   */
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString("he-IL", {
       weekday: "short",
@@ -15,19 +33,35 @@ const TicketCard = ({ ticket, showSellerInfo = true, extraActions }) => {
       year: "numeric",
     });
 
+  /**
+   * Formats number into ILS currency string.
+   */
   const formatPrice = (price) =>
     new Intl.NumberFormat("he-IL", {
       style: "currency",
       currency: "ILS",
     }).format(price);
 
+  /**
+   * Translates English team name to Hebrew if available.
+   */
   const getTeamName = (englishName) =>
     teamNameMap[englishName]?.name || englishName;
 
+  /**
+   * Navigates to ticket details page on card click.
+   */
   const handleCardClick = () => {
     navigate(`/tickets/${ticket._id}`);
   };
 
+  /**
+   * Renders the ticket summary card layout.
+   * - Top section: teams and sold-out badge
+   * - Middle: details grid (date, time, stadium, quantity)
+   * - Bottom: price breakdown and optional notes
+   * - Footer: actions and seller info
+   */
   return (
     <div
       className="bg-white rounded-xl shadow-md p-4 transition-all hover:shadow-lg border border-gray-200 cursor-pointer h-full flex flex-col justify-between"
@@ -85,11 +119,7 @@ const TicketCard = ({ ticket, showSellerInfo = true, extraActions }) => {
       </div>
 
       <div>
-        {extraActions && (
-          <div className="mt-4">
-            {extraActions}
-          </div>
-        )}
+        {extraActions && <div className="mt-4">{extraActions}</div>}
 
         {showSellerInfo && ticket.sellerId && (
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-4">

@@ -1,5 +1,9 @@
+// ### Utility Route: Secure Proxy (for API passthrough)
+// Acts as a secure proxy to external APIs (e.g., TheSportsDB) while enforcing domain whitelisting,
+// HTTPS enforcement, timeout handling, and CORS headers.
+
 const express = require('express');
-const fetch = require('node-fetch'); // ודא שזו הגרסה שאתה משתמש בה
+const fetch = require('node-fetch');
 const { URL } = require('url');
 const router = express.Router();
 
@@ -14,7 +18,7 @@ router.get('/', async (req, res) => {
 
     targetUrl = decodeURIComponent(targetUrl);
 
-    // וולידציה של URL תקני
+    // Validate URL structure
     let urlObj;
     try {
       urlObj = new URL(targetUrl);
@@ -28,7 +32,7 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: "URL must use HTTPS" });
     }
 
-    // דומיינים מותרים בלבד
+    // Allow only specific domains
     const allowedDomains = ['thesportsdb.com'];
     const hostnameValid = allowedDomains.some(domain => 
       urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`)
@@ -38,9 +42,9 @@ router.get('/', async (req, res) => {
       return res.status(403).json({ error: "Domain not allowed" });
     }
 
-    // Fetch עם timeout
+    // Setup fetch timeout
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15 שניות
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15 seconds
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -64,7 +68,7 @@ router.get('/', async (req, res) => {
 
     const data = await response.json();
 
-    // CORS headers
+    // Add CORS headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');

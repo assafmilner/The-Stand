@@ -1,8 +1,20 @@
-// CommentList.jsx - תיקון לpassage של הפרמטרים הנכונים
 import React, { useState } from "react";
 import useComments from "../../hooks/useComments";
 import Comment from "./Comment";
 import { useUser } from "../../context/UserContext";
+
+/**
+ * CommentList
+ *
+ * Displays and manages a list of comments for a specific post:
+ * - Fetches comments via `useComments` hook
+ * - Renders each comment using the `Comment` component
+ * - Supports adding, deleting, and editing comments
+ * - Includes a basic input form for adding new comments
+ *
+ * Props:
+ * - postId: ID of the post to which the comments belong
+ */
 
 const CommentList = ({ postId }) => {
   const { comments, addComment, deleteComment, updateComment } = useComments({
@@ -24,9 +36,7 @@ const CommentList = ({ postId }) => {
 
   return (
     <div className="comment-list">
-    
-
-      {/* רשימת תגובות */}
+      {/* Comments list */}
       {comments.map((comment) => (
         <Comment
           key={comment._id}
@@ -39,7 +49,7 @@ const CommentList = ({ postId }) => {
           }}
         />
       ))}
-        {/* טופס תגובה */}
+      {/* Comment file */}
       <form onSubmit={handleSubmit}>
         <input
           type="text"

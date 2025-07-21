@@ -4,6 +4,9 @@ import { CheckCircle, AlertTriangle } from "lucide-react";
 
 const locations = ["צפון", "מרכז", "דרום", "ירושלים", "אחר"];
 
+/**
+ * Formats a given date string into he-IL locale display.
+ */
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -14,6 +17,18 @@ const formatDate = (dateStr) => {
   });
 };
 
+/**
+ * PersonalInfoForm allows a user to view their profile data,
+ * and edit their phone number, location, and bio.
+ *
+ * Props:
+ * - user: user object containing current profile data
+ *
+ * Editable fields:
+ * - location (select)
+ * - phone (input)
+ * - bio (textarea)
+ */
 const PersonalInfoForm = ({ user }) => {
   const [selectedLocation, setSelectedLocation] = useState(
     user?.location || "אחר"
@@ -24,6 +39,9 @@ const PersonalInfoForm = ({ user }) => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  /**
+   * Sends updated profile fields (location, phone, bio) to the server.
+   */
   const handleSaveInfo = async () => {
     setSuccess("");
     setError("");
@@ -33,7 +51,7 @@ const PersonalInfoForm = ({ user }) => {
       const res = await api.put("/api/users/update-profile", {
         bio,
         phone,
-        location: selectedLocation, 
+        location: selectedLocation,
       });
       setSuccess(res.data.message);
     } catch (err) {
@@ -57,6 +75,7 @@ const PersonalInfoForm = ({ user }) => {
         </div>
       )}
 
+      {/* Non-editable user fields */}
       <div>
         <label className="block text-sm font-medium">שם מלא</label>
         <input
@@ -84,6 +103,7 @@ const PersonalInfoForm = ({ user }) => {
         />
       </div>
 
+      {/* Editable location select */}
       <div>
         <label className="block text-sm font-medium">מיקום</label>
         <select
@@ -102,6 +122,7 @@ const PersonalInfoForm = ({ user }) => {
         </select>
       </div>
 
+      {/* Other non-editable fields */}
       <div>
         <label className="block text-sm font-medium">מין</label>
         <input
@@ -129,6 +150,7 @@ const PersonalInfoForm = ({ user }) => {
         />
       </div>
 
+      {/* Editable phone number */}
       <div>
         <label className="block text-sm font-medium">טלפון</label>
         <input
@@ -139,6 +161,7 @@ const PersonalInfoForm = ({ user }) => {
         />
       </div>
 
+      {/* Editable bio */}
       <div className="col-span-2">
         <label className="block text-sm font-medium">ביוגרפיה קצרה</label>
         <textarea
@@ -149,6 +172,7 @@ const PersonalInfoForm = ({ user }) => {
         />
       </div>
 
+      {/* Save button */}
       <div className="col-span-2 flex justify-end mt-4 gap-3">
         <button
           type="button"

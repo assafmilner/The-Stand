@@ -1,4 +1,3 @@
-// src/components/post/PostActions.jsx
 import React, { useState, useEffect } from "react";
 import { Share2, ThumbsUp, MessageCircle } from "lucide-react";
 import LikeButton from "./LikeButton";
@@ -6,6 +5,21 @@ import LikeModal from "../modal/LikeModal";
 import api from "utils/api";
 import useComments from "../../hooks/useComments";
 import CommentList from "./CommentList";
+
+/**
+ * PostActions
+ *
+ * This component renders the interactive actions for a post:
+ * likes (with modal), comments (toggle + list), and social interaction UI.
+ * Also fetches comment count on mount and supports paginated comment loading.
+ *
+ * Props:
+ * - postId (string): ID of the post to operate on
+ * - likes (array): initial list of users who liked the post
+ * - authorId (string): ID of the post author (not used here, but may be useful)
+ * - colors (object): style customization for team-based themes
+ * - currentUser (object): current logged-in user (used for like actions)
+ */
 
 const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
   const [showLikeModal, setShowLikeModal] = useState(false);
@@ -38,7 +52,6 @@ const PostActions = ({ postId, likes = [], authorId, colors, currentUser }) => {
 
   return (
     <>
-      {/* like count - רק modal בלחיצה */}
       <div
         style={{
           padding: "0 16px",

@@ -1,3 +1,10 @@
+// ### Module: API Client
+// Axios instance configured with:
+// - baseURL from environment
+// - credentials included for cross-origin requests
+// - request interceptor for automatic auth header
+// - response interceptor for global error handling
+
 import axios from "axios";
 
 const api = axios.create({
@@ -5,7 +12,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// ✅ הוספת Authorization header אוטומטית אם קיים טוקן
+// ### Interceptor: Request
+// Adds Authorization header with Bearer token if token exists in localStorage
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
@@ -17,28 +25,27 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ טיפול גלובלי בשגיאות
+// ### Interceptor: Response
+// Handles 401 errors globally by redirecting to /login page,
+// unless the request is to login or email verification routes
 api.interceptors.response.use(
-  
-    res => res,
-    err => {
-      const { config, response } = err;
-  
-      // אם זו קריאה ל־login או ל־verify-email או ל־resend-verification – תן ל־catch המקומי לטפל
-      
-        const isAuthRoute =
-          config.url !== "/api/auth/login" &&
-          config.url !== "/api/auth/verify-email" &&
-          config.url !== "/api/auth/resend-verification"
-    
-  
-        const alreadyOnLoginPage = window.location.pathname === "/login";
+  (res) => res,
+  (err) => {
+    const { config, response } = err;
+
+    const isAuthRoute =
+      config.url !== "/api/auth/login" &&
+      config.url !== "/api/auth/verify-email" &&
+      config.url !== "/api/auth/resend-verification";
+
+    const alreadyOnLoginPage = window.location.pathname === "/login";
 
     if (response?.status === 401 && !isAuthRoute && !alreadyOnLoginPage) {
       window.location = "/login";
     }
-      return Promise.reject(err);
-    }
-  );
+
+    return Promise.reject(err);
+  }
+);
 
 export default api;
