@@ -188,9 +188,9 @@ const Friends = () => {
   return (
     <Layout>
       <div className="flex h-[80vh] bg-white shadow-md rounded-xl overflow-hidden">
-        {/* Sidebar: tabs and friend list */}
+        {/* Right Sidebar - Tabs and Lists */}
         <div className="w-[360px] border-l bg-gray-50 flex flex-col">
-          {/* Tab headers */}
+          {/* Tab Headers */}
           <div className="border-b bg-white px-2 pt-2">
             <div className="flex gap-2">
               {tabConfig.map((tab) => {
@@ -228,7 +228,7 @@ const Friends = () => {
             </div>
           </div>
 
-          {/* Tab content: friend list / requests / empty states */}
+          {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-4">
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -245,7 +245,7 @@ const Friends = () => {
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-2"></div>
-                <p className="text-gray-500">Loading...</p>
+                <p className="text-gray-500">טוען...</p>
               </div>
             ) : activeTabData.data.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -254,19 +254,19 @@ const Friends = () => {
                   className="mx-auto mb-4 text-gray-300"
                 />
                 <p className="font-medium">
-                  {activeTab === "friends" && "You have no friends yet"}
-                  {activeTab === "received" && "No new friend requests"}
-                  {activeTab === "sent" && "No sent requests"}
+                  {activeTab === "friends" && "אין לך חברים עדיין"}
+                  {activeTab === "received" && "אין בקשות חברות חדשות"}
+                  {activeTab === "sent" && "לא שלחת בקשות חברות"}
                 </p>
                 <p className="text-sm mt-1">
-                  {activeTab === "friends" && "Start connecting with fans"}
-                  {activeTab === "received" && "Requests will show up here"}
-                  {activeTab === "sent" && "Sent requests will appear here"}
+                  {activeTab === "friends" && "התחל לחבר עם אוהדים אחרים"}
+                  {activeTab === "received" && "בקשות חברות יופיעו כאן"}
+                  {activeTab === "sent" && "בקשות ששלחת יופיעו כאן"}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Friends tab */}
+                {/* Friends List */}
                 {activeTab === "friends" &&
                   friends.map((friend) => (
                     <div
@@ -286,11 +286,11 @@ const Friends = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{friend.name}</p>
                         <p className="text-sm text-gray-500 truncate">
-                          Fan of {friend.favoriteTeam}
+                          אוהד {friend.favoriteTeam}
                         </p>
                         {friend.friendshipDate && (
                           <p className="text-xs text-gray-400">
-                            Friends since{" "}
+                            חברים מאז{" "}
                             {new Date(friend.friendshipDate).toLocaleDateString(
                               "he-IL"
                             )}
@@ -300,7 +300,7 @@ const Friends = () => {
                     </div>
                   ))}
 
-                {/* Received tab */}
+                {/* Received Requests */}
                 {activeTab === "received" &&
                   receivedRequests.map((request) => (
                     <div
@@ -319,7 +319,7 @@ const Friends = () => {
                         <div className="flex-1">
                           <p className="font-medium">{request.sender.name}</p>
                           <p className="text-sm text-gray-500">
-                            Fan of {request.sender.favoriteTeam}
+                            אוהד {request.sender.favoriteTeam}
                           </p>
                           <p className="text-xs text-gray-400">
                             {new Date(request.createdAt).toLocaleDateString(
@@ -335,7 +335,7 @@ const Friends = () => {
                           className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                         >
                           <Check size={16} />
-                          <span className="text-sm">Accept</span>
+                          <span className="text-sm">אשר</span>
                         </button>
                         <button
                           onClick={() => handleRejectRequest(request.id)}
@@ -343,13 +343,13 @@ const Friends = () => {
                           className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
                           <X size={16} />
-                          <span className="text-sm">Reject</span>
+                          <span className="text-sm">דחה</span>
                         </button>
                       </div>
                     </div>
                   ))}
 
-                {/* Sent tab */}
+                {/* Sent Requests */}
                 {activeTab === "sent" &&
                   sentRequests.map((request) => (
                     <div
@@ -368,10 +368,10 @@ const Friends = () => {
                         <div className="flex-1">
                           <p className="font-medium">{request.receiver.name}</p>
                           <p className="text-sm text-gray-500">
-                            Fan of {request.receiver.favoriteTeam}
+                            אוהד {request.receiver.favoriteTeam}
                           </p>
                           <p className="text-xs text-gray-400">
-                            Sent on{" "}
+                            נשלח ב-
                             {new Date(request.createdAt).toLocaleDateString(
                               "he-IL"
                             )}
@@ -379,7 +379,7 @@ const Friends = () => {
                         </div>
                         <div className="flex items-center gap-2 text-orange-600">
                           <Clock size={16} />
-                          <span className="text-sm">Pending</span>
+                          <span className="text-sm">ממתין</span>
                         </div>
                       </div>
                     </div>
@@ -389,11 +389,11 @@ const Friends = () => {
           </div>
         </div>
 
-        {/* Friend detail view */}
+        {/* Left Content Area */}
         <div className="flex-1 flex flex-col border-r bg-white">
           {selectedFriend ? (
             <>
-              {/* Friend header */}
+              {/* Friend Details Header */}
               <div className="flex items-center gap-4 p-6 border-b bg-white">
                 <img
                   src={
@@ -405,7 +405,7 @@ const Friends = () => {
                 <div>
                   <h2 className="text-xl font-bold">{selectedFriend.name}</h2>
                   <p className="text-gray-600">
-                    Fan of {selectedFriend.favoriteTeam}
+                    אוהד {selectedFriend.favoriteTeam}
                   </p>
                   {selectedFriend.location && (
                     <p className="text-sm text-gray-500">
@@ -419,7 +419,7 @@ const Friends = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <MessageCircle size={18} />
-                    <span>Send Message</span>
+                    <span>שלח הודעה</span>
                   </button>
                   <button
                     onClick={() => handleRemoveFriend(selectedFriend)}
@@ -427,32 +427,30 @@ const Friends = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
                     <UserMinus size={18} />
-                    <span>
-                      {requestLoading ? "Removing..." : "Remove Friend"}
-                    </span>
+                    <span>{requestLoading ? "מסיר..." : "הסר חבר"}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Friend detail content */}
+              {/* Friend Details Content */}
               <div className="flex-1 p-6 bg-gray-50">
                 <div className="bg-white rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">Friend Details</h3>
+                  <h3 className="text-lg font-semibold mb-4">פרטי החבר</h3>
                   <div className="space-y-3">
                     <div>
-                      <span className="font-medium text-gray-700">Name: </span>
+                      <span className="font-medium text-gray-700">שם: </span>
                       <span>{selectedFriend.name}</span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">
-                        Favorite Team:{" "}
+                        קבוצת הלב:{" "}
                       </span>
                       <span>{selectedFriend.favoriteTeam}</span>
                     </div>
                     {selectedFriend.location && (
                       <div>
                         <span className="font-medium text-gray-700">
-                          Location:{" "}
+                          מיקום:{" "}
                         </span>
                         <span>{selectedFriend.location}</span>
                       </div>
@@ -460,7 +458,7 @@ const Friends = () => {
                     {selectedFriend.friendshipDate && (
                       <div>
                         <span className="font-medium text-gray-700">
-                          Friends Since:{" "}
+                          חברים מאז:{" "}
                         </span>
                         <span>
                           {new Date(
@@ -477,37 +475,37 @@ const Friends = () => {
             <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[400px]">
               <div className="text-center">
                 <Users size={64} className="mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium">Select a friend</p>
-                <p className="text-sm">View details and send a message</p>
+                <p className="text-lg font-medium">בחר חבר מהרשימה</p>
+                <p className="text-sm">צפה בפרטי החבר ושלח הודעות</p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
         onConfirm={confirmDeleteFriend}
-        title="Remove Friend"
+        title="הסר חבר"
         message={
           friendToDelete
-            ? `Are you sure you want to remove ${friendToDelete.name} from your friends list?`
-            : "Are you sure you want to remove this friend?"
+            ? `האם אתה בטוח שברצונך להסיר את ${friendToDelete.name} מרשימת החברים שלך?`
+            : "האם אתה בטוח שברצונך להסיר את החבר הזה?"
         }
-        confirmText="Remove"
-        cancelText="Cancel"
+        confirmText="הסר חבר"
+        cancelText="ביטול"
         type="danger"
       />
 
-      {/* Chat modal */}
+      {/* Chat Modal */}
       {isChatOpen && selectedChatFriend && (
         <Suspense
           fallback={
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white p-6 rounded-lg">
-                <p>Loading chat...</p>
+                <p>טוען צ'אט...</p>
               </div>
             </div>
           }
