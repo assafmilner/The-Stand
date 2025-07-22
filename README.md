@@ -5,6 +5,9 @@
 
 ---
 
+האתר עלה לאוויר!
+מוזמנים להיכנס דרך הקישור הבא: https://the-stand.onrender.com
+
 ## 🚀 טכנולוגיות
 
 ### 🔧 Backend
